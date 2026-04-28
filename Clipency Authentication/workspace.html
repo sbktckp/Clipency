@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clipency | Workspace</title>
+  <link rel="stylesheet" href="/staff.css" />
+</head>
+<body>
+  <main class="workspace-shell">
+    <section class="workspace-inner">
+      <div class="workspace-header">
+        <div class="eyebrow">CLIPENCY WORKSPACE</div>
+        <h1 id="workspace-title">Choose your workspace.</h1>
+        <p>Admins can enter the operating dashboard or switch into the creator-side experience to test the platform like a clipper.</p>
+      </div>
+
+      <div class="workspace-grid">
+        <a class="workspace-card" href="/admin">
+          <span>A</span>
+          <h2>Admin Dashboard</h2>
+          <p>Manage reviews, campaigns, leads, payouts and platform operations.</p>
+          <strong>Enter admin →</strong>
+        </a>
+
+        <a class="workspace-card" href="/dashboard">
+          <span>C</span>
+          <h2>Clipper Dashboard</h2>
+          <p>View campaigns, submissions, stats, payouts and the creator experience.</p>
+          <strong>Enter creator view →</strong>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabaseClient.js"></script>
+  <script src="/access-control.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const access = await window.ClipencyAccess.requireRole(["admin"]);
+      if (!access) return;
+
+      const name = access.profile?.full_name || access.user?.email?.split("@")[0] || "Admin";
+      document.getElementById("workspace-title").textContent = `Welcome, ${name}.`;
+    });
+  </script>
+</body>
+</html>

@@ -9,6 +9,15 @@
     { "source": "/use-cases", "destination": "/index.html" },
     { "source": "/command-center", "destination": "/index.html" },
 
+    { "source": "/workspace", "destination": "/workspace.html" },
+    { "source": "/review", "destination": "/review.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin/reviews", "destination": "/review.html" },
+    { "source": "/admin/campaigns", "destination": "/admin.html" },
+    { "source": "/admin/leads", "destination": "/admin.html" },
+    { "source": "/admin/payouts", "destination": "/admin.html" },
+    { "source": "/admin/users", "destination": "/admin.html" },
+
     { "source": "/dashboard", "destination": "/dashboard.html?page=dashboard" },
     { "source": "/campaigns", "destination": "/dashboard.html?page=campaigns" },
     { "source": "/stats", "destination": "/dashboard.html?page=stats" },
