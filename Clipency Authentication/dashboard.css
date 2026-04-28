@@ -2548,3 +2548,42 @@ aside {
     justify-items: start;
   }
 }
+
+/* ================================
+   PROFILE ACCESS REFINEMENT
+   ================================ */
+
+.nav-item[data-section="profile"] {
+  display: none !important;
+}
+
+.profile-click-target,
+.sidebar-user,
+.user-footer,
+.top-profile,
+.header-profile,
+.profile-chip,
+.user-pill {
+  cursor: pointer;
+}
+
+.profile-click-target:hover,
+.sidebar-user:hover,
+.user-footer:hover,
+.top-profile:hover,
+.header-profile:hover,
+.profile-chip:hover,
+.user-pill:hover {
+  border-color: rgba(167,139,250,0.42) !important;
+  background: rgba(167,139,250,0.12) !important;
+}
+
+.profile-click-target:active,
+.sidebar-user:active,
+.user-footer:active,
+.top-profile:active,
+.header-profile:active,
+.profile-chip:active,
+.user-pill:active {
+  transform: scale(0.985);
+}

@@ -2128,3 +2128,107 @@ if (oldRenderPremiumProfilePageForProfileEdit) {
     }
   };
 }
+
+/* ================================
+   PROFILE CLICK ROUTING
+   Top-right and bottom sidebar identity open /profile
+   Profile nav item hidden from sidebar
+   ================================ */
+
+function clipencyRouteToProfile() {
+  if (window.location.pathname !== "/profile") {
+    window.history.pushState({ page: "profile" }, "", "/profile");
+  }
+
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("active"));
+  document.querySelectorAll(".section").forEach((section) => section.classList.remove("active"));
+
+  const profileSection = document.getElementById("section-profile");
+  if (profileSection) profileSection.classList.add("active");
+
+  if (typeof renderPremiumProfilePage === "function") {
+    renderPremiumProfilePage();
+  }
+
+  document.title = "Clipency | Profile";
+}
+
+function clipencyMakeIdentityClickable() {
+  const selectors = [
+    ".sidebar-user",
+    ".user-footer",
+    ".top-profile",
+    ".header-profile",
+    ".profile-chip",
+    ".user-pill",
+    ".user-menu",
+    "[class*='user-card']"
+  ];
+
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => {
+      const text = (el.textContent || "").toLowerCase();
+
+      if (
+        text.includes("smit") ||
+        text.includes("creator") ||
+        text.includes("patil") ||
+        el.querySelector("img") ||
+        el.querySelector(".avatar") ||
+        el.querySelector("[class*='avatar']")
+      ) {
+        el.classList.add("profile-click-target");
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+
+        if (el.dataset.profileClickBound === "true") return;
+        el.dataset.profileClickBound = "true";
+
+        el.addEventListener("click", function (event) {
+          const logoutButton = event.target.closest("[data-logout], .logout, .signout, .sign-out, button");
+          if (logoutButton && !event.target.closest(".profile-click-target img")) return;
+
+          clipencyRouteToProfile();
+        });
+
+        el.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            clipencyRouteToProfile();
+          }
+        });
+      }
+    });
+  });
+}
+
+function clipencyHideProfileNavEverywhere() {
+  document.querySelectorAll('.nav-item[data-section="profile"]').forEach((el) => {
+    el.style.display = "none";
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(clipencyHideProfileNavEverywhere, 300);
+  setTimeout(clipencyMakeIdentityClickable, 700);
+  setTimeout(clipencyMakeIdentityClickable, 1600);
+});
+
+document.addEventListener("click", () => {
+  setTimeout(clipencyHideProfileNavEverywhere, 100);
+  setTimeout(clipencyMakeIdentityClickable, 250);
+});
+
+const clipencyIdentityObserver = new MutationObserver(() => {
+  window.requestAnimationFrame(() => {
+    clipencyHideProfileNavEverywhere();
+    clipencyMakeIdentityClickable();
+  });
+});
+
+if (document.body) {
+  clipencyIdentityObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
