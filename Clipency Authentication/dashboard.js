@@ -968,6 +968,11 @@ async function loadLiveCampaignsFromSupabase() {
         description: campaign.description || "",
         requirements: campaign.requirements || "",
         status: campaign.status || "active",
+        genre: campaign.genre || campaign.type || "Campaign",
+        budgetUsed: 0,
+        color: ["#6C5DD3", "#14B8A6", "#FACC15", "#EC4899", "#F97316", "#A78BFA"][index % 6],
+        platforms: ["TikTok", "Instagram", "YouTube"],
+        views: [120,200,300,420,560,720,900,1100,1300,1500,1750,2000],
         color: ["#6C5DD3", "#14B8A6", "#FACC15", "#EC4899", "#F97316", "#A78BFA"][index % 6],
         platforms: ["Instagram", "TikTok", "YouTube Shorts"],
         views: [80, 160, 240, 360, 480, 620, 760, 900, 1050, 1200, 1380, 1550]
