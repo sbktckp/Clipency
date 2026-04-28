@@ -1,3 +1,10 @@
+
+// Functional core owns creator routes now.
+// Prevent legacy dashboard rendering/toasts from fighting the new operating loop.
+if (window.CLIPENCY_FUNCTIONAL_CORE_ACTIVE) {
+  window.__CLIPENCY_LEGACY_RENDER_DISABLED = true;
+}
+
 /* ── Toast Notification System ──────────────────────── */
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');

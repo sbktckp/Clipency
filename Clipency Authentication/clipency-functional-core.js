@@ -755,9 +755,11 @@
           <div class="cx-core-card">
             <h2>Could not load this page.</h2>
             <p>${escapeHtml(error.message || "Please refresh once.")}</p>
+            <p class="cx-core-muted">Open Console if this repeats. Most likely cause: table field, RLS policy, or auth session mismatch.</p>
           </div>
         </section>
       `;
+      console.error("Clipency functional core error:", error);
     }
   }
 
