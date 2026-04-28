@@ -1,0 +1,430 @@
+/* =========================================================
+   CLIPENCY SURGICAL LAYOUT FIX
+   Restores previous feel, removes squeeze, keeps premium UI
+   ========================================================= */
+
+:root {
+  --sidebar-width: 300px;
+  --content-max: 1600px;
+  --panel-radius: 24px;
+}
+
+/* Base safety */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------
+   CREATOR / CLIPPER DASHBOARD
+--------------------------------------------------------- */
+body.cx-creator-route {
+  overflow-x: hidden;
+}
+
+/* Restore stable shell */
+body.cx-creator-route .dashboard-shell,
+body.cx-creator-route .app-shell,
+body.cx-creator-route .dashboard-layout,
+body.cx-creator-route .layout,
+body.cx-creator-route .page-shell {
+  display: grid !important;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important;
+  min-height: 100vh;
+}
+
+/* Sidebar restored */
+body.cx-creator-route .sidebar,
+body.cx-creator-route .dashboard-sidebar,
+body.cx-creator-route aside.sidebar {
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  max-width: var(--sidebar-width) !important;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+/* Top-left logo area fix */
+body.cx-creator-route .sidebar .brand,
+body.cx-creator-route .sidebar .logo-wrap,
+body.cx-creator-route .dashboard-sidebar .brand,
+body.cx-creator-route .dashboard-sidebar .logo-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 76px !important;
+  padding: 20px 24px !important;
+  overflow: visible !important;
+}
+
+body.cx-creator-route .sidebar .brand img,
+body.cx-creator-route .sidebar .logo-wrap img,
+body.cx-creator-route .dashboard-sidebar .brand img,
+body.cx-creator-route .dashboard-sidebar .logo-wrap img {
+  height: 34px !important;
+  width: auto !important;
+  max-width: 180px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Main content */
+body.cx-creator-route main,
+body.cx-creator-route .main-content,
+body.cx-creator-route .dashboard-content,
+body.cx-creator-route .page-content {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 28px 32px 36px !important;
+}
+
+/* Content inner alignment */
+body.cx-creator-route .dashboard-inner,
+body.cx-creator-route .content-inner,
+body.cx-creator-route .page-inner {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+/* Restore hero balance */
+body.cx-creator-route .dashboard-hero,
+body.cx-creator-route .welcome-card,
+body.cx-creator-route .hero-card,
+body.cx-creator-route .creator-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 420px) !important;
+  gap: 28px !important;
+  align-items: stretch !important;
+  padding: 32px !important;
+  border-radius: var(--panel-radius) !important;
+  min-height: unset !important;
+}
+
+/* Big heading reduced, not squeezed */
+body.cx-creator-route .dashboard-hero h1,
+body.cx-creator-route .welcome-card h1,
+body.cx-creator-route .hero-card h1,
+body.cx-creator-route .creator-hero h1 {
+  font-size: clamp(54px, 6vw, 88px) !important;
+  line-height: 0.94 !important;
+  letter-spacing: -0.05em !important;
+  margin-bottom: 18px !important;
+  max-width: 760px !important;
+}
+
+/* Supporting text */
+body.cx-creator-route .dashboard-hero p,
+body.cx-creator-route .welcome-card p,
+body.cx-creator-route .hero-card p,
+body.cx-creator-route .creator-hero p {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  max-width: 720px !important;
+}
+
+/* User profile card inside hero */
+body.cx-creator-route .creator-summary,
+body.cx-creator-route .profile-summary-card,
+body.cx-creator-route .hero-side-card {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* Stats grid */
+body.cx-creator-route .stats-grid,
+body.cx-creator-route .metrics-grid,
+body.cx-creator-route .dashboard-stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+
+body.cx-creator-route .stats-grid > *,
+body.cx-creator-route .metrics-grid > *,
+body.cx-creator-route .dashboard-stats > * {
+  min-width: 0 !important;
+  border-radius: 22px !important;
+  padding: 24px !important;
+}
+
+/* Recommendation area */
+body.cx-creator-route .dashboard-panels,
+body.cx-creator-route .insights-grid,
+body.cx-creator-route .recommendation-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+}
+
+body.cx-creator-route .dashboard-panels > *,
+body.cx-creator-route .insights-grid > *,
+body.cx-creator-route .recommendation-grid > * {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border-radius: 24px !important;
+}
+
+/* Prevent giant panel text */
+body.cx-creator-route .dashboard-panels h2,
+body.cx-creator-route .insights-grid h2,
+body.cx-creator-route .recommendation-grid h2 {
+  font-size: clamp(40px, 4.2vw, 72px) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.045em !important;
+}
+
+/* Quick switch smaller */
+body.cx-creator-route .cx-command-trigger,
+body.cx-creator-route .quick-switch,
+body.cx-creator-route .command-trigger {
+  transform: scale(0.88);
+  transform-origin: left bottom;
+}
+
+/* Desktop sidebar toggle hidden by default */
+.cx-sidebar-toggle {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   LANDING PAGE
+--------------------------------------------------------- */
+.landing-page,
+.home-page,
+body.cx-landing-route {
+  overflow-x: hidden !important;
+}
+
+.landing-nav,
+.navbar {
+  padding: 18px 32px !important;
+}
+
+.landing-nav .brand img,
+.navbar .brand img {
+  height: 34px !important;
+  width: auto !important;
+  max-width: 180px !important;
+  object-fit: contain !important;
+}
+
+/* Hero area */
+.hero-section,
+.home-hero {
+  padding: 80px 32px 72px !important;
+  min-height: auto !important;
+}
+
+.hero-inner,
+.home-hero-inner {
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+}
+
+.hero-copy h1,
+.home-hero-copy h1 {
+  font-size: clamp(64px, 8vw, 112px) !important;
+  line-height: 0.92 !important;
+  letter-spacing: -0.055em !important;
+  max-width: 900px !important;
+}
+
+.hero-copy p,
+.home-hero-copy p {
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+  max-width: 720px !important;
+}
+
+/* Section consistency */
+.section,
+.home-section {
+  padding: 84px 32px !important;
+}
+
+.section-inner,
+.home-section-inner {
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+}
+
+/* ---------------------------------------------------------
+   ADMIN / REVIEWER / WORKSPACE
+--------------------------------------------------------- */
+.staff-layout,
+.admin-layout,
+.review-layout,
+.workspace-layout {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) !important;
+  min-height: 100vh;
+}
+
+.staff-sidebar,
+.admin-sidebar,
+.review-sidebar,
+.workspace-sidebar {
+  min-width: 280px !important;
+  max-width: 280px !important;
+}
+
+.staff-main,
+.admin-main,
+.review-main,
+.workspace-main {
+  min-width: 0 !important;
+  padding: 28px 32px !important;
+}
+
+.staff-topbar h1,
+.admin-header h1,
+.review-header h1,
+.workspace-header h1 {
+  font-size: clamp(44px, 5vw, 72px) !important;
+  line-height: 0.96 !important;
+  letter-spacing: -0.05em !important;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+--------------------------------------------------------- */
+@media (max-width: 1100px) {
+  body.cx-creator-route .dashboard-hero,
+  body.cx-creator-route .welcome-card,
+  body.cx-creator-route .hero-card,
+  body.cx-creator-route .creator-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.cx-creator-route .stats-grid,
+  body.cx-creator-route .metrics-grid,
+  body.cx-creator-route .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.cx-creator-route .dashboard-panels,
+  body.cx-creator-route .insights-grid,
+  body.cx-creator-route .recommendation-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .staff-layout,
+  .admin-layout,
+  .review-layout,
+  .workspace-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 84vw;
+  }
+
+  .cx-sidebar-toggle {
+    display: grid !important;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 999px;
+    z-index: 9999;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(8,8,14,0.86);
+    color: white;
+    backdrop-filter: blur(16px);
+    font-size: 20px;
+  }
+
+  body.cx-creator-route .dashboard-shell,
+  body.cx-creator-route .app-shell,
+  body.cx-creator-route .dashboard-layout,
+  body.cx-creator-route .layout,
+  body.cx-creator-route .page-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.cx-creator-route .sidebar,
+  body.cx-creator-route .dashboard-sidebar,
+  body.cx-creator-route aside.sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    width: min(84vw, 320px) !important;
+    min-width: 0 !important;
+    max-width: min(84vw, 320px) !important;
+    height: 100vh !important;
+    transform: translateX(-104%) !important;
+    transition: transform 0.24s ease !important;
+    z-index: 9998 !important;
+    pointer-events: none;
+  }
+
+  body.cx-mobile-sidebar-open .sidebar,
+  body.cx-mobile-sidebar-open .dashboard-sidebar,
+  body.cx-mobile-sidebar-open aside.sidebar {
+    transform: translateX(0) !important;
+    pointer-events: auto;
+  }
+
+  body.cx-mobile-sidebar-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 9997;
+  }
+
+  body.cx-creator-route main,
+  body.cx-creator-route .main-content,
+  body.cx-creator-route .dashboard-content,
+  body.cx-creator-route .page-content {
+    padding: 76px 16px 28px !important;
+  }
+
+  body.cx-creator-route .dashboard-hero h1,
+  body.cx-creator-route .welcome-card h1,
+  body.cx-creator-route .hero-card h1,
+  body.cx-creator-route .creator-hero h1 {
+    font-size: clamp(42px, 13vw, 62px) !important;
+  }
+
+  body.cx-creator-route .stats-grid,
+  body.cx-creator-route .metrics-grid,
+  body.cx-creator-route .dashboard-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-section,
+  .home-hero,
+  .section,
+  .home-section,
+  .staff-main,
+  .admin-main,
+  .review-main,
+  .workspace-main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .hero-copy h1,
+  .home-hero-copy h1 {
+    font-size: clamp(44px, 13vw, 68px) !important;
+  }
+}
