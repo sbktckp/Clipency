@@ -1,5 +1,5 @@
 /* ── Data ── */
-const campaigns = [
+let campaigns = [
   { id:1, title:"WoT Heat", type:"Clipping", rpm:1250, budget:4785, budgetUsed:0, creators:13, tags:["Clipping"], color:"#6C5DD3", platforms:["TikTok","YouTube"], genre:"Gaming", views:[120,200,180,350,420,500,610,720,800,950,1100,1250] },
   { id:2, title:"We Do What We Want", type:"Edits", rpm:1000, budget:5000, budgetUsed:0, creators:20, tags:["Music","Edits"], color:"#14B8A6", platforms:["TikTok","Instagram"], genre:"Music", views:[80,160,240,300,450,520,680,900,1100,1300,1500,1800] },
   { id:3, title:"La Isla Bonita", type:"Music", rpm:150, budget:1000, budgetUsed:2, creators:61, tags:["Music"], color:"#FACC15", platforms:["Instagram","YouTube"], genre:"Music", views:[50,90,130,200,280,350,420,500,560,620,700,800] },
@@ -950,7 +950,7 @@ async function loadLiveCampaignsFromSupabase() {
       return;
     }
 
-    window.campaigns = data.map((campaign) => ({
+    campaigns = data.map((campaign) => ({
       id: campaign.id,
       title: campaign.title,
       category: campaign.genre || campaign.type || "Campaign",
@@ -966,16 +966,18 @@ async function loadLiveCampaignsFromSupabase() {
       status: campaign.status || "active"
     }));
 
+    window.campaigns = campaigns;
+
     if (typeof renderCampaigns === "function") {
-      renderCampaigns(window.campaigns);
+      renderCampaigns();
     }
 
     const countEl = document.querySelector(".campaign-count, #campaign-count");
     if (countEl) {
-      countEl.textContent = `${window.campaigns.length} campaigns`;
+      countEl.textContent = `${campaigns.length} campaigns`;
     }
 
-    console.log("Live campaigns loaded from Supabase:", window.campaigns.length);
+    console.log("Live campaigns loaded from Supabase:", campaigns.length);
   } catch (err) {
     console.error("Live campaigns load failed:", err);
   }
