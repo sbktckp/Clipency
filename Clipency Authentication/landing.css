@@ -1269,3 +1269,135 @@ textarea:focus {
     width: 140px !important;
   }
 }
+
+/* =========================================================
+   REAL VISIBLE CLIPENCY LOGO — INLINE, NO ASSET DEPENDENCY
+   ========================================================= */
+
+.brand-lockup,
+.footer-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+}
+
+.brand-logo-img,
+.hero-brand-seal,
+.hero-brand-seal img {
+  display: none !important;
+}
+
+.clipency-real-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,0.95))
+    drop-shadow(0 12px 28px rgba(167,139,250,0.22)) !important;
+}
+
+.clipency-scissors {
+  width: 44px !important;
+  height: 52px !important;
+  flex: 0 0 auto !important;
+  display: block !important;
+}
+
+.clipency-word {
+  display: inline-block !important;
+  color: #ffffff !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -1.6px !important;
+  text-transform: uppercase !important;
+  font-family: Inter, Montserrat, Arial, Helvetica, sans-serif !important;
+}
+
+.brand-lockup > span:not(.clipency-real-logo) {
+  display: inline-flex !important;
+}
+
+.hero-brand-line {
+  width: auto !important;
+  margin-bottom: 34px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.clipency-real-logo-hero {
+  gap: 12px !important;
+}
+
+.clipency-real-logo-hero .clipency-scissors {
+  width: 76px !important;
+  height: 88px !important;
+}
+
+.clipency-real-logo-hero .clipency-word {
+  font-size: 40px !important;
+  letter-spacing: -2.7px !important;
+}
+
+.footer-brand .clipency-scissors {
+  width: 48px !important;
+  height: 56px !important;
+}
+
+.footer-brand .clipency-word {
+  font-size: 24px !important;
+}
+
+@media (max-width: 900px) {
+  .clipency-scissors {
+    width: 38px !important;
+    height: 46px !important;
+  }
+
+  .clipency-word {
+    font-size: 19px !important;
+    letter-spacing: -1.3px !important;
+  }
+
+  .clipency-real-logo-hero .clipency-scissors {
+    width: 60px !important;
+    height: 70px !important;
+  }
+
+  .clipency-real-logo-hero .clipency-word {
+    font-size: 32px !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .clipency-scissors {
+    width: 34px !important;
+    height: 42px !important;
+  }
+
+  .clipency-word {
+    font-size: 17px !important;
+  }
+
+  .hero-brand-line {
+    margin-bottom: 26px !important;
+  }
+
+  .clipency-real-logo-hero .clipency-scissors {
+    width: 48px !important;
+    height: 58px !important;
+  }
+
+  .clipency-real-logo-hero .clipency-word {
+    font-size: 26px !important;
+    letter-spacing: -1.9px !important;
+  }
+}
