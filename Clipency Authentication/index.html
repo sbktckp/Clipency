@@ -9,14 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script defer>
-    window.addEventListener('DOMContentLoaded', () => {});
-    const SUPABASE_URL = 'https://spwtkdgpgeutrhwcjrpy.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_IInNrDBLK3dINHSyWaUDzg_UWF63j0B';
-    const { createClient } = supabase;
-    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
+
 </head>
 <body>
   <div class="page">
@@ -156,6 +149,13 @@
     </div>
   </div>
 
-  <script src="app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://spwtkdgpgeutrhwcjrpy.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_IInNrDBLK3dINHSyWaUDzg_UWF63j0B';
+    const { createClient } = supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+  <script src="app.js"></script>
 </body>
 </html>

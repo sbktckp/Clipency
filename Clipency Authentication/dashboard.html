@@ -7,13 +7,7 @@
   <meta name="description" content="Clipency creator dashboard — manage campaigns, track stats, and handle payouts.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = 'https://spwtkdgpgeutrhwcjrpy.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_IInNrDBLK3dINHSyWaUDzg_UWF63j0B';
-    const { createClient } = supabase;
-    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
+
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
@@ -205,6 +199,13 @@
     <div class="modal-box" id="modal-box"></div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://spwtkdgpgeutrhwcjrpy.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_IInNrDBLK3dINHSyWaUDzg_UWF63j0B';
+    const { createClient } = supabase;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
   <script src="dashboard.js"></script>
 </body>
 </html>
