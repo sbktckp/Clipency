@@ -141,7 +141,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   setButtonLoading(btn, 'Creating account…');
 
   try {
-    const { data, error } = await _supabase.auth.signUp({
+    const { data, error } = await window.supabaseClient.auth.signUp({
       email,
       password,
       options: {
@@ -199,7 +199,7 @@ document.getElementById('signin-form').addEventListener('submit', async (e) => {
   setButtonLoading(btn, 'Signing in…');
 
   try {
-    const { data, error } = await _supabase.auth.signInWithPassword({
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -225,7 +225,7 @@ async function signInWithGoogle() {
     // Build the redirect URL — window.location.origin is "null" for file:// URLs,
     // so we construct the full current URL without hash/search fragments.
     const currentUrl = window.location.href.split('#')[0].split('?')[0];
-    const { error } = await _supabase.auth.signInWithOAuth({
+    const { error } = await window.supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: currentUrl,
@@ -290,7 +290,7 @@ document.getElementById('forgot-form')?.addEventListener('submit', async (e) => 
 
   try {
     const resetRedirectUrl = window.location.href.split('#')[0].split('?')[0];
-    const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
       redirectTo: resetRedirectUrl,
     });
 
@@ -312,7 +312,7 @@ document.getElementById('btn-signout')?.addEventListener('click', async () => {
   setButtonLoading(btn, 'Signing out…');
 
   try {
-    const { error } = await _supabase.auth.signOut();
+    const { error } = await window.supabaseClient.auth.signOut();
     if (error) throw error;
     showToast('You have been signed out.', 'info');
     showAuthView();
@@ -327,7 +327,7 @@ document.getElementById('btn-signout')?.addEventListener('click', async () => {
 // Track whether the initial session check is done to avoid redirect on page-load restore
 let _initialCheckDone = false;
 
-_supabase.auth.onAuthStateChange((event, session) => {
+window.supabaseClient.auth.onAuthStateChange((event, session) => {
   // Only redirect on a real user sign-in action, not the initial session restore
   if (event === 'SIGNED_IN' && session?.user && _initialCheckDone) {
     window.location.href = 'dashboard.html';
@@ -345,7 +345,7 @@ _supabase.auth.onAuthStateChange((event, session) => {
 
 // Check for existing session on page load — go straight to dashboard
 (async () => {
-  const { data: { session } } = await _supabase.auth.getSession();
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
   _initialCheckDone = true;
   if (session?.user) {
     window.location.href = 'dashboard.html';

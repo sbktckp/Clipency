@@ -128,7 +128,7 @@ let _authUser = null;
 (async () => {
   // Small delay so Supabase SDK can restore session from localStorage
   await new Promise(r => setTimeout(r, 300));
-  const { data: { session } } = await _supabase.auth.getSession();
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
   if (!session) {
     window.location.href = "index.html";
     return;
@@ -155,12 +155,12 @@ let _authUser = null;
   renderPayments();
 })();
 
-_supabase.auth.onAuthStateChange((event) => {
+window.supabaseClient.auth.onAuthStateChange((event) => {
   if (event === "SIGNED_OUT") window.location.href = "index.html";
 });
 
 document.getElementById("btn-signout").addEventListener("click", async () => {
-  await _supabase.auth.signOut();
+  await window.supabaseClient.auth.signOut();
 });
 
 /* ── Nav ── */
@@ -762,7 +762,7 @@ function buildProfile(user) {
     const parts = newName.split(" ");
     const firstName = parts[0] || newName;
     const lastName = parts.slice(1).join(" ") || "";
-    const { error } = await _supabase.auth.updateUser({
+    const { error } = await window.supabaseClient.auth.updateUser({
       data: { first_name: firstName, last_name: lastName }
     });
     if (!error) {
@@ -883,7 +883,7 @@ function renderModal(campaign) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting…';
 
-      const { error } = await _supabase.from('submissions').insert({
+      const { error } = await window.supabaseClient.from('submissions').insert({
         user_id:        _authUser.id,
         campaign_id:    campaign.id,
         campaign_title: campaign.title,

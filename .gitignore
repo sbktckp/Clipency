@@ -1,1 +1,11 @@
 .DS_Store
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Backups
+*.backup
+*.backup-*
+*.before-*
