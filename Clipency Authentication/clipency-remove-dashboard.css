@@ -9,3 +9,19 @@ aside a[href="/dashboard"],
 .dashboard-sidebar [data-nav="dashboard"] {
   display: none !important;
 }
+
+/* Remove orphan ACCOUNT label from clipper sidebar */
+.sidebar-section-label,
+.nav-section-label,
+.sidebar-label,
+.dashboard-sidebar-label {
+  display: none;
+}
+
+/* More specific fallback: hide labels that only act as headings */
+.sidebar span,
+.dashboard-sidebar span,
+aside span {
+  /* this stays harmless unless JS marks exact account label */
+}
+

@@ -55,3 +55,26 @@
     subtree: true
   });
 })();
+
+(function () {
+  function removeOrphanAccountLabel() {
+    document.querySelectorAll(".sidebar *, .dashboard-sidebar *, aside *").forEach((el) => {
+      const text = (el.textContent || "").trim().toLowerCase();
+
+      if (text === "account") {
+        el.remove();
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", removeOrphanAccountLabel);
+  } else {
+    removeOrphanAccountLabel();
+  }
+
+  new MutationObserver(removeOrphanAccountLabel).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+})();
