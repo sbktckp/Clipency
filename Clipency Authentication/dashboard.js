@@ -2232,3 +2232,55 @@ if (document.body) {
     subtree: true
   });
 }
+
+/* ================================
+   LOGO / BRAND CLICK TO HOME
+   ================================ */
+
+function clipencyBindLogoHome() {
+  const selectors = [
+    ".logo",
+    ".brand",
+    ".brand-logo",
+    ".sidebar-logo",
+    ".app-logo",
+    "[class*='logo']",
+    "[class*='brand']"
+  ];
+
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => {
+      const text = (el.textContent || "").trim().toLowerCase();
+      const hasLogo = el.querySelector("img, svg") || el.tagName === "IMG";
+
+      if (!hasLogo && !text.includes("clipency")) return;
+      if (el.dataset.logoHomeBound === "true") return;
+
+      el.dataset.logoHomeBound = "true";
+      el.setAttribute("role", "link");
+      el.setAttribute("tabindex", "0");
+      el.title = "Go to Clipency home";
+
+      el.addEventListener("click", function (event) {
+        event.preventDefault();
+        window.location.href = "https://clipency.in";
+      });
+
+      el.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          window.location.href = "https://clipency.in";
+        }
+      });
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(clipencyBindLogoHome, 300);
+  setTimeout(clipencyBindLogoHome, 1200);
+});
+
+document.addEventListener("click", () => {
+  setTimeout(clipencyBindLogoHome, 150);
+});

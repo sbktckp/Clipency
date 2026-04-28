@@ -2587,3 +2587,14 @@ aside {
 .user-pill:active {
   transform: scale(0.985);
 }
+
+/* Logo / brand home click */
+.logo,
+.brand,
+.brand-logo,
+.sidebar-logo,
+.app-logo,
+[class*="logo"],
+[class*="brand"] {
+  cursor: pointer;
+}
