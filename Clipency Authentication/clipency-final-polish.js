@@ -1,9 +1,11 @@
 /* =========================================================
-   CLIPENCY FINAL INTEGRATION LAYER
-   Route state, identity behavior, campaign cleanup, stability
+   CLIPENCY LIGHTWEIGHT FINAL POLISH
+   Performance-safe version
    ========================================================= */
 
 (function () {
+  let polishTimer = null;
+
   const routeMap = {
     "/dashboard": "dashboard",
     "/campaigns": "campaigns",
@@ -16,11 +18,7 @@
   function currentRoute() {
     const path = window.location.pathname.toLowerCase();
     const queryPage = new URLSearchParams(window.location.search).get("page");
-
-    if (routeMap[path]) return routeMap[path];
-    if (queryPage) return queryPage;
-
-    return "dashboard";
+    return routeMap[path] || queryPage || "dashboard";
   }
 
   function setRouteClass() {
@@ -36,125 +34,27 @@
     );
 
     document.body.classList.add(`route-${route}`);
-
-    return route;
   }
 
-  function isInsideSidebar(el) {
-    return Boolean(el.closest(".sidebar, aside, [class*='sidebar']"));
-  }
-
-  function markTopIdentity() {
-    const selectors = [
-      ".top-profile",
-      ".header-profile",
-      ".profile-chip",
-      ".user-pill",
-      ".user-menu",
-      "[class*='top-profile']",
-      "[class*='header-profile']",
-      "[class*='profile-chip']"
-    ];
-
-    selectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((el) => {
-        if (!isInsideSidebar(el)) {
-          el.classList.add("clipency-top-identity");
-        }
-      });
-    });
-
-    document.querySelectorAll("body *").forEach((el) => {
-      if (isInsideSidebar(el)) return;
-      if (el.classList.contains("campaign-card")) return;
-      if (el.closest(".campaign-card")) return;
-
-      const text = (el.textContent || "").trim().toLowerCase();
-      const hasAvatar = el.querySelector("img, .avatar, [class*='avatar']");
-
-      if (
-        hasAvatar &&
-        (
-          text.includes("smit bharat patil") ||
-          text.includes("patilsmit") ||
-          text.includes("creator")
-        )
-      ) {
-        el.classList.add("clipency-top-identity");
-      }
-    });
-  }
-
-  function routeToProfile() {
-    if (window.location.pathname !== "/profile") {
-      window.history.pushState({ page: "profile" }, "", "/profile");
-    }
-
-    document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("active"));
-    document.querySelectorAll(".section").forEach((section) => section.classList.remove("active"));
-
-    const profileSection = document.getElementById("section-profile");
-    if (profileSection) profileSection.classList.add("active");
-
-    if (typeof renderPremiumProfilePage === "function") {
-      renderPremiumProfilePage();
-    }
-
-    setRouteClass();
-    document.title = "Clipency | Profile";
-  }
-
-  function makeIdentityClickable() {
-    const selectors = [
-      ".sidebar-user",
-      ".user-footer",
-      ".top-profile",
-      ".header-profile",
-      ".profile-chip",
-      ".user-pill",
-      ".user-menu",
-      ".clipency-top-identity",
-      "[class*='footer-user']"
-    ];
-
-    selectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((el) => {
-        if (el.dataset.profileClickReady === "true") return;
-
-        const text = (el.textContent || "").toLowerCase();
-        const hasAvatar = el.querySelector("img, .avatar, [class*='avatar']");
-
-        if (
-          hasAvatar ||
-          text.includes("creator") ||
-          text.includes("smit") ||
-          text.includes("patil")
-        ) {
-          el.dataset.profileClickReady = "true";
-          el.style.cursor = "pointer";
-          el.setAttribute("role", "button");
-          el.setAttribute("tabindex", "0");
-
-          el.addEventListener("click", (event) => {
-            const logout = event.target.closest(".logout, .signout, .sign-out, [data-logout]");
-            if (logout) return;
-            routeToProfile();
-          });
-
-          el.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              routeToProfile();
-            }
-          });
-        }
-      });
-    });
-  }
-
-  function hideSidebarProfileNav() {
+  function hideProfileNav() {
     document.querySelectorAll('.nav-item[data-section="profile"]').forEach((el) => {
       el.style.display = "none";
+    });
+  }
+
+  function syncNav() {
+    const route = currentRoute();
+
+    const navSection =
+      route === "dashboard" ? "dashboard" :
+      route === "campaigns" ? "campaigns" :
+      route === "stats" ? "stats" :
+      route === "payout" || route === "payouts" ? "payout" :
+      route === "payment" || route === "wallet" ? "payment" :
+      route;
+
+    document.querySelectorAll(".nav-item").forEach((item) => {
+      item.classList.toggle("active", item.dataset.section === navSection);
     });
   }
 
@@ -179,68 +79,96 @@
     });
   }
 
-  function cleanHumanText() {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const nodes = [];
+  function routeToProfile() {
+    if (window.location.pathname !== "/profile") {
+      window.history.pushState({ page: "profile" }, "", "/profile");
+    }
 
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("active"));
+    document.querySelectorAll(".section").forEach((section) => section.classList.remove("active"));
 
-    nodes.forEach((node) => {
-      if (!node.nodeValue) return;
+    const profileSection = document.getElementById("section-profile");
+    if (profileSection) profileSection.classList.add("active");
 
-      node.nodeValue = node.nodeValue
-        .replace(/\s*-\s*-\s*/g, " — ")
-        .replace(/Campaign\s*·\s*undefined/g, "Campaign")
-        .replace(/\s+·\s+undefined/g, "")
-        .replace(/\bundefined\b/g, "")
-        .replace(/\s{2,}/g, " ");
-    });
+    if (typeof renderPremiumProfilePage === "function") {
+      renderPremiumProfilePage();
+    }
+
+    setRouteClass();
+    syncNav();
+    document.title = "Clipency | Profile";
   }
 
-  function syncNavFromRoute() {
-    const route = currentRoute();
+  function makeIdentityClickable() {
+    const selectors = [
+      ".sidebar-user",
+      ".user-footer",
+      ".top-profile",
+      ".header-profile",
+      ".profile-chip",
+      ".user-pill",
+      ".user-menu",
+      "[class*='footer-user']"
+    ];
 
-    const navSection =
-      route === "dashboard" ? "dashboard" :
-      route === "campaigns" ? "campaigns" :
-      route === "stats" ? "stats" :
-      route === "payout" || route === "payouts" ? "payout" :
-      route === "payment" || route === "wallet" ? "payment" :
-      route;
+    selectors.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((el) => {
+        if (el.dataset.profileClickReady === "true") return;
 
-    document.querySelectorAll(".nav-item").forEach((item) => {
-      item.classList.toggle("active", item.dataset.section === navSection);
+        const text = (el.textContent || "").toLowerCase();
+        const hasAvatar = el.querySelector("img, .avatar, [class*='avatar']");
+
+        if (
+          hasAvatar ||
+          text.includes("creator") ||
+          text.includes("smit") ||
+          text.includes("patil")
+        ) {
+          el.dataset.profileClickReady = "true";
+          el.style.cursor = "pointer";
+
+          el.addEventListener("click", (event) => {
+            const logout = event.target.closest(".logout, .signout, .sign-out, [data-logout]");
+            if (logout) return;
+            routeToProfile();
+          });
+        }
+      });
     });
   }
 
   function polish() {
     setRouteClass();
-    markTopIdentity();
+    hideProfileNav();
+    syncNav();
     makeIdentityClickable();
-    hideSidebarProfileNav();
-    dedupeCampaignTags();
-    cleanHumanText();
-    syncNavFromRoute();
+
+    if (currentRoute() === "campaigns") {
+      dedupeCampaignTags();
+    }
+  }
+
+  function schedulePolish() {
+    clearTimeout(polishTimer);
+    polishTimer = setTimeout(polish, 150);
   }
 
   function boot() {
     polish();
 
-    const observer = new MutationObserver(() => {
-      window.requestAnimationFrame(polish);
-    });
+    document.addEventListener("click", schedulePolish);
+    window.addEventListener("popstate", schedulePolish);
 
+    // Lightweight observer only for added/removed nodes.
+    // No characterData scanning, no full text walking.
+    const observer = new MutationObserver(schedulePolish);
     observer.observe(document.body, {
       childList: true,
-      subtree: true,
-      characterData: true
+      subtree: true
     });
 
-    window.addEventListener("popstate", polish);
-
-    document.addEventListener("click", () => {
-      setTimeout(polish, 120);
-    });
+    // Stop observer after initial dynamic render is complete to keep app fast.
+    setTimeout(() => observer.disconnect(), 5000);
   }
 
   if (document.readyState === "loading") {
