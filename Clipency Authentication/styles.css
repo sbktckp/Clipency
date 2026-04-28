@@ -763,3 +763,8 @@
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Remove mistakenly injected standalone auth logo */
+body > .clipency-auth-logo {
+  display: none !important;
+}
