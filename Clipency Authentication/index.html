@@ -1,28 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<script>
-  (function () {
-    var keys = ["clipency.selectedCurrency", "clipency.currency", "selectedCurrency", "currency"];
-    var selected = "USD";
-
-    for (var i = 0; i < keys.length; i++) {
-      var value = localStorage.getItem(keys[i]);
-
-      if (["USD","INR","EUR","GBP","JPY","AUD","CAD"].indexOf(String(value || "").toUpperCase()) !== -1) {
-        selected = String(value).toUpperCase();
-        break;
-      }
-    }
-
-    if (selected !== "USD") {
-      document.documentElement.classList.add("cx-currency-booting");
-    }
-  })();
-</script>
-
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#080610" />
   <meta name="description" content="Clipency is a performance-first creator distribution platform helping brands turn attention into measurable campaign growth." />
@@ -32,7 +11,6 @@
 <link rel="stylesheet" href="/experience.css" />
 <link rel="canonical" href="https://clipency.in/" />
 <link rel="stylesheet" href="/clipency-cursor.css" />
-  <link rel="stylesheet" href="/clipency-live-currency.css" />
 </head>
 
 <body>
@@ -704,6 +682,6 @@
   <script src="landing.js"></script>
 <script src="/experience.js"></script>
 <script src="/clipency-cursor.js"></script>
-  <script src="/clipency-live-currency.js"></script>
+<script src="/clipency-premium-titles.js"></script>
 </body>
 </html>

@@ -1,33 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<script>
-  (function () {
-    var keys = ["clipency.selectedCurrency", "clipency.currency", "selectedCurrency", "currency"];
-    var selected = "USD";
-
-    for (var i = 0; i < keys.length; i++) {
-      var value = localStorage.getItem(keys[i]);
-
-      if (["USD","INR","EUR","GBP","JPY","AUD","CAD"].indexOf(String(value || "").toUpperCase()) !== -1) {
-        selected = String(value).toUpperCase();
-        break;
-      }
-    }
-
-    if (selected !== "USD") {
-      document.documentElement.classList.add("cx-currency-booting");
-    }
-  })();
-</script>
-
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clipency | Review Clips</title>
   <link rel="stylesheet" href="/staff.css" />
 <link rel="stylesheet" href="/clipency-cursor.css" />
-  <link rel="stylesheet" href="/clipency-live-currency.css" />
 </head>
 <body>
   <div class="staff-shell">
@@ -94,6 +72,6 @@
   <script src="/staff-common.js"></script>
   <script src="/review.js"></script>
 <script src="/clipency-cursor.js"></script>
-  <script src="/clipency-live-currency.js"></script>
+<script src="/clipency-premium-titles.js"></script>
 </body>
 </html>

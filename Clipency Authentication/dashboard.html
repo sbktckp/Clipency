@@ -29,29 +29,6 @@
     document.title = titles[window.location.pathname] || "Clipency";
   })();
 </script>
-
-
-<script>
-  (function () {
-    var keys = ["clipency.selectedCurrency", "clipency.currency", "selectedCurrency", "currency"];
-    var selected = "USD";
-
-    for (var i = 0; i < keys.length; i++) {
-      var value = localStorage.getItem(keys[i]);
-
-      if (["USD","INR","EUR","GBP","JPY","AUD","CAD"].indexOf(String(value || "").toUpperCase()) !== -1) {
-        selected = String(value).toUpperCase();
-        break;
-      }
-    }
-
-    if (selected !== "USD") {
-      document.documentElement.classList.add("cx-currency-booting");
-    }
-  })();
-</script>
-
-
 <script>
   (function () {
     var protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
@@ -128,7 +105,6 @@
   <link rel="stylesheet" href="/clipency-remove-dashboard.css" />
   <link rel="stylesheet" href="/clipency-force-profile-button.css" />
   <link rel="stylesheet" href="/clipency-profile-final.css" />
-  <link rel="stylesheet" href="/clipency-live-currency.css" />
 </head>
 <body>
   <!-- Loading overlay -->
@@ -348,7 +324,6 @@
   <script src="/clipency-force-profile-button.js"></script>
   <script src="/clipency-smooth-boot.js"></script>
   <script src="/clipency-profile-final.js"></script>
-  <script src="/clipency-live-currency.js"></script>
-  <script src="/clipency-premium-titles.js"></script>
+<script src="/clipency-premium-titles.js"></script>
 </body>
 </html>
