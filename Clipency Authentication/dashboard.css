@@ -2627,3 +2627,11 @@ aside {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* Remove mistakenly injected official-logo image from dashboard.
+   Keep the original dashboard/sidebar Clipency logo untouched. */
+.clipency-dashboard-logo,
+.dashboard-extra-logo,
+body > .clipency-brand-logo {
+  display: none !important;
+}
