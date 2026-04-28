@@ -1418,7 +1418,7 @@ async function renderPremiumProfilePage() {
 
           <div class="premium-profile-badges">
             <span class="premium-pill success">✓ Account Verified</span>
-            <span class="premium-pill">${role.charAt(0).toUpperCase() + role.slice(1)}</span>
+            <span class="premium-pill">${role === "admin" ? "Creator" : role.charAt(0).toUpperCase() + role.slice(1)}</span>
             <span class="premium-pill">${country}</span>
           </div>
         </div>
@@ -1521,3 +1521,102 @@ window.addEventListener("popstate", () => {
   setTimeout(clipencyUpdateVisibleIdentity, 300);
   setTimeout(renderPremiumProfilePage, 500);
 });
+
+/* ================================
+   USERNAME EDIT: ONCE PER 30 DAYS
+   ================================ */
+
+async function clipencyUpdateUsername() {
+  const input = document.getElementById("clipency-username-input");
+  const message = document.getElementById("clipency-username-message");
+  const button = document.getElementById("clipency-username-save");
+
+  if (!input || !message || !button) return;
+
+  const username = input.value.trim().toLowerCase();
+
+  message.className = "username-edit-message";
+  message.textContent = "Checking availability…";
+  button.disabled = true;
+  button.style.opacity = "0.6";
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc("update_my_username", {
+      new_username: username
+    });
+
+    if (error) throw error;
+
+    if (!data?.success) {
+      message.className = "username-edit-message error";
+      message.textContent = data?.message || "Username update failed.";
+      return;
+    }
+
+    message.className = "username-edit-message success";
+    message.textContent = data.message || "Username updated successfully.";
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 900);
+  } catch (err) {
+    message.className = "username-edit-message error";
+    message.textContent = err.message || "Something went wrong.";
+  } finally {
+    button.disabled = false;
+    button.style.opacity = "1";
+  }
+}
+
+function clipencyInjectUsernameEditor(profile) {
+  const infoList = document.querySelector(".profile-info-list");
+  if (!infoList || document.getElementById("clipency-username-input")) return;
+
+  const currentUsername = profile?.username || "";
+
+  const card = document.createElement("div");
+  card.className = "username-edit-card";
+  card.innerHTML = `
+    <strong>Username</strong>
+    <div class="username-edit-row">
+      <input 
+        id="clipency-username-input" 
+        value="${currentUsername}" 
+        placeholder="choose_username"
+        maxlength="24"
+      />
+      <button id="clipency-username-save">Save</button>
+    </div>
+    <div class="username-edit-note">
+      Usernames are unique and can be changed only once every 30 days. Use lowercase letters, numbers and underscores only.
+    </div>
+    <div id="clipency-username-message" class="username-edit-message"></div>
+  `;
+
+  infoList.appendChild(card);
+
+  document
+    .getElementById("clipency-username-save")
+    ?.addEventListener("click", clipencyUpdateUsername);
+}
+
+const oldRenderPremiumProfilePageForUsername = typeof renderPremiumProfilePage === "function"
+  ? renderPremiumProfilePage
+  : null;
+
+if (oldRenderPremiumProfilePageForUsername) {
+  renderPremiumProfilePage = async function() {
+    await oldRenderPremiumProfilePageForUsername();
+
+    const { profile } = await clipencyGetProfile();
+
+    clipencyInjectUsernameEditor(profile);
+
+    document.querySelectorAll(".premium-pill").forEach((pill) => {
+      const text = (pill.textContent || "").trim().toLowerCase();
+      if (text === "admin") {
+        pill.textContent = "Creator";
+      }
+    });
+  };
+}
