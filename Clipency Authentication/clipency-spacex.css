@@ -1,0 +1,484 @@
+/* =========================================================
+   CLIPENCY SPACEX-LEVEL OPTIMISATION
+   Dark, precise, lightweight, responsive, no oversized panels.
+   ========================================================= */
+
+:root {
+  --sx-bg: #050509;
+  --sx-bg-soft: #080811;
+  --sx-panel: rgba(255, 255, 255, 0.045);
+  --sx-panel-strong: rgba(255, 255, 255, 0.07);
+  --sx-border: rgba(255, 255, 255, 0.10);
+  --sx-border-strong: rgba(255, 255, 255, 0.18);
+  --sx-text: rgba(255, 255, 255, 0.96);
+  --sx-muted: rgba(255, 255, 255, 0.58);
+  --sx-faint: rgba(255, 255, 255, 0.34);
+  --sx-purple: #9b7cff;
+  --sx-green: #20d47b;
+  --sx-radius: 22px;
+  --sx-sidebar-width: 280px;
+}
+
+/* Global hard fixes */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  background: var(--sx-bg) !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/* Remove the overly heavy operating-system feel */
+.cx-command-trigger {
+  transform: scale(0.86) !important;
+  opacity: 0.72 !important;
+}
+
+.cx-command-trigger:hover {
+  opacity: 1 !important;
+}
+
+/* =========================================================
+   CREATOR / CLIPPER DASHBOARD FIXES
+   ========================================================= */
+
+body.cx-creator-route {
+  background:
+    radial-gradient(circle at 70% -20%, rgba(155,124,255,0.12), transparent 34%),
+    linear-gradient(180deg, #06060c, #030306) !important;
+}
+
+/* Generic main/content selectors to catch current dashboard structure */
+body.cx-creator-route main,
+body.cx-creator-route .main,
+body.cx-creator-route .main-content,
+body.cx-creator-route .dashboard-main,
+body.cx-creator-route .dashboard-content,
+body.cx-creator-route .content,
+body.cx-creator-route .page-content,
+body.cx-creator-route #app {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* If dashboard uses sidebar + content */
+body.cx-creator-route .sidebar,
+body.cx-creator-route .dashboard-sidebar,
+body.cx-creator-route aside:not(.finance-launcher-side):not(.staff-sidebar) {
+  width: var(--sx-sidebar-width) !important;
+  min-width: var(--sx-sidebar-width) !important;
+  max-width: var(--sx-sidebar-width) !important;
+}
+
+/* Reduce huge content scale */
+body.cx-creator-route h1 {
+  font-size: clamp(34px, 4.4vw, 64px) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.055em !important;
+}
+
+body.cx-creator-route h2 {
+  font-size: clamp(26px, 3vw, 42px) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.cx-creator-route h3 {
+  font-size: clamp(18px, 1.6vw, 24px) !important;
+}
+
+body.cx-creator-route p {
+  font-size: clamp(14px, 1.2vw, 16px) !important;
+  line-height: 1.55 !important;
+}
+
+/* Dashboard shell width */
+body.cx-creator-route .dashboard-page,
+body.cx-creator-route .dashboard-shell,
+body.cx-creator-route .dashboard-content,
+body.cx-creator-route .main-content,
+body.cx-creator-route .page-content {
+  padding: clamp(18px, 3vw, 42px) !important;
+}
+
+/* Fix massive hero/profile panel */
+body.cx-creator-route .hero,
+body.cx-creator-route .dashboard-hero,
+body.cx-creator-route .profile-hero,
+body.cx-creator-route .welcome-card,
+body.cx-creator-route .command-card,
+body.cx-creator-route .creator-intelligence,
+body.cx-creator-route [class*="hero"],
+body.cx-creator-route [class*="welcome"] {
+  max-width: 1120px !important;
+  min-height: auto !important;
+  padding: clamp(22px, 3vw, 38px) !important;
+  border-radius: var(--sx-radius) !important;
+}
+
+/* Fix huge recommendation cards */
+body.cx-creator-route [class*="recommended"],
+body.cx-creator-route [class*="recommend"],
+body.cx-creator-route [class*="best"],
+body.cx-creator-route .recommendation-card,
+body.cx-creator-route .insight-card,
+body.cx-creator-route .dashboard-card {
+  max-width: 100% !important;
+  min-height: auto !important;
+  border-radius: var(--sx-radius) !important;
+}
+
+/* Force grids to behave */
+body.cx-creator-route .stats-grid,
+body.cx-creator-route .metrics-grid,
+body.cx-creator-route .dashboard-grid,
+body.cx-creator-route .campaign-grid,
+body.cx-creator-route .cards-grid,
+body.cx-creator-route [class*="grid"] {
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)) !important;
+  gap: clamp(12px, 1.6vw, 20px) !important;
+}
+
+/* Cards should not overflow */
+body.cx-creator-route .card,
+body.cx-creator-route .stat-card,
+body.cx-creator-route .metric-card,
+body.cx-creator-route .campaign-card,
+body.cx-creator-route .profile-card,
+body.cx-creator-route .wallet-card,
+body.cx-creator-route .payout-card,
+body.cx-creator-route [class*="card"] {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--sx-radius) !important;
+}
+
+/* Fix huge stat cards */
+body.cx-creator-route .stat-card,
+body.cx-creator-route .metric-card,
+body.cx-creator-route [class*="stat"],
+body.cx-creator-route [class*="metric"] {
+  min-height: 130px !important;
+  padding: clamp(18px, 2vw, 24px) !important;
+}
+
+body.cx-creator-route .stat-card strong,
+body.cx-creator-route .metric-card strong,
+body.cx-creator-route [class*="stat"] strong,
+body.cx-creator-route [class*="metric"] strong {
+  font-size: clamp(30px, 3.4vw, 48px) !important;
+  line-height: 1 !important;
+}
+
+/* Prevent text from exploding */
+body.cx-creator-route .dashboard-card h2,
+body.cx-creator-route .recommendation-card h2,
+body.cx-creator-route [class*="recommended"] h2,
+body.cx-creator-route [class*="recommend"] h2 {
+  font-size: clamp(32px, 4.2vw, 66px) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.06em !important;
+}
+
+/* SpaceX style buttons */
+body.cx-creator-route button,
+body.cx-creator-route .btn,
+body.cx-creator-route a.button {
+  border-radius: 999px !important;
+  min-height: 42px !important;
+}
+
+/* Sidebar collapse */
+.cx-sidebar-toggle {
+  position: fixed;
+  left: 18px;
+  top: 18px;
+  z-index: 999999;
+  width: 42px;
+  height: 42px;
+  display: none;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--sx-border);
+  background: rgba(10, 10, 18, 0.78);
+  color: white;
+  backdrop-filter: blur(18px);
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.32);
+}
+
+body.cx-creator-route .cx-sidebar-toggle {
+  display: grid;
+}
+
+body.cx-sidebar-collapsed .sidebar,
+body.cx-sidebar-collapsed .dashboard-sidebar,
+body.cx-sidebar-collapsed aside:not(.staff-sidebar):not(.finance-launcher-side) {
+  transform: translateX(calc(-1 * var(--sx-sidebar-width))) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.cx-sidebar-collapsed main,
+body.cx-sidebar-collapsed .main,
+body.cx-sidebar-collapsed .main-content,
+body.cx-sidebar-collapsed .dashboard-main,
+body.cx-sidebar-collapsed .dashboard-content,
+body.cx-sidebar-collapsed .page-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+/* If dashboard used CSS grid/flex shell */
+body.cx-sidebar-collapsed .dashboard-layout,
+body.cx-sidebar-collapsed .app-layout,
+body.cx-sidebar-collapsed .layout {
+  grid-template-columns: 1fr !important;
+}
+
+/* =========================================================
+   LANDING PAGE — SpaceX inspired discipline
+   ========================================================= */
+
+.landing-nav {
+  background: rgba(2, 2, 6, 0.78) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.nav-links a {
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-size: 12px !important;
+}
+
+.hero-section {
+  min-height: 94vh !important;
+  padding-top: clamp(72px, 9vw, 120px) !important;
+}
+
+.hero-copy h1 {
+  font-size: clamp(52px, 8vw, 118px) !important;
+  line-height: 0.9 !important;
+  letter-spacing: -0.075em !important;
+  max-width: 980px !important;
+}
+
+.hero-lede {
+  max-width: 720px !important;
+  font-size: clamp(17px, 1.5vw, 21px) !important;
+  color: rgba(255,255,255,0.64) !important;
+}
+
+.section h2,
+.split-copy h2,
+.contact-copy h2 {
+  font-size: clamp(38px, 5.6vw, 84px) !important;
+  line-height: 0.95 !important;
+}
+
+.system-card,
+.testimonial-card,
+.insight-card,
+.team-card,
+.contact-form,
+.product-panel,
+.glass-panel {
+  border-radius: 22px !important;
+}
+
+/* =========================================================
+   STAFF / ADMIN / REVIEWER / WORKSPACE
+   ========================================================= */
+
+.staff-main {
+  overflow-x: hidden !important;
+}
+
+.staff-topbar h1,
+.workspace-header h1,
+.finance-launcher-hero h2 {
+  font-size: clamp(36px, 4.8vw, 76px) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.06em !important;
+}
+
+.workspace-card {
+  min-height: 230px !important;
+  border-radius: 22px !important;
+}
+
+.staff-stat {
+  min-height: 118px !important;
+  border-radius: 22px !important;
+}
+
+.staff-stat strong {
+  font-size: clamp(28px, 3vw, 42px) !important;
+}
+
+.admin-panel,
+.review-card,
+.finance-launcher-hero,
+.finance-launcher-side,
+.module-status-card {
+  border-radius: 22px !important;
+}
+
+.review-toolbar {
+  position: relative !important;
+  top: auto !important;
+}
+
+/* =========================================================
+   MOBILE OPTIMISATION
+   ========================================================= */
+
+@media (max-width: 900px) {
+  :root {
+    --sx-sidebar-width: 82vw;
+  }
+
+  body.cx-creator-route .sidebar,
+  body.cx-creator-route .dashboard-sidebar,
+  body.cx-creator-route aside:not(.staff-sidebar):not(.finance-launcher-side) {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: min(82vw, 320px) !important;
+    min-width: 0 !important;
+    max-width: min(82vw, 320px) !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    transform: translateX(-105%) !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    transition: transform 220ms ease !important;
+    background: rgba(5,5,9,0.96) !important;
+    backdrop-filter: blur(22px) !important;
+  }
+
+  body.cx-mobile-sidebar-open .sidebar,
+  body.cx-mobile-sidebar-open .dashboard-sidebar,
+  body.cx-mobile-sidebar-open aside:not(.staff-sidebar):not(.finance-launcher-side) {
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+  }
+
+  body.cx-mobile-sidebar-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 99990;
+    background: rgba(0,0,0,0.54);
+    backdrop-filter: blur(5px);
+  }
+
+  body.cx-sidebar-collapsed .sidebar,
+  body.cx-sidebar-collapsed .dashboard-sidebar,
+  body.cx-sidebar-collapsed aside:not(.staff-sidebar):not(.finance-launcher-side) {
+    opacity: 1 !important;
+  }
+
+  body.cx-creator-route main,
+  body.cx-creator-route .main,
+  body.cx-creator-route .main-content,
+  body.cx-creator-route .dashboard-main,
+  body.cx-creator-route .dashboard-content,
+  body.cx-creator-route .page-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 74px 16px 28px !important;
+  }
+
+  body.cx-creator-route h1 {
+    font-size: clamp(34px, 10vw, 48px) !important;
+  }
+
+  body.cx-creator-route .dashboard-card h2,
+  body.cx-creator-route .recommendation-card h2,
+  body.cx-creator-route [class*="recommended"] h2,
+  body.cx-creator-route [class*="recommend"] h2 {
+    font-size: clamp(32px, 11vw, 46px) !important;
+  }
+
+  .hero-section {
+    min-height: auto !important;
+    padding: 76px 18px 64px !important;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(44px, 14vw, 64px) !important;
+  }
+
+  .section {
+    padding: 74px 18px !important;
+  }
+
+  .staff-main {
+    padding: 18px !important;
+  }
+
+  .staff-topbar,
+  .workspace-card,
+  .admin-panel,
+  .review-card,
+  .finance-launcher-hero,
+  .finance-launcher-side {
+    border-radius: 20px !important;
+  }
+
+  .staff-topbar h1,
+  .workspace-header h1,
+  .finance-launcher-hero h2 {
+    font-size: clamp(34px, 11vw, 48px) !important;
+  }
+
+  .cx-command-trigger,
+  .staff-global-switcher {
+    display: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  body.cx-creator-route .stats-grid,
+  body.cx-creator-route .metrics-grid,
+  body.cx-creator-route .dashboard-grid,
+  body.cx-creator-route .campaign-grid,
+  body.cx-creator-route .cards-grid,
+  body.cx-creator-route [class*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-actions,
+  .review-actions {
+    width: 100%;
+  }
+
+  .hero-actions a,
+  .review-actions a,
+  .review-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
