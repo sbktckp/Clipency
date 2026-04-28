@@ -1765,7 +1765,7 @@ async function renderPremiumDashboard() {
     <div class="master-dashboard-shell">
       <section class="master-welcome">
         <div class="master-welcome-copy">
-          <div class="master-kicker">Personal Creator Intelligence</div>
+          <div class="master-kicker">Creator Intelligence</div>
           <h1>${clipencyGreeting()}, <span>${name}</span></h1>
 
           <div class="master-username-line">
@@ -1849,7 +1849,7 @@ async function renderPremiumDashboard() {
           <div class="master-panel-head">
             <div>
               <span class="eyebrow">RECOMMENDED FOR YOU</span>
-              <h2>Best campaigns to attack next</h2>
+              <h2>Best campaigns for you</h2>
             </div>
             <a class="premium-link" href="/campaigns">View all →</a>
           </div>
@@ -1875,7 +1875,7 @@ async function renderPremiumDashboard() {
           <div class="master-panel-head">
             <div>
               <span class="eyebrow">WHAT TO DO NOW</span>
-              <h2>Your next best moves</h2>
+              <h2>Recommended next steps</h2>
             </div>
           </div>
 

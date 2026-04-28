@@ -1864,3 +1864,534 @@ h4 { font-size: 15px; font-weight: 700; color: #fff; }
     text-align: left;
   }
 }
+
+/* =========================================================
+   CLIPENCY PREMIUM SCALE REFINEMENT
+   Elegant proportions across full creator app
+   ========================================================= */
+
+:root {
+  --page-max-width: 1380px;
+  --content-pad-x: clamp(28px, 4vw, 56px);
+  --content-pad-y: clamp(24px, 3vw, 38px);
+  --card-radius-premium: 24px;
+  --card-radius-large: 28px;
+}
+
+/* Main content scale */
+.main-content,
+.dashboard-main,
+main,
+.content {
+  max-width: var(--page-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--content-pad-y) var(--content-pad-x) !important;
+}
+
+/* General page headings */
+.section h1,
+.page-title,
+.campaigns-title,
+#section-campaigns h1,
+#section-stats h1,
+#section-payout h1,
+#section-payment h1,
+#section-profile h1 {
+  font-size: clamp(34px, 3.8vw, 54px) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.055em !important;
+  margin-bottom: 22px !important;
+}
+
+/* Remove oversized duplicated old dashboard hero feel */
+.dashboard-hero {
+  display: none !important;
+}
+
+/* Master dashboard: premium compact hero */
+.master-dashboard-shell {
+  gap: 22px !important;
+}
+
+.master-welcome {
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.55fr) !important;
+  gap: 22px !important;
+  padding: clamp(24px, 3.2vw, 38px) !important;
+  border-radius: 28px !important;
+  min-height: auto !important;
+}
+
+.master-welcome h1 {
+  font-size: clamp(40px, 5vw, 72px) !important;
+  line-height: 0.92 !important;
+  letter-spacing: -0.075em !important;
+  max-width: 760px !important;
+}
+
+.master-kicker {
+  margin-bottom: 12px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.17em !important;
+}
+
+.master-helper {
+  margin-top: 18px !important;
+  max-width: 650px !important;
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+  color: rgba(255,255,255,0.60) !important;
+}
+
+.master-username-line {
+  margin-top: 12px !important;
+  font-size: 14px !important;
+}
+
+.master-username-pill {
+  padding: 7px 11px !important;
+  font-size: 13px !important;
+}
+
+.master-actions {
+  margin-top: 22px !important;
+  gap: 10px !important;
+}
+
+.master-btn {
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+}
+
+/* Dashboard side card */
+.master-side-card {
+  padding: 18px !important;
+  border-radius: 24px !important;
+  gap: 14px !important;
+  align-self: center !important;
+}
+
+.master-avatar {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 17px !important;
+  font-size: 21px !important;
+}
+
+.master-side-top strong {
+  font-size: 16px !important;
+}
+
+.master-side-top span {
+  font-size: 12px !important;
+}
+
+.master-rank-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.master-mini-stat {
+  padding: 12px !important;
+  border-radius: 16px !important;
+}
+
+.master-mini-stat span {
+  font-size: 10px !important;
+  letter-spacing: 0.11em !important;
+}
+
+.master-mini-stat strong {
+  margin-top: 6px !important;
+  font-size: 22px !important;
+}
+
+/* KPI cards */
+.overview-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  margin-bottom: 20px !important;
+}
+
+.overview-card,
+.hero-card {
+  padding: 20px !important;
+  border-radius: 22px !important;
+}
+
+.hero-card strong {
+  font-size: clamp(28px, 3vw, 38px) !important;
+  margin: 10px 0 6px !important;
+}
+
+.hero-card p {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.card-label,
+.eyebrow {
+  font-size: 10.5px !important;
+  letter-spacing: 0.15em !important;
+}
+
+/* Dashboard recommendation panels */
+.master-guidance-grid,
+.dashboard-split {
+  grid-template-columns: 1.05fr 0.95fr !important;
+  gap: 18px !important;
+}
+
+.master-panel,
+.overview-panel {
+  padding: 22px !important;
+  border-radius: 24px !important;
+}
+
+.master-panel-head,
+.panel-head {
+  margin-bottom: 16px !important;
+}
+
+.master-panel h2,
+.panel-head h2 {
+  font-size: clamp(21px, 2vw, 27px) !important;
+  margin-top: 6px !important;
+  letter-spacing: -0.045em !important;
+}
+
+.master-panel p {
+  font-size: 14px !important;
+}
+
+.master-recommend-list,
+.recommended-list,
+.activity-list,
+.master-next-steps {
+  gap: 12px !important;
+}
+
+.master-recommend-card,
+.recommended-card,
+.activity-row,
+.master-step {
+  padding: 14px !important;
+  border-radius: 18px !important;
+}
+
+.master-campaign-icon,
+.campaign-mark {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 16px !important;
+  font-size: 21px !important;
+}
+
+.master-recommend-main strong,
+.recommended-main h3,
+.activity-row strong {
+  font-size: 15px !important;
+}
+
+.master-recommend-main span,
+.recommended-main p,
+.activity-row span,
+.master-step span {
+  font-size: 12.5px !important;
+}
+
+.master-recommend-money strong,
+.recommended-metric span {
+  font-size: 17px !important;
+}
+
+/* Campaign page scale */
+#section-campaigns {
+  padding-top: 2px !important;
+}
+
+.campaigns-grid,
+.campaign-grid,
+#campaigns-grid {
+  gap: 18px !important;
+}
+
+.campaign-card {
+  min-height: 245px !important;
+  padding: 22px !important;
+  border-radius: 24px !important;
+}
+
+.campaign-card h3,
+.campaign-card .campaign-title {
+  font-size: 19px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.campaign-card .rate,
+.campaign-card .price,
+.campaign-card strong {
+  font-size: clamp(25px, 2.4vw, 34px) !important;
+}
+
+.campaign-card .tag,
+.campaign-card .badge,
+.campaign-card [class*="tag"],
+.campaign-card [class*="badge"] {
+  font-size: 11px !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+}
+
+.filter-tabs,
+.category-tabs,
+.campaign-filters {
+  gap: 10px !important;
+  margin-bottom: 26px !important;
+}
+
+.filter-tabs button,
+.category-tabs button,
+.campaign-filters button {
+  min-height: 42px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font-size: 14px !important;
+}
+
+/* Stats / payouts / wallet / profile cards */
+.stats-card,
+.payout-card,
+.wallet-card,
+.payment-card,
+.profile-card,
+.premium-profile-panel,
+.premium-profile-hero {
+  border-radius: 24px !important;
+}
+
+.stats-card,
+.payout-card,
+.wallet-card,
+.payment-card,
+.premium-profile-panel {
+  padding: 22px !important;
+}
+
+/* Stats chart elegance */
+.chart-card,
+.stats-chart,
+.monthly-chart,
+[class*="chart"] {
+  border-radius: 24px !important;
+}
+
+#section-stats .overview-grid,
+#section-payout .overview-grid {
+  gap: 14px !important;
+}
+
+/* Profile page compact premium */
+.premium-profile-shell {
+  gap: 20px !important;
+}
+
+.premium-profile-hero {
+  grid-template-columns: auto 1fr minmax(180px, 260px) !important;
+  gap: 22px !important;
+  padding: 28px !important;
+  min-height: auto !important;
+}
+
+.premium-avatar-xl {
+  width: 92px !important;
+  height: 92px !important;
+  border-radius: 26px !important;
+  font-size: 38px !important;
+}
+
+.premium-profile-copy h1 {
+  font-size: clamp(34px, 3.7vw, 54px) !important;
+  line-height: 0.95 !important;
+}
+
+.premium-profile-copy p {
+  font-size: 14px !important;
+  margin-top: 9px !important;
+}
+
+.premium-profile-badges {
+  gap: 8px !important;
+  margin-top: 14px !important;
+}
+
+.premium-pill {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+}
+
+.profile-score-card {
+  min-width: 0 !important;
+  padding: 18px !important;
+  border-radius: 22px !important;
+}
+
+.profile-score-card strong {
+  font-size: 34px !important;
+}
+
+.premium-profile-grid {
+  gap: 18px !important;
+}
+
+.profile-info-row,
+.connected-premium-row {
+  padding: 14px !important;
+  border-radius: 17px !important;
+}
+
+.connected-premium-icon {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 15px !important;
+}
+
+/* Modals */
+.modal,
+.modal-content,
+[class*="modal"] {
+  border-radius: 26px !important;
+}
+
+.modal-content {
+  max-width: min(680px, calc(100vw - 32px)) !important;
+  padding: 26px !important;
+}
+
+/* Top user pill */
+.user-pill,
+.profile-pill,
+.user-card,
+[class*="user"] {
+  max-height: none;
+}
+
+.user-pill,
+.top-profile,
+.header-profile,
+.profile-chip {
+  border-radius: 18px !important;
+}
+
+/* Sidebar scale */
+.sidebar,
+aside {
+  width: 280px !important;
+}
+
+.nav-item {
+  min-height: 48px !important;
+  border-radius: 15px !important;
+  margin-bottom: 7px !important;
+  font-size: 15px !important;
+}
+
+.nav-icon {
+  transform: scale(0.92);
+}
+
+/* Bottom identity */
+.sidebar-user,
+.user-footer,
+[class*="footer-user"] {
+  padding: 14px !important;
+}
+
+/* Remove accidental extra huge command center block spacing */
+#section-dashboard > .dashboard-hero + *,
+#section-dashboard .master-dashboard-shell {
+  margin-top: 0 !important;
+}
+
+/* Elegant page breathing */
+.section {
+  padding-bottom: 40px !important;
+}
+
+/* Better desktop density */
+@media (min-width: 1280px) {
+  .campaigns-grid,
+  .campaign-grid,
+  #campaigns-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1180px) {
+  .master-welcome,
+  .master-guidance-grid,
+  .dashboard-split,
+  .premium-profile-hero,
+  .premium-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .master-side-card {
+    align-self: stretch !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+  :root {
+    --content-pad-x: 16px;
+    --content-pad-y: 18px;
+  }
+
+  .main-content,
+  .dashboard-main,
+  main,
+  .content {
+    padding: 72px 16px 24px !important;
+  }
+
+  .master-welcome {
+    padding: 22px !important;
+    border-radius: 24px !important;
+  }
+
+  .master-welcome h1 {
+    font-size: 38px !important;
+    letter-spacing: -0.065em !important;
+  }
+
+  .master-helper {
+    font-size: 14px !important;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .campaign-card {
+    min-height: 220px !important;
+  }
+
+  .premium-profile-hero {
+    padding: 22px !important;
+  }
+
+  .premium-avatar-xl {
+    width: 76px !important;
+    height: 76px !important;
+    font-size: 32px !important;
+  }
+}
