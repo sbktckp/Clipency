@@ -4,6 +4,8 @@ aside a[href="/dashboard"],
 .sidebar button[data-route="dashboard"],
 .dashboard-sidebar button[data-route="dashboard"],
 .sidebar button[data-page="dashboard"],
-.dashboard-sidebar button[data-page="dashboard"] {
+.dashboard-sidebar button[data-page="dashboard"],
+.sidebar [data-nav="dashboard"],
+.dashboard-sidebar [data-nav="dashboard"] {
   display: none !important;
 }

@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script>
+  // Clipency: Dashboard has been merged into Stats.
+  // Redirect immediately before any old dashboard renderer runs.
+  if (window.location.pathname === "/dashboard") {
+    window.location.replace("/stats");
+  }
+</script>
+
 <meta name="theme-color" content="#080610">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +31,7 @@
 <script>
   window.CLIPENCY_FUNCTIONAL_CORE_ACTIVE = ["/dashboard", "/stats", "/payouts"].includes(window.location.pathname);
 </script>
+  <link rel="stylesheet" href="/clipency-remove-dashboard.css" />
 </head>
 <body>
   <!-- Loading overlay -->
@@ -237,5 +247,6 @@
   <script src="/clipency-functional-core.js"></script>
   <script src="/clipency-toast-guard.js"></script>
   <script src="/clipency-sidebar-nav.js"></script>
+  <script src="/clipency-remove-dashboard.js"></script>
 </body>
 </html>

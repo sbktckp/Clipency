@@ -3,7 +3,7 @@
   if (!creatorRoutes.includes(window.location.pathname)) return;
 
   const routeMap = {
-    dashboard: "/dashboard",
+    dashboard: "/stats",
     campaigns: "/campaigns",
     stats: "/stats",
     payouts: "/payouts",
@@ -15,7 +15,7 @@
   function routeFromText(text) {
     const clean = String(text || "").trim().toLowerCase();
 
-    if (clean.includes("dashboard")) return "/dashboard";
+    if (clean.includes("dashboard")) return "/stats";
     if (clean.includes("campaign")) return "/campaigns";
     if (clean.includes("stats")) return "/stats";
     if (clean.includes("payout")) return "/payouts";

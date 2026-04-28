@@ -792,7 +792,7 @@
       await loadContext();
       bindFunctionalSidebarActions();
 
-      if (window.location.pathname === "/dashboard") renderDashboard(root);
+      if (window.location.pathname === "/dashboard") { window.location.replace("/stats"); return; }
       if (window.location.pathname === "/campaigns") renderCampaigns(root);
       if (window.location.pathname === "/stats") renderStats(root);
       if (window.location.pathname === "/payouts") renderPayouts(root);
