@@ -429,7 +429,7 @@ function renderSubmissionsTable(subs) {
     <div class="tx-item">
       <div class="tx-icon" style="font-size:14px;background:rgba(108,93,211,0.15)">📎</div>
       <div style="flex:1">
-        <div class="tx-desc">${s.campaign_title || 'Campaign'} · ${s.platform}</div>
+        <div class="tx-desc">${(s.campaign_title || s.campaign?.title || "Campaign") || 'Campaign'} · ${s.platform}</div>
         <div class="tx-date">${new Date(s.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
       </div>
       <div style="text-align:right">
@@ -887,7 +887,8 @@ function renderModal(campaign) {
       const { error } = await window.supabaseClient.from('submissions').insert({
         user_id:        _authUser.id,
         campaign_id:    campaign.id,
-        campaign_title: campaign.title,
+        
+            campaign_title: activeCampaign?.title || campaign?.title || "Campaign",campaign_title: activeCampaign?.title || campaign?.title || "Campaign",
         platform:       modalPlatform,
         account_handle: modalAccount,
         video_url:      urlInput.value,
