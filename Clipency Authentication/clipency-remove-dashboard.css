@@ -1,0 +1,9 @@
+.sidebar a[href="/dashboard"],
+.dashboard-sidebar a[href="/dashboard"],
+aside a[href="/dashboard"],
+.sidebar button[data-route="dashboard"],
+.dashboard-sidebar button[data-route="dashboard"],
+.sidebar button[data-page="dashboard"],
+.dashboard-sidebar button[data-page="dashboard"] {
+  display: none !important;
+}
