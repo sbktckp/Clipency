@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# Supabase config (contains project URL and anon key)
+supabase-config.js
+
+# OS files
+.DS_Store
+Thumbs.db
