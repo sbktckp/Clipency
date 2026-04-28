@@ -286,3 +286,82 @@
     bootIndustryLayer();
   }
 })();
+
+
+/* PREMIUM URL ROUTER START */
+(function () {
+  const premiumRoutes = {
+    "/system": "system",
+    "/clients": "clients",
+    "/creators": "creators",
+    "/proof": "proof",
+    "/team": "team",
+    "/contact": "contact",
+    "/use-cases": "usecases",
+    "/command-center": "command"
+  };
+
+  function sectionForPath(pathname) {
+    return premiumRoutes[pathname] || null;
+  }
+
+  function scrollToPremiumRoute(instant = false) {
+    const sectionId = sectionForPath(window.location.pathname);
+    if (!sectionId) return;
+
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
+    const navOffset = 88;
+    const y = section.getBoundingClientRect().top + window.scrollY - navOffset;
+
+    window.scrollTo({
+      top: Math.max(0, y),
+      behavior: instant ? "auto" : "smooth"
+    });
+
+    document.querySelectorAll(".nav-links a").forEach((link) => {
+      try {
+        const url = new URL(link.href, window.location.origin);
+        link.classList.toggle("active", url.pathname === window.location.pathname);
+      } catch {}
+    });
+  }
+
+  function goToPremiumPath(pathname) {
+    if (!sectionForPath(pathname)) return;
+
+    if (window.location.pathname !== pathname) {
+      window.history.pushState({ clipencySection: pathname }, "", pathname);
+    }
+
+    scrollToPremiumRoute(false);
+  }
+
+  document.addEventListener("click", function (event) {
+    const link = event.target.closest("a[href]");
+    if (!link) return;
+
+    const url = new URL(link.getAttribute("href"), window.location.origin);
+
+    if (url.origin !== window.location.origin) return;
+    if (!sectionForPath(url.pathname)) return;
+
+    event.preventDefault();
+    goToPremiumPath(url.pathname);
+  });
+
+  window.addEventListener("popstate", function () {
+    scrollToPremiumRoute(false);
+  });
+
+  window.addEventListener("DOMContentLoaded", function () {
+    setTimeout(() => scrollToPremiumRoute(true), 120);
+  });
+
+  if (document.readyState !== "loading") {
+    setTimeout(() => scrollToPremiumRoute(true), 120);
+  }
+})();
+/* PREMIUM URL ROUTER END */
+
