@@ -380,7 +380,7 @@ async function renderStatsSection() {
   // Fetch all user submissions
   const { data: subs, error } = await _supabase
     .from('submissions')
-    .select('views, likes, comments, earnings, campaign_id, submitted_at')
+      .select('id, user_id, clipper_id, campaign_id, campaign_title, platform, account_handle, video_url, post_url, views, likes, comments, shares, earnings, status, submitted_at')
     .eq('user_id', _authUser.id);
 
   if (error) {
@@ -429,7 +429,7 @@ function renderSubmissionsTable(subs) {
     <div class="tx-item">
       <div class="tx-icon" style="font-size:14px;background:rgba(108,93,211,0.15)">📎</div>
       <div style="flex:1">
-        <div class="tx-desc">${(s.campaign_title || s.campaign?.title || "Campaign") || 'Campaign'} · ${s.platform}</div>
+        <div class="tx-desc">${s.campaign_title || s.campaign?.title || 'Campaign'} · ${s.platform || 'Submitted'}</div>
         <div class="tx-date">${new Date(s.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
       </div>
       <div style="text-align:right">
