@@ -751,3 +751,15 @@
   .toast-container { top: 1rem; right: 1rem; left: 1rem; }
   .toast { min-width: unset; }
 }
+
+/* Official Clipency auth logo */
+.clipency-auth-logo,
+.clipency-brand-logo {
+  display: block !important;
+  width: 170px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  margin: 0 auto 24px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

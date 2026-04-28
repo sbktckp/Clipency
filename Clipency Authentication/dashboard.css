@@ -2611,3 +2611,19 @@ aside {
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Official Clipency dashboard logo */
+.clipency-dashboard-logo,
+.clipency-brand-logo,
+.logo img,
+.sidebar-logo img,
+.brand-logo img {
+  display: block !important;
+  width: 152px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
