@@ -1005,18 +1005,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
 /* =========================
-   PREMIUM CLEAN DASHBOARD ROUTING
-   Routes:
-   /dashboard -> Campaigns
-   /campaigns -> Campaigns
-   /stats -> Stats
-   /payouts -> Payouts
-   /wallet -> Wallet
-   /profile -> Profile
+   CLIPENCY PREMIUM ROUTING
+   /dashboard = Campaigns landing page
+   /stats = Stats
+   /payouts = Payouts
+   /wallet = Wallet
+   /profile = Profile
    ========================= */
 
-(function setupPremiumCleanRoutes() {
+(function setupClipencyPremiumRoutes() {
   const routeMap = {
     "/dashboard": "campaigns",
     "/campaigns": "campaigns",
@@ -1034,27 +1035,26 @@ document.addEventListener("DOMContentLoaded", () => {
     profile: "/profile"
   };
 
-  const routeLabels = {
-    campaigns: ["campaigns", "campaign"],
+  const labels = {
+    campaigns: ["campaigns", "campaign", "dashboard"],
     stats: ["stats", "statistics"],
     payouts: ["payouts", "payout"],
     wallet: ["wallet"],
     profile: ["profile"]
   };
 
-  function getPageFromUrl() {
+  function pageFromUrl() {
     const path = window.location.pathname.toLowerCase();
-    const params = new URLSearchParams(window.location.search);
-    const queryPage = params.get("page");
+    const query = new URLSearchParams(window.location.search).get("page");
 
     if (routeMap[path]) return routeMap[path];
-    if (queryPage && pageToPath[queryPage]) return queryPage;
+    if (query && pageToPath[query]) return query;
 
     return "campaigns";
   }
 
-  function findSidebarItem(page) {
-    const labels = routeLabels[page] || routeLabels.campaigns;
+  function findNavItem(page) {
+    const accepted = labels[page] || labels.campaigns;
 
     const items = Array.from(
       document.querySelectorAll(
@@ -1064,39 +1064,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return items.find((el) => {
       const text = (el.textContent || "").trim().toLowerCase();
-      const section = (el.dataset.section || "").toLowerCase();
-      const pageName = (el.dataset.page || "").toLowerCase();
-      const tab = (el.dataset.tab || "").toLowerCase();
-      const joined = `${text} ${section} ${pageName} ${tab}`;
+      const data = [
+        el.dataset.section || "",
+        el.dataset.page || "",
+        el.dataset.tab || ""
+      ].join(" ").toLowerCase();
 
-      return labels.some(label => joined.includes(label));
+      const combined = `${text} ${data}`;
+
+      return accepted.some((word) => combined.includes(word));
     });
   }
 
   function openPage(page, push = true) {
     const cleanPage = pageToPath[page] ? page : "campaigns";
-    const btn = findSidebarItem(cleanPage);
+    const nav = findNavItem(cleanPage);
 
-    if (btn) btn.click();
+    if (nav) nav.click();
 
-    const targetPath = pageToPath[cleanPage];
+    const targetPath = pageToPath[cleanPage] || "/dashboard";
 
     if (push && window.location.pathname !== targetPath) {
       window.history.pushState({ page: cleanPage }, "", targetPath);
     }
 
-    document.title = `Clipency | ${cleanPage.charAt(0).toUpperCase() + cleanPage.slice(1)}`;
+    const titleName = cleanPage === "campaigns" ? "Dashboard" : cleanPage.charAt(0).toUpperCase() + cleanPage.slice(1);
+    document.title = `Clipency | ${titleName}`;
   }
 
-  function inferPageFromClick(el) {
+  function inferClickedPage(el) {
     const text = (el.textContent || "").trim().toLowerCase();
-    const section = (el.dataset.section || "").toLowerCase();
-    const pageName = (el.dataset.page || "").toLowerCase();
-    const tab = (el.dataset.tab || "").toLowerCase();
-    const joined = `${text} ${section} ${pageName} ${tab}`;
+    const data = [
+      el.dataset.section || "",
+      el.dataset.page || "",
+      el.dataset.tab || ""
+    ].join(" ").toLowerCase();
 
-    for (const page of Object.keys(routeLabels)) {
-      if (routeLabels[page].some(label => joined.includes(label))) {
+    const combined = `${text} ${data}`;
+
+    for (const page of Object.keys(labels)) {
+      if (labels[page].some((word) => combined.includes(word))) {
         return page;
       }
     }
@@ -1111,26 +1118,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!target) return;
 
-    const page = inferPageFromClick(target);
+    const page = inferClickedPage(target);
+    if (!page) return;
 
-    if (page) {
-      setTimeout(() => {
-        const targetPath = pageToPath[page];
-        if (window.location.pathname !== targetPath) {
-          window.history.pushState({ page }, "", targetPath);
-        }
-        document.title = `Clipency | ${page.charAt(0).toUpperCase() + page.slice(1)}`;
-      }, 80);
-    }
+    setTimeout(() => {
+      const path = pageToPath[page] || "/dashboard";
+
+      if (window.location.pathname !== path) {
+        window.history.pushState({ page }, "", path);
+      }
+
+      const titleName = page === "campaigns" ? "Dashboard" : page.charAt(0).toUpperCase() + page.slice(1);
+      document.title = `Clipency | ${titleName}`;
+    }, 80);
   });
 
   window.addEventListener("popstate", function () {
-    openPage(getPageFromUrl(), false);
+    openPage(pageFromUrl(), false);
   });
 
   document.addEventListener("DOMContentLoaded", function () {
     setTimeout(() => {
-      openPage(getPageFromUrl(), false);
+      openPage(pageFromUrl(), false);
     }, 1000);
   });
 })();
