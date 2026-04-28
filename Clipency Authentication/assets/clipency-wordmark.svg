@@ -1,5 +1,12 @@
-<svg width="820" height="180" viewBox="0 0 820 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <image href="/assets/clipency-logo.svg" x="10" y="15" width="150" height="150"/>
-  <text x="190" y="106" fill="white" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="850" letter-spacing="-4.5">Clipency</text>
-  <text x="195" y="140" fill="#A78BFA" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="750" letter-spacing="2.2">ATTENTION → DISTRIBUTION → GROWTH</text>
+<svg width="860" height="220" viewBox="0 0 860 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(30 34)">
+    <path d="M71.4 74.6C57.8 58.1 44.8 39.8 38.8 22.5C34.2 9.2 39.4 1.1 49.1 1.1C63.2 1.1 75.7 23.2 85.8 51.7C95.9 23.2 108.4 1.1 122.5 1.1C132.2 1.1 137.4 9.2 132.8 22.5C126.8 39.8 113.8 58.1 100.2 74.6C117.8 99.1 137.6 128.8 149.5 152.4" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M22.1 152.4C34 128.8 53.8 99.1 71.4 74.6" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="43.6" cy="19.5" r="16.5" stroke="white" stroke-width="8.5"/>
+    <circle cx="128" cy="19.5" r="16.5" stroke="white" stroke-width="8.5"/>
+    <path d="M85.8 51.7L85.8 152.4" stroke="white" stroke-width="8.5" stroke-linecap="round"/>
+  </g>
+
+  <text x="190" y="118" fill="white" font-family="Inter, Arial, Helvetica, sans-serif" font-size="72" font-weight="800" letter-spacing="-4.5">CLIPENCY</text>
+  <text x="194" y="154" fill="#A78BFA" font-family="Inter, Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2.4">ATTENTION → DISTRIBUTION → GROWTH</text>
 </svg>

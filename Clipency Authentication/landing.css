@@ -1180,3 +1180,45 @@ textarea:focus {
     min-height: 38px !important;
   }
 }
+
+/* Correct Clipency logo sizing */
+.brand-logo-img {
+  width: 132px !important;
+  height: auto !important;
+  min-width: 132px !important;
+  min-height: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  object-fit: contain !important;
+}
+
+.brand-lockup > span {
+  display: none !important;
+}
+
+.footer-brand .brand-logo-img {
+  width: 146px !important;
+  height: auto !important;
+}
+
+.hero-brand-seal {
+  width: min(420px, 88vw) !important;
+}
+
+.hero-brand-seal img {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 700px) {
+  .brand-logo-img {
+    width: 118px !important;
+    min-width: 118px !important;
+  }
+
+  .footer-brand .brand-logo-img {
+    width: 128px !important;
+  }
+}
