@@ -1222,3 +1222,50 @@ textarea:focus {
     width: 128px !important;
   }
 }
+
+/* Correct real Clipency logo: scissors + CLIPENCY */
+.brand-logo-img {
+  width: 150px !important;
+  height: auto !important;
+  min-width: 150px !important;
+  min-height: 0 !important;
+  display: block !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.brand-lockup {
+  gap: 0 !important;
+}
+
+.brand-lockup > span {
+  display: none !important;
+}
+
+.footer-brand .brand-logo-img {
+  width: 160px !important;
+}
+
+.hero-brand-seal {
+  width: min(300px, 82vw) !important;
+  padding: 8px 10px !important;
+}
+
+.hero-brand-seal img {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 700px) {
+  .brand-logo-img {
+    width: 132px !important;
+    min-width: 132px !important;
+  }
+
+  .footer-brand .brand-logo-img {
+    width: 140px !important;
+  }
+}

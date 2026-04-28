@@ -1,11 +1,20 @@
-<svg width="720" height="220" viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(32 34)">
-    <path d="M71.4 74.6C57.8 58.1 44.8 39.8 38.8 22.5C34.2 9.2 39.4 1.1 49.1 1.1C63.2 1.1 75.7 23.2 85.8 51.7C95.9 23.2 108.4 1.1 122.5 1.1C132.2 1.1 137.4 9.2 132.8 22.5C126.8 39.8 113.8 58.1 100.2 74.6C117.8 99.1 137.6 128.8 149.5 152.4" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M22.1 152.4C34 128.8 53.8 99.1 71.4 74.6" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="43.6" cy="19.5" r="16.5" stroke="white" stroke-width="8.5"/>
-    <circle cx="128" cy="19.5" r="16.5" stroke="white" stroke-width="8.5"/>
-    <path d="M85.8 51.7L85.8 152.4" stroke="white" stroke-width="8.5" stroke-linecap="round"/>
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(22 18)" stroke="white" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="25" cy="17" r="11"/>
+    <circle cx="58" cy="17" r="11"/>
+    <path d="M33.5 25.5L72 80"/>
+    <path d="M49.5 25.5L11 80"/>
+    <path d="M42 42L42 86"/>
+    <path d="M42 42C34 33 28 24 25 17"/>
+    <path d="M42 42C50 33 56 24 58 17"/>
   </g>
 
-  <text x="190" y="126" fill="white" font-family="Inter, Arial, Helvetica, sans-serif" font-size="74" font-weight="800" letter-spacing="-5">CLIPENCY</text>
+  <text x="104" y="74"
+        fill="white"
+        font-family="Inter, Montserrat, Arial, Helvetica, sans-serif"
+        font-size="44"
+        font-weight="800"
+        letter-spacing="-3.2">
+    CLIPENCY
+  </text>
 </svg>
