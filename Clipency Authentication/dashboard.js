@@ -921,3 +921,66 @@ function renderModal(campaign) {
 }
 
 /* ── Init handled after auth resolves above ── */
+
+
+/* =========================
+   LIVE CAMPAIGNS FROM SUPABASE
+   ========================= */
+
+async function loadLiveCampaignsFromSupabase() {
+  try {
+    if (!window.supabaseClient) {
+      console.error("Supabase client not found");
+      return;
+    }
+
+    const { data, error } = await window.supabaseClient
+      .from("campaigns")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Campaign fetch error:", error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("No active campaigns found in Supabase");
+      return;
+    }
+
+    window.campaigns = data.map((campaign) => ({
+      id: campaign.id,
+      title: campaign.title,
+      category: campaign.genre || campaign.type || "Campaign",
+      type: campaign.type || campaign.genre || "Campaign",
+      rate: campaign.rpm || 0,
+      rpm: campaign.rpm || 0,
+      budget: campaign.budget || 0,
+      currency: campaign.currency || "USD",
+      creators: campaign.creators_count || 0,
+      isNew: campaign.is_new ?? true,
+      description: campaign.description || "",
+      requirements: campaign.requirements || "",
+      status: campaign.status || "active"
+    }));
+
+    if (typeof renderCampaigns === "function") {
+      renderCampaigns(window.campaigns);
+    }
+
+    const countEl = document.querySelector(".campaign-count, #campaign-count");
+    if (countEl) {
+      countEl.textContent = `${window.campaigns.length} campaigns`;
+    }
+
+    console.log("Live campaigns loaded from Supabase:", window.campaigns.length);
+  } catch (err) {
+    console.error("Live campaigns load failed:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(loadLiveCampaignsFromSupabase, 500);
+});
