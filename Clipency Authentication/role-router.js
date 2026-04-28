@@ -27,6 +27,20 @@
     const access = await waitForAccess();
     if (!access) return;
 
+    const path = window.location.pathname;
+
+    if (["/login", "/signup", "/auth"].includes(path)) {
+      try {
+        const context = await access.getRole();
+
+        if (context.user) {
+          await access.redirectByRole();
+        }
+      } catch {}
+
+      return;
+    }
+
     await access.protectCurrentRoute();
   }
 

@@ -13,8 +13,16 @@
         <img src="/assets/clipency-logo.png" alt="Clipency" />
       </a>
 
+      <div class="staff-nav-section-label">Review</div>
       <nav class="staff-nav">
         <a class="active" href="/review">Review Queue</a>
+      </nav>
+
+      <div class="staff-nav-section-label">Admin</div>
+      <nav class="staff-nav" data-review-admin-links></nav>
+
+      <div class="staff-nav-section-label">Account</div>
+      <nav class="staff-nav">
         <a href="/dashboard">Creator View</a>
         <a href="/login" id="logout-link">Logout</a>
       </nav>
@@ -27,15 +35,28 @@
           <h1>Review submitted clips.</h1>
           <p>Open proof links, enter performance metrics, approve or reject submissions and add review notes.</p>
         </div>
+
+        <div class="staff-top-actions">
+          <div class="staff-identity-chip">
+            <span data-staff-initials>R</span>
+            <div>
+              <strong data-staff-name>Reviewer</strong>
+              <small data-staff-role>reviewer</small>
+            </div>
+          </div>
+        </div>
       </header>
 
       <section class="staff-grid" id="review-stats"></section>
 
-      <div class="filter-row" id="review-filters">
-        <button class="active" data-filter="all">All</button>
-        <button data-filter="pending">Pending</button>
-        <button data-filter="approved">Approved</button>
-        <button data-filter="rejected">Rejected</button>
+      <div class="review-toolbar">
+        <input id="review-search" placeholder="Search by campaign, creator, platform or URL…" />
+        <div class="filter-row" id="review-filters">
+          <button class="active" data-filter="all">All</button>
+          <button data-filter="pending">Pending</button>
+          <button data-filter="approved">Approved</button>
+          <button data-filter="rejected">Rejected</button>
+        </div>
       </div>
 
       <section class="review-list" id="review-list">
@@ -47,6 +68,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabaseClient.js"></script>
   <script src="/access-control.js"></script>
+  <script src="/staff-common.js"></script>
   <script src="/review.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 (function () {
   let submissions = [];
   let currentFilter = "all";
+  let searchTerm = "";
   let accessContext = null;
 
   function supabase() {
@@ -9,6 +10,25 @@
 
   function safe(value, fallback = "—") {
     return value === null || value === undefined || value === "" ? fallback : value;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function safeUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      if (!["http:", "https:"].includes(url.protocol)) return "";
+      return url.href;
+    } catch {
+      return "";
+    }
   }
 
   function statusClass(status) {
@@ -20,7 +40,7 @@
   }
 
   function getUrl(row) {
-    return row.submission_url || row.post_url || row.clip_url || row.url || row.link || row.content_url || "";
+    return safeUrl(row.submission_url || row.post_url || row.clip_url || row.video_url || row.url || row.link || row.content_url || "");
   }
 
   function getTitle(row) {
@@ -29,6 +49,11 @@
 
   function getCreator(row) {
     return row.user_email || row.creator_email || row.email || row.user_id || row.clipper_id || "Unknown";
+  }
+
+  function money(value) {
+    const num = Number(value || 0);
+    return `$${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   }
 
   async function loadSubmissions() {
@@ -57,8 +82,20 @@
   }
 
   function filteredRows() {
-    if (currentFilter === "all") return submissions;
-    return submissions.filter((row) => statusClass(row.status) === currentFilter);
+    return submissions.filter((row) => {
+      const statusMatches = currentFilter === "all" || statusClass(row.status) === currentFilter;
+      const haystack = [
+        getTitle(row),
+        getCreator(row),
+        row.platform,
+        getUrl(row),
+        row.status
+      ].join(" ").toLowerCase();
+
+      const searchMatches = !searchTerm || haystack.includes(searchTerm.toLowerCase());
+
+      return statusMatches && searchMatches;
+    });
   }
 
   function renderList() {
@@ -66,7 +103,7 @@
     const rows = filteredRows();
 
     if (!rows.length) {
-      target.innerHTML = `<div class="staff-card loading-card">No ${currentFilter === "all" ? "" : currentFilter} submissions found.</div>`;
+      target.innerHTML = `<div class="staff-card loading-card">No matching submissions found.</div>`;
       return;
     }
 
@@ -75,24 +112,32 @@
       const url = getUrl(row);
       const status = statusClass(row.status);
       const earnings = Number(row.earnings || 0).toFixed(2);
+      const submittedDate = row.submitted_at || row.created_at;
 
       return `
-        <article class="review-card" data-id="${id}">
+        <article class="review-card" data-id="${escapeHtml(id)}">
           <div class="review-head">
             <div>
-              <h3>${getTitle(row)}</h3>
+              <h3>${escapeHtml(getTitle(row))}</h3>
               <p class="review-meta">
-                Platform: ${safe(row.platform, "Not specified")} · 
-                Creator: ${safe(getCreator(row), "Unknown")} ·
-                Submitted: ${row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "Unknown"}
+                Creator: ${escapeHtml(getCreator(row))} ·
+                Submitted: ${submittedDate ? new Date(submittedDate).toLocaleString() : "Unknown"}
               </p>
+              <div class="review-card-header-line">
+                <span class="badge">${escapeHtml(safe(row.platform, "Platform not set"))}</span>
+                <span class="badge">${Number(row.views || 0).toLocaleString()} views</span>
+                <span class="badge">${Number(row.likes || 0).toLocaleString()} likes</span>
+                <span class="badge">${Number(row.comments || 0).toLocaleString()} comments</span>
+              </div>
             </div>
             <span class="badge ${status}">${status}</span>
           </div>
 
-          <div class="review-actions">
-            ${url ? `<a class="action-btn link" href="${url}" target="_blank" rel="noopener">Open proof URL</a>` : ""}
-            <span class="badge">Earnings: $${earnings}</span>
+          ${url ? `<div class="review-proof-box">${escapeHtml(url)}</div>` : `<div class="review-proof-box">No proof URL attached.</div>`}
+
+          <div class="review-actions" style="margin-top:14px">
+            ${url ? `<a class="action-btn link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Open proof URL</a>` : ""}
+            <span class="badge">Earnings: ${money(earnings)}</span>
           </div>
 
           <div class="review-form">
@@ -118,7 +163,7 @@
 
             <label>
               Review note
-              <textarea data-field="review_note" placeholder="Add a short review note">${safe(row.review_note, "")}</textarea>
+              <textarea data-field="review_note" placeholder="Add a short review note">${escapeHtml(safe(row.review_note, ""))}</textarea>
             </label>
           </div>
 
@@ -171,6 +216,11 @@
       renderList();
     });
 
+    document.getElementById("review-search")?.addEventListener("input", (event) => {
+      searchTerm = event.target.value.trim();
+      renderList();
+    });
+
     document.getElementById("review-list").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action]");
       if (!button) return;
@@ -210,10 +260,23 @@
       renderList();
     } catch (error) {
       document.getElementById("review-list").innerHTML = `
-        <div class="staff-card loading-card">Could not load review queue: ${error.message}</div>
+        <div class="staff-card loading-card">Could not load review queue: ${escapeHtml(error.message || "Unknown error")}</div>
       `;
     }
   }
 
-  document.addEventListener("DOMContentLoaded", boot);
+  function bootWhenReady() {
+    if (!window.ClipencyAccess || !window.supabaseClient) {
+      setTimeout(bootWhenReady, 120);
+      return;
+    }
+
+    boot();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootWhenReady);
+  } else {
+    bootWhenReady();
+  }
 })();

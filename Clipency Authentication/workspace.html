@@ -12,22 +12,36 @@
       <div class="workspace-header">
         <div class="eyebrow">CLIPENCY WORKSPACE</div>
         <h1 id="workspace-title">Choose your workspace.</h1>
-        <p>Admins can enter the operating dashboard or switch into the creator-side experience to test the platform like a clipper.</p>
+        <p>Move between the admin operating layer, review queue and creator-side experience without losing context.</p>
       </div>
 
       <div class="workspace-grid">
         <a class="workspace-card" href="/admin">
           <span>A</span>
           <h2>Admin Dashboard</h2>
-          <p>Manage reviews, campaigns, leads, payouts and platform operations.</p>
+          <p>Manage campaigns, leads, payouts, access and overall platform operations.</p>
           <strong>Enter admin →</strong>
+        </a>
+
+        <a class="workspace-card" href="/review">
+          <span>R</span>
+          <h2>Review Queue</h2>
+          <p>Review submitted clips, update metrics, approve or reject proof and add notes.</p>
+          <strong>Review clips →</strong>
         </a>
 
         <a class="workspace-card" href="/dashboard">
           <span>C</span>
           <h2>Clipper Dashboard</h2>
-          <p>View campaigns, submissions, stats, payouts and the creator experience.</p>
+          <p>Enter the creator-side dashboard and test the experience like a clipper.</p>
           <strong>Enter creator view →</strong>
+        </a>
+
+        <a class="workspace-card" href="/admin/users">
+          <span>U</span>
+          <h2>Access Control</h2>
+          <p>Add admins, invite reviewers and manage role-based access.</p>
+          <strong>Manage users →</strong>
         </a>
       </div>
     </section>
@@ -36,13 +50,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabaseClient.js"></script>
   <script src="/access-control.js"></script>
+  <script src="/staff-common.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const access = await window.ClipencyAccess.requireRole(["admin"]);
       if (!access) return;
 
       const name = access.profile?.full_name || access.user?.email?.split("@")[0] || "Admin";
-      document.getElementById("workspace-title").textContent = `Welcome, ${name}.`;
+      document.getElementById("workspace-title").textContent = `Welcome back, ${name}.`;
     });
   </script>
 </body>

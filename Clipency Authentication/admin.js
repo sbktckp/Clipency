@@ -11,11 +11,8 @@
   }
 
   function setHeader(title, subtitle) {
-    const titleEl = document.getElementById("admin-title");
-    const subtitleEl = document.getElementById("admin-subtitle");
-
-    if (titleEl) titleEl.textContent = title;
-    if (subtitleEl) subtitleEl.textContent = subtitle;
+    document.getElementById("admin-title").textContent = title;
+    document.getElementById("admin-subtitle").textContent = subtitle;
   }
 
   function pathMode() {
@@ -29,10 +26,6 @@
     return "home";
   }
 
-  function safe(value, fallback = "—") {
-    return value === null || value === undefined || value === "" ? fallback : value;
-  }
-
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -40,6 +33,36 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function safe(value, fallback = "—") {
+    return value === null || value === undefined || value === "" ? fallback : value;
+  }
+
+  function money(value) {
+    const num = Number(value || 0);
+    return `$${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
+  async function selectTable(table, columns = "*", options = {}) {
+    try {
+      let query = supabase().from(table).select(columns);
+
+      if (options.order) {
+        query = query.order(options.order.column, { ascending: options.order.ascending });
+      }
+
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) return [];
+
+      return data || [];
+    } catch {
+      return [];
+    }
   }
 
   async function countTable(table) {
@@ -56,16 +79,6 @@
   }
 
   async function renderStats() {
-    const target = document.getElementById("admin-stats");
-    if (!target) return;
-
-    target.innerHTML = `
-      <div class="staff-stat"><span>Submissions</span><strong>—</strong></div>
-      <div class="staff-stat"><span>Client Leads</span><strong>—</strong></div>
-      <div class="staff-stat"><span>Campaigns</span><strong>—</strong></div>
-      <div class="staff-stat"><span>Users</span><strong>—</strong></div>
-    `;
-
     const [submissions, leads, campaigns, profiles] = await Promise.all([
       countTable("submissions"),
       countTable("contact_leads"),
@@ -73,7 +86,7 @@
       countTable("profiles")
     ]);
 
-    target.innerHTML = `
+    document.getElementById("admin-stats").innerHTML = `
       <div class="staff-stat"><span>Submissions</span><strong>${submissions}</strong></div>
       <div class="staff-stat"><span>Client Leads</span><strong>${leads}</strong></div>
       <div class="staff-stat"><span>Campaigns</span><strong>${campaigns}</strong></div>
@@ -94,32 +107,79 @@
   }
 
   async function renderHome() {
-    setHeader("Platform operations.", "Manage Clipency campaigns, reviews, leads, payouts and access from one place.");
+    setHeader("Platform operations.", "Your command center for campaigns, reviews, leads, payouts and access.");
+
+    const submissions = await selectTable("submissions", "*", {
+      order: { column: "submitted_at", ascending: false },
+      limit: 5
+    });
+
+    const leads = await selectTable("contact_leads", "*", {
+      order: { column: "created_at", ascending: false },
+      limit: 4
+    });
+
+    const pending = submissions.filter((s) => String(s.status || "pending").toLowerCase().includes("pending")).length;
+    const approvedValue = submissions
+      .filter((s) => String(s.status || "").toLowerCase().includes("approved"))
+      .reduce((sum, s) => sum + Number(s.earnings || 0), 0);
 
     setContent(`
-      <div class="admin-two">
+      <div class="staff-page-subnav">
+        <a class="active" href="/admin">Overview</a>
+        <a href="/review">Review Queue</a>
+        <a href="/admin/leads">Client Leads</a>
+        <a href="/admin/users">Access Control</a>
+      </div>
+
+      <section class="admin-panel">
+        <div class="eyebrow">LIVE OPERATING LAYER</div>
+        <h2>What needs attention right now</h2>
+
+        <div class="module-status-grid">
+          <div class="module-status-card">
+            <span>Pending review</span>
+            <strong>${pending}</strong>
+            <p>Submissions waiting for admin or reviewer action.</p>
+          </div>
+
+          <div class="module-status-card">
+            <span>Approved value</span>
+            <strong>${money(approvedValue)}</strong>
+            <p>Total approved creator earnings visible to admin.</p>
+          </div>
+
+          <div class="module-status-card">
+            <span>New leads</span>
+            <strong>${leads.length}</strong>
+            <p>Recent inquiries from the public landing page.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="admin-two" style="margin-top:18px">
         <a class="admin-panel" href="/review">
           <div class="eyebrow">REVIEW QUEUE</div>
           <h2>Review submitted clips</h2>
-          <p>Open proof URLs, enter performance metrics, approve or reject submissions and add review notes.</p>
+          <p>Open proof URLs, enter metrics, approve or reject submissions and add notes.</p>
         </a>
 
         <a class="admin-panel" href="/admin/leads">
           <div class="eyebrow">CLIENT PIPELINE</div>
-          <h2>View landing page leads</h2>
-          <p>Every contact form submission from the landing page appears here for admin follow-up.</p>
+          <h2>View campaign inquiries</h2>
+          <p>Every contact form submission appears here for admin follow-up.</p>
         </a>
 
         <a class="admin-panel" href="/admin/campaigns">
           <div class="eyebrow">CAMPAIGNS</div>
           <h2>Campaign management</h2>
-          <p>Create, edit, pause and monitor campaigns. This module is prepared for the next phase.</p>
+          <p>Review active campaigns and prepare campaign creation controls in the next build phase.</p>
         </a>
 
         <a class="admin-panel" href="/admin/users">
           <div class="eyebrow">ACCESS</div>
           <h2>User roles</h2>
-          <p>Add reviewer emails, manage access and keep Clipency roles clean.</p>
+          <p>Add admin emails, invite reviewers and manage access cleanly.</p>
         </a>
       </div>
     `);
@@ -127,17 +187,11 @@
 
   async function renderLeads() {
     setHeader("Client leads.", "Campaign inquiries submitted from the public landing page.");
-
     setContent(`<div class="staff-card loading-card">Loading leads securely…</div>`);
 
-    const { data, error } = await supabase()
-      .from("contact_leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    const leads = data || [];
+    const leads = await selectTable("contact_leads", "*", {
+      order: { column: "created_at", ascending: false }
+    });
 
     if (!leads.length) {
       setContent(`
@@ -178,6 +232,11 @@
   async function renderUsers() {
     setHeader("Access control.", "Invite reviewers or change existing user roles.");
 
+    const profiles = await selectTable("profiles", "id,email,full_name,username,role,created_at", {
+      order: { column: "created_at", ascending: false },
+      limit: 20
+    });
+
     setContent(`
       <section class="admin-panel">
         <div class="eyebrow">INVITE ACCESS</div>
@@ -199,6 +258,21 @@
         </div>
 
         <p id="access-message"></p>
+      </section>
+
+      <section class="admin-panel" style="margin-top:18px">
+        <div class="eyebrow">RECENT USERS</div>
+        <h2>Role visibility</h2>
+
+        <div class="admin-list" style="margin-top:16px">
+          ${profiles.map((profile) => `
+            <div class="module-status-card">
+              <span>${escapeHtml(profile.role || "clipper")}</span>
+              <strong>${escapeHtml(profile.full_name || profile.username || profile.email || "User")}</strong>
+              <p>${escapeHtml(profile.email || "No email")}</p>
+            </div>
+          `).join("") || `<p>No users found.</p>`}
+        </div>
       </section>
     `);
 
@@ -238,19 +312,66 @@
     msg.textContent = data?.message || "Saved.";
   }
 
-  function renderPlaceholder(mode) {
-    const titles = {
-      campaigns: "Campaign management.",
-      payouts: "Payout operations."
-    };
+  async function renderCampaigns() {
+    setHeader("Campaign management.", "Monitor campaign inventory and prepare campaign controls.");
 
-    setHeader(titles[mode] || "Admin module.", "The access foundation is ready. We can wire the full module in the next build phase.");
+    const campaigns = await selectTable("campaigns", "*", {
+      order: { column: "created_at", ascending: false }
+    });
 
     setContent(`
-      <section class="admin-panel">
-        <div class="eyebrow">COMING NEXT</div>
-        <h2>${titles[mode] || "Admin module"}</h2>
-        <p>This module is prepared. Next, we connect real campaign creation/editing and payout workflows.</p>
+      <section class="admin-list">
+        ${campaigns.map((campaign) => `
+          <article class="admin-panel">
+            <div class="review-head">
+              <div>
+                <h3>${escapeHtml(campaign.title || campaign.name || "Campaign")}</h3>
+                <p>${escapeHtml(campaign.brand_name || campaign.client || "No brand")} · ${escapeHtml(campaign.currency || "USD")}</p>
+              </div>
+              <span class="badge">${escapeHtml(campaign.status || "active")}</span>
+            </div>
+            <p>${escapeHtml(campaign.description || campaign.rules || "No description added.")}</p>
+          </article>
+        `).join("") || `
+          <article class="admin-panel">
+            <div class="eyebrow">COMING NEXT</div>
+            <h2>No campaigns found.</h2>
+            <p>The campaign manager shell is ready. Next we can add create/edit campaign controls.</p>
+          </article>
+        `}
+      </section>
+    `);
+  }
+
+  async function renderPayouts() {
+    setHeader("Payout operations.", "Track approved earnings and upcoming payout workload.");
+
+    const submissions = await selectTable("submissions", "*", {
+      order: { column: "submitted_at", ascending: false }
+    });
+
+    const approved = submissions.filter((s) => String(s.status || "").toLowerCase().includes("approved"));
+
+    setContent(`
+      <section class="admin-list">
+        ${approved.map((submission) => `
+          <article class="admin-panel">
+            <div class="review-head">
+              <div>
+                <h3>${escapeHtml(submission.campaign_title || submission.title || "Approved submission")}</h3>
+                <p>${escapeHtml(submission.user_email || submission.creator_email || submission.clipper_id || "Creator")} · ${Number(submission.views || 0).toLocaleString()} views</p>
+              </div>
+              <span class="badge approved">${money(submission.earnings || 0)}</span>
+            </div>
+            <p>${escapeHtml(submission.review_note || "No admin note added.")}</p>
+          </article>
+        `).join("") || `
+          <article class="admin-panel">
+            <div class="eyebrow">PAYOUTS</div>
+            <h2>No approved payouts yet.</h2>
+            <p>Approved submissions with earnings will appear here.</p>
+          </article>
+        `}
       </section>
     `);
   }
@@ -271,7 +392,8 @@
       if (mode === "home") await renderHome();
       else if (mode === "leads") await renderLeads();
       else if (mode === "users") await renderUsers();
-      else renderPlaceholder(mode);
+      else if (mode === "campaigns") await renderCampaigns();
+      else if (mode === "payouts") await renderPayouts();
     } catch (error) {
       setContent(`
         <section class="admin-panel">
@@ -296,17 +418,4 @@
   } else {
     bootWhenReady();
   }
-
-  setTimeout(() => {
-    const target = document.getElementById("admin-content");
-
-    if (target && target.textContent.includes("Loading admin dashboard")) {
-      target.innerHTML = `
-        <section class="admin-panel">
-          <h2>Admin page is taking longer than expected.</h2>
-          <p>Refresh once. If this repeats, check browser console and Supabase RLS permissions for this role.</p>
-        </section>
-      `;
-    }
-  }, 8000);
 })();

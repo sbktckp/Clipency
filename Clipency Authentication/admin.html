@@ -13,14 +13,20 @@
         <img src="/assets/clipency-logo.png" alt="Clipency" />
       </a>
 
+      <div class="staff-nav-section-label">Operations</div>
       <nav class="staff-nav">
         <a class="active" href="/admin">Command Center</a>
         <a href="/review">Reviews</a>
         <a href="/admin/campaigns">Campaigns</a>
         <a href="/admin/leads">Leads</a>
         <a href="/admin/payouts">Payouts</a>
+      </nav>
+
+      <div class="staff-nav-section-label">Access</div>
+      <nav class="staff-nav">
         <a href="/admin/users">Users</a>
         <a href="/workspace">Workspace</a>
+        <a href="/dashboard">Clipper View</a>
       </nav>
     </aside>
 
@@ -30,6 +36,16 @@
           <div class="eyebrow">ADMIN COMMAND CENTER</div>
           <h1 id="admin-title">Platform operations.</h1>
           <p id="admin-subtitle">Manage Clipency campaigns, reviews, leads, payouts and access from one place.</p>
+        </div>
+
+        <div class="staff-top-actions">
+          <div class="staff-identity-chip">
+            <span data-staff-initials>A</span>
+            <div>
+              <strong data-staff-name>Admin</strong>
+              <small data-staff-role>admin</small>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -44,6 +60,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabaseClient.js"></script>
   <script src="/access-control.js"></script>
+  <script src="/staff-common.js"></script>
   <script src="/admin.js"></script>
 </body>
 </html>
