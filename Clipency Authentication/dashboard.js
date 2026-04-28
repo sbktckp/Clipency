@@ -1277,3 +1277,224 @@ async function renderPremiumDashboard() {
   });
 })();
 
+
+/* ================================
+   UNIVERSAL DISPLAY NAME + PREMIUM PROFILE
+   ================================ */
+
+async function clipencyGetProfile() {
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user || window._authUser || _authUser;
+
+    if (!user) return { user: null, profile: null };
+
+    const { data: profile } = await window.supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    return { user, profile };
+  } catch (error) {
+    console.warn("Profile fetch failed:", error);
+    return { user: window._authUser || _authUser || null, profile: null };
+  }
+}
+
+function clipencyDisplayName(profile, user) {
+  const meta = user?.user_metadata || {};
+
+  const firstLast = [profile?.first_name, profile?.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return (
+    profile?.full_name ||
+    firstLast ||
+    meta.full_name ||
+    meta.name ||
+    [meta.first_name, meta.last_name].filter(Boolean).join(" ").trim() ||
+    user?.email?.split("@")[0] ||
+    "Creator"
+  );
+}
+
+function clipencyInitial(name) {
+  return (name || "C").trim().charAt(0).toUpperCase();
+}
+
+async function clipencyUpdateVisibleIdentity() {
+  const { user, profile } = await clipencyGetProfile();
+  if (!user) return;
+
+  const name = clipencyDisplayName(profile, user);
+  const emailPrefix = user.email?.split("@")[0];
+
+  document.querySelectorAll("body *").forEach((el) => {
+    if (!el.children.length && el.textContent) {
+      const text = el.textContent.trim();
+
+      if (
+        text === emailPrefix ||
+        text === profile?.username ||
+        text === "patilsmit2006"
+      ) {
+        el.textContent = name;
+      }
+
+      if (text === "Creator" && el.closest("#section-profile")) {
+        el.textContent = name;
+      }
+    }
+  });
+
+  document.querySelectorAll(".avatar, .user-avatar, [class*='avatar']").forEach((el) => {
+    if ((el.textContent || "").trim().length <= 2) {
+      el.textContent = clipencyInitial(name);
+    }
+  });
+}
+
+async function renderPremiumProfilePage() {
+  const section = document.getElementById("section-profile");
+  if (!section || !section.classList.contains("active")) return;
+
+  const { user, profile } = await clipencyGetProfile();
+  if (!user) return;
+
+  const name = clipencyDisplayName(profile, user);
+  const role = profile?.role || "clipper";
+  const email = profile?.email || user.email || "";
+  const country = profile?.country || "India";
+  const username = profile?.username || email.split("@")[0] || "creator";
+
+  let submissions = [];
+  try {
+    const { data } = await window.supabaseClient
+      .from("submissions")
+      .select("id, views, earnings, status, campaign_id")
+      .eq("user_id", user.id);
+
+    submissions = data || [];
+  } catch {}
+
+  const totalViews = submissions.reduce((sum, s) => sum + Number(s.views || 0), 0);
+  const totalEarned = submissions
+    .filter(s => s.status === "approved" || s.status === "paid")
+    .reduce((sum, s) => sum + Number(s.earnings || 0), 0);
+
+  const activeCampaigns = new Set(submissions.map(s => s.campaign_id).filter(Boolean)).size;
+  const approvedClips = submissions.filter(s => s.status === "approved" || s.status === "paid").length;
+
+  section.innerHTML = `
+    <div class="premium-profile-shell">
+      <div class="premium-profile-hero">
+        <div class="premium-avatar-xl">${clipencyInitial(name)}</div>
+
+        <div class="premium-profile-copy">
+          <span class="eyebrow">CREATOR PROFILE</span>
+          <h1>${name}</h1>
+          <p>${email}</p>
+
+          <div class="premium-profile-badges">
+            <span class="premium-pill success">✓ Account Verified</span>
+            <span class="premium-pill">${role.charAt(0).toUpperCase() + role.slice(1)}</span>
+            <span class="premium-pill">${country}</span>
+          </div>
+        </div>
+
+        <div class="profile-score-card">
+          <span>Creator Score</span>
+          <strong>${Math.min(100, Math.round((approvedClips * 12) + (totalViews / 1000)))}</strong>
+          <small>Growing profile</small>
+        </div>
+      </div>
+
+      <div class="premium-profile-grid">
+        <div class="premium-profile-panel">
+          <h2>Performance Identity</h2>
+
+          <div class="profile-info-list">
+            <div class="profile-info-row">
+              <span>Display Name</span>
+              <strong>${name}</strong>
+            </div>
+
+            <div class="profile-info-row">
+              <span>Username</span>
+              <strong>@${username}</strong>
+            </div>
+
+            <div class="profile-info-row">
+              <span>Total Views</span>
+              <strong>${Number(totalViews || 0).toLocaleString()}</strong>
+            </div>
+
+            <div class="profile-info-row">
+              <span>Total Earned</span>
+              <strong>$${Number(totalEarned || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            </div>
+
+            <div class="profile-info-row">
+              <span>Campaigns Submitted</span>
+              <strong>${activeCampaigns}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="premium-profile-panel">
+          <h2>Connected Accounts</h2>
+
+          <div class="connected-premium-list">
+            <div class="connected-premium-row">
+              <div class="connected-premium-icon">♪</div>
+              <div class="connected-premium-main">
+                <strong>TikTok</strong>
+                <span>Ready for campaign submissions</span>
+              </div>
+              <div class="connected-premium-status">Connected</div>
+            </div>
+
+            <div class="connected-premium-row">
+              <div class="connected-premium-icon">◎</div>
+              <div class="connected-premium-main">
+                <strong>Instagram</strong>
+                <span>Ready for reels and creator proof</span>
+              </div>
+              <div class="connected-premium-status">Connected</div>
+            </div>
+
+            <div class="connected-premium-row">
+              <div class="connected-premium-icon">▶</div>
+              <div class="connected-premium-main">
+                <strong>YouTube</strong>
+                <span>Connect Shorts for more campaign access</span>
+              </div>
+              <div class="connected-premium-status muted">Connect</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  clipencyUpdateVisibleIdentity();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(clipencyUpdateVisibleIdentity, 800);
+  setTimeout(clipencyUpdateVisibleIdentity, 1800);
+  setTimeout(renderPremiumProfilePage, 1200);
+});
+
+document.addEventListener("click", () => {
+  setTimeout(clipencyUpdateVisibleIdentity, 300);
+  setTimeout(renderPremiumProfilePage, 500);
+});
+
+window.addEventListener("popstate", () => {
+  setTimeout(clipencyUpdateVisibleIdentity, 300);
+  setTimeout(renderPremiumProfilePage, 500);
+});
