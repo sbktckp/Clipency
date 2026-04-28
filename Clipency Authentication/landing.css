@@ -1696,3 +1696,331 @@ textarea:focus {
     margin-bottom: 24px;
   }
 }
+
+/* =========================================================
+   LANDING PAGE LAYOUT FIX — PREMIUM SCALE + LOGO CONTROL
+   ========================================================= */
+
+/* Kill all previous oversized/fake logo attempts */
+.landing-hero-logo,
+.hero-brand-line,
+.hero-brand-seal,
+.cx-real-logo,
+.cx-real-logo *,
+.cx-real-scissors,
+.cx-real-word,
+.brand-logo-img,
+.brand-mark {
+  display: none !important;
+}
+
+/* Navbar: clean, balanced, premium */
+.landing-nav {
+  min-height: 76px !important;
+  padding: 14px clamp(28px, 5vw, 88px) !important;
+  background: rgba(8, 6, 16, 0.82) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.075) !important;
+}
+
+.brand-lockup,
+.footer-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.clipency-brand-logo {
+  display: block !important;
+  width: 118px !important;
+  height: auto !important;
+  max-height: 42px !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  filter: none !important;
+}
+
+/* Because uploaded logo image has black background, keep it small and intentional */
+.landing-nav .clipency-brand-logo {
+  width: 112px !important;
+  max-height: 42px !important;
+}
+
+.footer-brand .clipency-brand-logo,
+.footer-logo {
+  width: 128px !important;
+  max-height: 48px !important;
+}
+
+/* Hero: reduce excessive height and empty space */
+.hero-section {
+  min-height: calc(100vh - 76px) !important;
+  padding: clamp(56px, 6vw, 82px) clamp(28px, 5vw, 88px) clamp(64px, 7vw, 96px) !important;
+  grid-template-columns: minmax(0, 0.92fr) minmax(360px, 0.72fr) !important;
+  gap: clamp(32px, 5vw, 70px) !important;
+  align-items: center !important;
+}
+
+.hero-section::before {
+  top: 28px !important;
+  bottom: 28px !important;
+  left: clamp(28px, 5vw, 88px) !important;
+  right: clamp(28px, 5vw, 88px) !important;
+  border-radius: 38px !important;
+  opacity: 0.65 !important;
+}
+
+/* Hero typography: premium, not giant/broken */
+.hero-copy h1 {
+  max-width: 850px !important;
+  margin: 14px 0 22px !important;
+  font-size: clamp(58px, 6.4vw, 98px) !important;
+  line-height: 0.91 !important;
+  letter-spacing: -0.078em !important;
+}
+
+.hero-copy h1 span {
+  display: inline !important;
+}
+
+.hero-copy h1::after {
+  width: 96px !important;
+  height: 4px !important;
+  margin-top: 24px !important;
+}
+
+.hero-lede {
+  max-width: 710px !important;
+  font-size: clamp(16px, 1.25vw, 19px) !important;
+  line-height: 1.68 !important;
+  color: rgba(255,255,255,0.64) !important;
+}
+
+.eyebrow {
+  font-size: 11px !important;
+  letter-spacing: 0.20em !important;
+}
+
+/* CTA scale */
+.hero-actions {
+  margin-top: 28px !important;
+}
+
+.primary-btn,
+.secondary-btn {
+  min-height: 50px !important;
+  padding: 0 20px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+}
+
+/* Metrics should not consume too much vertical space */
+.hero-metrics {
+  margin-top: 34px !important;
+  max-width: 830px !important;
+  gap: 10px !important;
+}
+
+.hero-metrics div {
+  padding: 14px !important;
+  border-radius: 18px !important;
+}
+
+.hero-metrics strong {
+  font-size: 14px !important;
+}
+
+.hero-metrics span {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+/* Product mockup should not start too low */
+.hero-product {
+  min-height: 460px !important;
+}
+
+.product-window {
+  inset: 32px 8px auto 0 !important;
+  border-radius: 28px !important;
+  transform: perspective(1000px) rotateY(-3deg) rotateX(2deg) !important;
+}
+
+.campaign-command {
+  padding: 24px !important;
+}
+
+.command-head strong {
+  font-size: 26px !important;
+}
+
+.campaign-brief-card {
+  margin-top: 22px !important;
+}
+
+.flow-line {
+  margin: 20px 0 !important;
+}
+
+.flow-node {
+  min-height: 62px !important;
+  border-radius: 17px !important;
+}
+
+.floating-proof {
+  padding: 15px 16px !important;
+  border-radius: 18px !important;
+  min-width: 156px !important;
+}
+
+.floating-proof strong {
+  font-size: 18px !important;
+}
+
+.proof-a {
+  top: 0 !important;
+  right: 0 !important;
+}
+
+.proof-b {
+  bottom: 52px !important;
+  left: -8px !important;
+}
+
+.proof-c {
+  right: 22px !important;
+  bottom: 0 !important;
+}
+
+/* Section rhythm: tighter, more expensive looking */
+.section {
+  padding: clamp(72px, 8vw, 108px) clamp(28px, 5vw, 88px) !important;
+}
+
+.section h2,
+.narrative-copy h2,
+.client-copy h2,
+.contact-copy h2 {
+  font-size: clamp(36px, 4.4vw, 64px) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.06em !important;
+}
+
+.section-heading {
+  margin-bottom: 30px !important;
+}
+
+/* Cards: smaller, sharper */
+.narrative-stack article,
+.operating-card,
+.proof-card,
+.testimonial-card,
+.team-card,
+.contact-form,
+.client-panel {
+  border-radius: 24px !important;
+}
+
+.operating-card {
+  padding: 24px !important;
+  min-height: 220px !important;
+}
+
+.operating-card.tall {
+  min-height: 460px !important;
+}
+
+.proof-card,
+.testimonial-card,
+.team-card {
+  padding: 24px !important;
+}
+
+.client-panel {
+  padding: 26px !important;
+}
+
+.panel-row strong {
+  font-size: clamp(23px, 2.55vw, 34px) !important;
+}
+
+/* Fix signal strip */
+.signal-strip {
+  padding: 15px clamp(28px, 5vw, 88px) !important;
+  font-size: 12px !important;
+}
+
+/* Footer */
+.landing-footer {
+  padding: 32px clamp(28px, 5vw, 88px) !important;
+}
+
+/* Make black-background logo less ugly until transparent version is uploaded */
+.clipency-brand-logo {
+  mix-blend-mode: screen;
+}
+
+/* On pure dark nav screen blend works well; keep fallback opacity */
+.landing-nav .clipency-brand-logo,
+.landing-footer .clipency-brand-logo {
+  opacity: 0.96 !important;
+}
+
+@media (max-width: 1120px) {
+  .hero-section {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+  }
+
+  .hero-product {
+    min-height: 420px !important;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(52px, 9vw, 84px) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-nav {
+    min-height: 70px !important;
+    padding: 12px 18px !important;
+  }
+
+  .clipency-brand-logo {
+    width: 102px !important;
+    max-height: 38px !important;
+  }
+
+  .hero-section {
+    padding: 46px 20px 60px !important;
+  }
+
+  .hero-section::before {
+    display: none !important;
+  }
+
+  .hero-copy h1 {
+    font-size: 48px !important;
+    line-height: 0.94 !important;
+  }
+
+  .hero-product {
+    display: none !important;
+  }
+
+  .hero-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .section {
+    padding: 64px 20px !important;
+  }
+}
