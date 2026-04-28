@@ -8,6 +8,29 @@
     message.className = `form-message ${type || ""}`;
   }
 
+  function revealOnScroll() {
+    const items = document.querySelectorAll(
+      ".system-card, .insight-card, .process-step, .testimonial-card, .team-card, .contact-form, .client-panel"
+    );
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = "1";
+          entry.target.style.transform = "translateY(0)";
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    items.forEach((item) => {
+      item.style.opacity = "0";
+      item.style.transform = "translateY(16px)";
+      item.style.transition = "opacity 520ms ease, transform 520ms ease";
+      observer.observe(item);
+    });
+  }
+
   if (form) {
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
@@ -56,5 +79,11 @@
         button.style.opacity = "1";
       }
     });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", revealOnScroll);
+  } else {
+    revealOnScroll();
   }
 })();
