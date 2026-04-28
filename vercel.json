@@ -1,3 +1,36 @@
 {
-  "outputDirectory": "Clipency Authentication"
+  "rewrites": [
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html?page=campaigns"
+    },
+    {
+      "source": "/campaigns",
+      "destination": "/dashboard.html?page=campaigns"
+    },
+    {
+      "source": "/stats",
+      "destination": "/dashboard.html?page=stats"
+    },
+    {
+      "source": "/payouts",
+      "destination": "/dashboard.html?page=payouts"
+    },
+    {
+      "source": "/wallet",
+      "destination": "/dashboard.html?page=wallet"
+    },
+    {
+      "source": "/profile",
+      "destination": "/dashboard.html?page=profile"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/index.html"
+    }
+  ]
 }

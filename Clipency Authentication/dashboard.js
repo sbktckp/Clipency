@@ -1002,3 +1002,136 @@ document.addEventListener("DOMContentLoaded", () => {
   setTimeout(loadLiveCampaignsFromSupabase, 800);
 });
 
+
+
+
+/* =========================
+   PREMIUM CLEAN DASHBOARD ROUTING
+   Routes:
+   /dashboard -> Campaigns
+   /campaigns -> Campaigns
+   /stats -> Stats
+   /payouts -> Payouts
+   /wallet -> Wallet
+   /profile -> Profile
+   ========================= */
+
+(function setupPremiumCleanRoutes() {
+  const routeMap = {
+    "/dashboard": "campaigns",
+    "/campaigns": "campaigns",
+    "/stats": "stats",
+    "/payouts": "payouts",
+    "/wallet": "wallet",
+    "/profile": "profile"
+  };
+
+  const pageToPath = {
+    campaigns: "/dashboard",
+    stats: "/stats",
+    payouts: "/payouts",
+    wallet: "/wallet",
+    profile: "/profile"
+  };
+
+  const routeLabels = {
+    campaigns: ["campaigns", "campaign"],
+    stats: ["stats", "statistics"],
+    payouts: ["payouts", "payout"],
+    wallet: ["wallet"],
+    profile: ["profile"]
+  };
+
+  function getPageFromUrl() {
+    const path = window.location.pathname.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const queryPage = params.get("page");
+
+    if (routeMap[path]) return routeMap[path];
+    if (queryPage && pageToPath[queryPage]) return queryPage;
+
+    return "campaigns";
+  }
+
+  function findSidebarItem(page) {
+    const labels = routeLabels[page] || routeLabels.campaigns;
+
+    const items = Array.from(
+      document.querySelectorAll(
+        "button, a, .nav-item, .sidebar-item, [data-section], [data-page], [data-tab]"
+      )
+    );
+
+    return items.find((el) => {
+      const text = (el.textContent || "").trim().toLowerCase();
+      const section = (el.dataset.section || "").toLowerCase();
+      const pageName = (el.dataset.page || "").toLowerCase();
+      const tab = (el.dataset.tab || "").toLowerCase();
+      const joined = `${text} ${section} ${pageName} ${tab}`;
+
+      return labels.some(label => joined.includes(label));
+    });
+  }
+
+  function openPage(page, push = true) {
+    const cleanPage = pageToPath[page] ? page : "campaigns";
+    const btn = findSidebarItem(cleanPage);
+
+    if (btn) btn.click();
+
+    const targetPath = pageToPath[cleanPage];
+
+    if (push && window.location.pathname !== targetPath) {
+      window.history.pushState({ page: cleanPage }, "", targetPath);
+    }
+
+    document.title = `Clipency | ${cleanPage.charAt(0).toUpperCase() + cleanPage.slice(1)}`;
+  }
+
+  function inferPageFromClick(el) {
+    const text = (el.textContent || "").trim().toLowerCase();
+    const section = (el.dataset.section || "").toLowerCase();
+    const pageName = (el.dataset.page || "").toLowerCase();
+    const tab = (el.dataset.tab || "").toLowerCase();
+    const joined = `${text} ${section} ${pageName} ${tab}`;
+
+    for (const page of Object.keys(routeLabels)) {
+      if (routeLabels[page].some(label => joined.includes(label))) {
+        return page;
+      }
+    }
+
+    return null;
+  }
+
+  document.addEventListener("click", function (event) {
+    const target = event.target.closest(
+      "button, a, .nav-item, .sidebar-item, [data-section], [data-page], [data-tab]"
+    );
+
+    if (!target) return;
+
+    const page = inferPageFromClick(target);
+
+    if (page) {
+      setTimeout(() => {
+        const targetPath = pageToPath[page];
+        if (window.location.pathname !== targetPath) {
+          window.history.pushState({ page }, "", targetPath);
+        }
+        document.title = `Clipency | ${page.charAt(0).toUpperCase() + page.slice(1)}`;
+      }, 80);
+    }
+  });
+
+  window.addEventListener("popstate", function () {
+    openPage(getPageFromUrl(), false);
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(() => {
+      openPage(getPageFromUrl(), false);
+    }, 1000);
+  });
+})();
+
