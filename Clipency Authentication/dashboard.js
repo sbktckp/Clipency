@@ -1,3 +1,15 @@
+
+function getCreatorDisplayName(profile, user) {
+  return (
+    profile?.full_name ||
+    profile?.first_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Creator"
+  );
+}
+
 /* ── Data ── */
 let campaigns = [
   { id:1, title:"WoT Heat", type:"Clipping", rpm:1250, budget:4785, budgetUsed:0, creators:13, tags:["Clipping"], color:"#6C5DD3", platforms:["TikTok","YouTube"], genre:"Gaming", views:[120,200,180,350,420,500,610,720,800,950,1100,1250] },
