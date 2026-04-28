@@ -4,6 +4,27 @@
 
 <script>
   (function () {
+    var keys = ["clipency.selectedCurrency", "clipency.currency", "selectedCurrency", "currency"];
+    var selected = "USD";
+
+    for (var i = 0; i < keys.length; i++) {
+      var value = localStorage.getItem(keys[i]);
+
+      if (["USD","INR","EUR","GBP","JPY","AUD","CAD"].indexOf(String(value || "").toUpperCase()) !== -1) {
+        selected = String(value).toUpperCase();
+        break;
+      }
+    }
+
+    if (selected !== "USD") {
+      document.documentElement.classList.add("cx-currency-booting");
+    }
+  })();
+</script>
+
+
+<script>
+  (function () {
     var protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
 
     if (protectedRoutes.indexOf(window.location.pathname) !== -1) {

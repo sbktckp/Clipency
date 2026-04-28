@@ -1,21 +1,54 @@
 (function () {
-  if (window.__clipencyLiveCurrencyLoaded) return;
-  window.__clipencyLiveCurrencyLoaded = true;
+  if (window.__clipencyRealLiveCurrencyLoaded) return;
+  window.__clipencyRealLiveCurrencyLoaded = true;
 
   const SUPPORTED = ["USD", "INR", "EUR", "GBP", "JPY", "AUD", "CAD"];
-  const RATE_KEY = "clipency.liveCurrency.rates";
-  const CURRENCY_KEY = "clipency.selectedCurrency";
-  const CACHE_MAX_AGE = 15 * 60 * 1000;
+  const SYMBOLS = {
+    USD: "$",
+    INR: "₹",
+    EUR: "€",
+    GBP: "£",
+    JPY: "¥",
+    AUD: "A$",
+    CAD: "C$"
+  };
+
+  const CURRENCY_KEYS = [
+    "clipency.selectedCurrency",
+    "clipency.currency",
+    "selectedCurrency",
+    "currency"
+  ];
+
+  const RATE_KEY = "clipency.realLiveCurrency.rates.v2";
+  const CACHE_MAX_AGE = 5 * 60 * 1000;
 
   const originalText = new WeakMap();
 
-  let currentCurrency = localStorage.getItem(CURRENCY_KEY) || "USD";
+  let currentCurrency = getInitialCurrency();
   let rates = { USD: 1 };
-  let converting = false;
-  let debounceTimer = null;
+  let isConverting = false;
+  let booted = false;
 
-  function isSupported(code) {
-    return SUPPORTED.includes(String(code || "").toUpperCase());
+  function getInitialCurrency() {
+    for (const key of CURRENCY_KEYS) {
+      const value = localStorage.getItem(key);
+      if (SUPPORTED.includes(String(value || "").toUpperCase())) {
+        return String(value).toUpperCase();
+      }
+    }
+
+    return "USD";
+  }
+
+  function saveCurrency(code) {
+    currentCurrency = code;
+
+    CURRENCY_KEYS.forEach((key) => {
+      localStorage.setItem(key, code);
+    });
+
+    document.documentElement.setAttribute("data-clipency-currency", code);
   }
 
   function safeJsonParse(value) {
@@ -45,37 +78,58 @@
     localStorage.setItem(RATE_KEY, JSON.stringify(payload));
   }
 
-  async function fetchFrankfurterRates() {
-    const targets = SUPPORTED.filter((code) => code !== "USD").join(",");
-    const res = await fetch(`https://api.frankfurter.app/latest?from=USD&to=${targets}`, {
+  async function fetchPrimaryRates() {
+    const response = await fetch("https://open.er-api.com/v6/latest/USD", {
       cache: "no-store"
     });
 
-    if (!res.ok) throw new Error("Frankfurter rate fetch failed.");
+    if (!response.ok) {
+      throw new Error("Primary currency API failed.");
+    }
 
-    const data = await res.json();
+    const data = await response.json();
 
-    return {
-      USD: 1,
-      ...data.rates
-    };
-  }
-
-  async function fetchOpenExchangeFallback() {
-    const res = await fetch("https://open.er-api.com/v6/latest/USD", {
-      cache: "no-store"
-    });
-
-    if (!res.ok) throw new Error("Open exchange rate fetch failed.");
-
-    const data = await res.json();
+    if (!data || !data.rates) {
+      throw new Error("Primary currency API returned invalid data.");
+    }
 
     const nextRates = { USD: 1 };
 
     SUPPORTED.forEach((code) => {
       if (code === "USD") return;
-      if (data.rates && data.rates[code]) {
-        nextRates[code] = data.rates[code];
+
+      if (Number(data.rates[code])) {
+        nextRates[code] = Number(data.rates[code]);
+      }
+    });
+
+    return nextRates;
+  }
+
+  async function fetchFallbackRates() {
+    const response = await fetch("https://latest.currency-api.pages.dev/v1/currencies/usd.json", {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Fallback currency API failed.");
+    }
+
+    const data = await response.json();
+
+    if (!data || !data.usd) {
+      throw new Error("Fallback currency API returned invalid data.");
+    }
+
+    const nextRates = { USD: 1 };
+
+    SUPPORTED.forEach((code) => {
+      if (code === "USD") return;
+
+      const value = data.usd[code.toLowerCase()];
+
+      if (Number(value)) {
+        nextRates[code] = Number(value);
       }
     });
 
@@ -86,75 +140,83 @@
     const cached = getCachedRates();
 
     if (!force && cached && Date.now() - cached.fetchedAt < CACHE_MAX_AGE) {
-      rates = cached.rates;
+      rates = {
+        USD: 1,
+        ...cached.rates
+      };
+
       return rates;
     }
 
     try {
-      rates = await fetchFrankfurterRates();
-      saveRates(rates, "frankfurter");
+      rates = await fetchPrimaryRates();
+      saveRates(rates, "open.er-api.com");
       return rates;
     } catch (primaryError) {
       try {
-        rates = await fetchOpenExchangeFallback();
-        saveRates(rates, "open-er-api");
+        rates = await fetchFallbackRates();
+        saveRates(rates, "currency-api.pages.dev");
         return rates;
       } catch (fallbackError) {
         if (cached?.rates) {
-          rates = cached.rates;
-          console.warn("Using last fetched currency rates because live fetch failed.");
+          rates = {
+            USD: 1,
+            ...cached.rates
+          };
+
+          console.warn("Using cached FX rates because live fetch failed.");
           return rates;
         }
 
         rates = { USD: 1 };
-        console.warn("Currency rates unavailable. Keeping USD amounts.");
+        console.warn("No live FX rates available. USD display retained.");
         return rates;
       }
     }
   }
 
-  function amountFromMatch(rawNumber, suffix) {
-    const base = Number(String(rawNumber || "0").replace(/,/g, ""));
+  function parseUsdAmount(number, suffix) {
+    const clean = Number(String(number || "0").replace(/,/g, ""));
 
-    if (String(suffix || "").toUpperCase() === "K") return base * 1000;
-    if (String(suffix || "").toUpperCase() === "M") return base * 1000000;
-    if (String(suffix || "").toUpperCase() === "B") return base * 1000000000;
+    if (String(suffix || "").toUpperCase() === "K") return clean * 1000;
+    if (String(suffix || "").toUpperCase() === "M") return clean * 1000000;
+    if (String(suffix || "").toUpperCase() === "B") return clean * 1000000000;
 
-    return base;
+    return clean;
   }
 
-  function formatMoney(usdAmount, sign = "") {
-    const currency = isSupported(currentCurrency) ? currentCurrency : "USD";
-    const rate = rates[currency] || 1;
+  function formatCurrencyFromUsd(usdAmount, plusSign) {
+    const code = SUPPORTED.includes(currentCurrency) ? currentCurrency : "USD";
+    const rate = Number(rates[code] || 1);
     const converted = Number(usdAmount || 0) * rate;
 
-    const formatter = new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+    const formatter = new Intl.NumberFormat(code === "INR" ? "en-IN" : "en-US", {
       style: "currency",
-      currency,
-      maximumFractionDigits: currency === "JPY" ? 0 : 2
+      currency: code,
+      maximumFractionDigits: code === "JPY" ? 0 : 2
     });
 
-    const value = formatter.format(converted);
+    const formatted = formatter.format(converted);
 
-    return sign === "+" ? `+${value}` : value;
+    return plusSign ? `+${formatted}` : formatted;
   }
 
-  function convertTextValue(text) {
+  function convertUsdText(text) {
     if (!text || !text.includes("$")) return text;
 
     return text.replace(/([+])?\$\s*([0-9][0-9,]*(?:\.\d+)?)([KMB])?/gi, function (_, plus, number, suffix) {
-      const usdAmount = amountFromMatch(number, suffix);
-      return formatMoney(usdAmount, plus || "");
+      const usdAmount = parseUsdAmount(number, suffix);
+      return formatCurrencyFromUsd(usdAmount, plus);
     });
   }
 
-  function shouldIgnoreNode(node) {
+  function shouldIgnoreTextNode(node) {
     const parent = node.parentElement;
 
     if (!parent) return true;
 
     if (
-      parent.closest("script, style, textarea, input, select, option, code, pre") ||
+      parent.closest("script, style, input, textarea, select, option, code, pre") ||
       parent.closest(".cx-currency-no-convert") ||
       parent.closest(".classic-form") ||
       parent.closest(".cx-core-form")
@@ -165,10 +227,25 @@
     return false;
   }
 
-  function convertPage() {
-    if (converting) return;
+  function resetConvertedNodesToUsd() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const nodes = [];
 
-    converting = true;
+    while (walker.nextNode()) {
+      nodes.push(walker.currentNode);
+    }
+
+    nodes.forEach((node) => {
+      if (originalText.has(node)) {
+        node.nodeValue = originalText.get(node);
+      }
+    });
+  }
+
+  function convertPageAmounts() {
+    if (!document.body || isConverting) return;
+
+    isConverting = true;
 
     try {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -179,46 +256,73 @@
       }
 
       nodes.forEach((node) => {
-        if (shouldIgnoreNode(node)) return;
+        if (shouldIgnoreTextNode(node)) return;
+
+        const current = node.nodeValue || "";
 
         if (!originalText.has(node)) {
-          originalText.set(node, node.nodeValue);
+          if (current.includes("$")) {
+            originalText.set(node, current);
+          } else {
+            return;
+          }
         }
 
-        const baseText = originalText.get(node);
+        const baseUsdText = originalText.get(node);
 
-        if (!baseText || !baseText.includes("$")) return;
+        if (!baseUsdText || !baseUsdText.includes("$")) return;
 
-        node.nodeValue = currentCurrency === "USD" ? baseText : convertTextValue(baseText);
+        node.nodeValue = currentCurrency === "USD" ? baseUsdText : convertUsdText(baseUsdText);
       });
 
-      updateCurrencyUI();
+      updateCurrencyUi();
     } finally {
-      converting = false;
+      isConverting = false;
+      revealCurrencyBoot();
     }
   }
 
-  function scheduleConvert() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(convertPage, 90);
+  function revealCurrencyBoot() {
+    document.documentElement.classList.remove("cx-currency-booting");
+    document.documentElement.classList.add("cx-currency-ready");
   }
 
-  function getCurrencyFromElement(el) {
-    const text = (el.textContent || "").toUpperCase();
+  function codeFromText(value) {
+    const upper = String(value || "").toUpperCase();
 
-    return SUPPORTED.find((code) => {
-      return new RegExp(`\\b${code}\\b`).test(text);
-    });
+    return SUPPORTED.find((code) => new RegExp(`\\b${code}\\b`).test(upper));
   }
 
-  async function setCurrency(code) {
-    if (!isSupported(code)) return;
+  function clickedCurrencyOption(event) {
+    const sidebar = event.target.closest(".sidebar, .dashboard-sidebar, aside");
 
-    currentCurrency = code.toUpperCase();
-    localStorage.setItem(CURRENCY_KEY, currentCurrency);
+    if (!sidebar) return null;
 
-    await loadRates(true);
-    convertPage();
+    const candidate = event.target.closest("button, a, div, li, span");
+
+    if (!candidate) return null;
+
+    const code = codeFromText(candidate.textContent);
+
+    if (!code) return null;
+
+    return {
+      code,
+      candidate
+    };
+  }
+
+  async function setCurrency(code, forceFetch = false) {
+    const nextCode = String(code || "").toUpperCase();
+
+    if (!SUPPORTED.includes(nextCode)) return;
+
+    saveCurrency(nextCode);
+
+    await loadRates(forceFetch);
+
+    resetConvertedNodesToUsd();
+    convertPageAmounts();
 
     window.dispatchEvent(new CustomEvent("clipency:currency-change", {
       detail: {
@@ -228,89 +332,117 @@
     }));
   }
 
-  function bindCurrencyClicks() {
-    document.addEventListener("click", async function (event) {
-      const sidebar = event.target.closest(".sidebar, .dashboard-sidebar, aside");
+  function bindCurrencySelection() {
+    document.addEventListener("click", function (event) {
+      const match = clickedCurrencyOption(event);
 
-      if (!sidebar) return;
+      if (!match) return;
 
-      const candidate = event.target.closest("button, a, div, li");
+      const { code, candidate } = match;
 
-      if (!candidate) return;
+      // Allow the collapsed current currency row to open normally.
+      if (code === currentCurrency && !candidate.textContent.includes("1.00")) {
+        return;
+      }
 
-      const code = getCurrencyFromElement(candidate);
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
 
-      if (!code) return;
-
-      // Let the existing dropdown open/close naturally, then apply live conversion.
-      setTimeout(() => {
-        setCurrency(code);
-      }, 80);
-    });
+      setCurrency(code, true);
+    }, true);
   }
 
-  function updateCurrencyUI() {
+  function updateCurrencyUi() {
     document.documentElement.setAttribute("data-clipency-currency", currentCurrency);
 
+    const cached = getCachedRates();
+    const source = cached?.source || "live";
+    const rate = rates[currentCurrency] || 1;
+    const symbol = SYMBOLS[currentCurrency] || currentCurrency;
+
+    document.querySelectorAll(".cx-live-currency-indicator").forEach((el) => {
+      el.remove();
+    });
+
+    const sidebar = document.querySelector(".sidebar, .dashboard-sidebar, aside");
+
+    if (sidebar) {
+      const label = Array.from(sidebar.querySelectorAll("*")).find((el) => {
+        return (el.textContent || "").trim().toLowerCase() === "currency";
+      });
+
+      const indicator = document.createElement("div");
+      indicator.className = "cx-live-currency-indicator cx-currency-no-convert";
+
+      if (currentCurrency === "USD") {
+        indicator.textContent = "LIVE FX · USD BASE";
+      } else {
+        indicator.textContent = `LIVE FX · 1 USD = ${symbol}${Number(rate).toLocaleString(currentCurrency === "INR" ? "en-IN" : "en-US", {
+          maximumFractionDigits: currentCurrency === "JPY" ? 0 : 4
+        })} ${currentCurrency}`;
+      }
+
+      if (label) {
+        label.insertAdjacentElement("afterend", indicator);
+      }
+    }
+
     document.querySelectorAll(".sidebar *, .dashboard-sidebar *, aside *").forEach((el) => {
-      const code = getCurrencyFromElement(el);
+      const code = codeFromText(el.textContent);
 
       if (!code) return;
 
       el.classList.toggle("cx-live-currency-active", code === currentCurrency);
     });
-
-    let indicator = document.querySelector(".cx-live-currency-indicator");
-
-    if (!indicator) {
-      const sidebar = document.querySelector(".sidebar, .dashboard-sidebar, aside");
-
-      if (sidebar) {
-        indicator = document.createElement("div");
-        indicator.className = "cx-live-currency-indicator cx-currency-no-convert";
-
-        const currencyLabel = Array.from(sidebar.querySelectorAll("*")).find((el) => {
-          return (el.textContent || "").trim().toLowerCase() === "currency";
-        });
-
-        if (currencyLabel) {
-          currencyLabel.insertAdjacentElement("afterend", indicator);
-        }
-      }
-    }
-
-    const cached = getCachedRates();
-    const sourceText = cached?.source ? `Live rate: ${currentCurrency}` : `Currency: ${currentCurrency}`;
-
-    if (indicator) {
-      indicator.textContent = sourceText;
-    }
   }
 
-  async function boot() {
-    await loadRates(false);
-    bindCurrencyClicks();
-    convertPage();
+  function startObserver() {
+    const observer = new MutationObserver(function () {
+      if (!booted || isConverting) return;
 
-    setInterval(async () => {
-      await loadRates(true);
-      convertPage();
-    }, CACHE_MAX_AGE);
+      // MutationObserver runs before paint, so this prevents visible rollback.
+      convertPageAmounts();
+    });
 
-    new MutationObserver(scheduleConvert).observe(document.documentElement, {
+    observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
       characterData: true
     });
   }
 
+  async function boot() {
+    saveCurrency(currentCurrency);
+
+    await loadRates(false);
+
+    bindCurrencySelection();
+    startObserver();
+
+    booted = true;
+
+    convertPageAmounts();
+
+    setInterval(async function () {
+      await loadRates(true);
+      resetConvertedNodesToUsd();
+      convertPageAmounts();
+    }, CACHE_MAX_AGE);
+  }
+
   window.ClipencyCurrency = {
     setCurrency,
-    getCurrency: () => currentCurrency,
-    getRates: () => rates,
-    refresh: async () => {
+    refresh: async function () {
       await loadRates(true);
-      convertPage();
+      resetConvertedNodesToUsd();
+      convertPageAmounts();
+    },
+    getCurrency: function () {
+      return currentCurrency;
+    },
+    getRates: function () {
+      return rates;
     }
   };
 
