@@ -1,15 +1,12 @@
 (function () {
   let submissions = [];
-  let currentFilter = "all";
+  let campaigns = [];
+  let currentFilter = "pending";
   let searchTerm = "";
   let accessContext = null;
 
   function supabase() {
     return window.supabaseClient;
-  }
-
-  function safe(value, fallback = "—") {
-    return value === null || value === undefined || value === "" ? fallback : value;
   }
 
   function escapeHtml(value) {
@@ -19,6 +16,10 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function safe(value, fallback = "—") {
+    return value === null || value === undefined || value === "" ? fallback : value;
   }
 
   function safeUrl(value) {
@@ -31,16 +32,22 @@
     }
   }
 
+  function money(value) {
+    return `$${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
   function statusClass(status) {
     const value = String(status || "pending").toLowerCase();
 
-    if (value.includes("approved")) return "approved";
-    if (value.includes("reject")) return "rejected";
+    if (value === "approved") return "approved";
+    if (value === "rejected") return "rejected";
+    if (value === "on_hold") return "pending";
+
     return "pending";
   }
 
   function getUrl(row) {
-    return safeUrl(row.submission_url || row.post_url || row.clip_url || row.video_url || row.url || row.link || row.content_url || "");
+    return safeUrl(row.post_url || row.video_url || row.submission_url || row.clip_url || row.url || row.link || "");
   }
 
   function getTitle(row) {
@@ -48,12 +55,25 @@
   }
 
   function getCreator(row) {
-    return row.user_email || row.creator_email || row.email || row.user_id || row.clipper_id || "Unknown";
+    return row.user_email || row.creator_email || row.email || row.clipper_id || row.user_id || "Unknown";
   }
 
-  function money(value) {
-    const num = Number(value || 0);
-    return `$${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  function getCampaign(row) {
+    return campaigns.find((campaign) => campaign.id === row.campaign_id) || null;
+  }
+
+  function estimatedEarnings(row, views) {
+    const campaign = getCampaign(row);
+    const rpm = Number(campaign?.rpm || row.rpm || 0);
+    return (Number(views || 0) / 1000000) * rpm;
+  }
+
+  async function loadCampaigns() {
+    const { data } = await supabase()
+      .from("campaigns")
+      .select("id,title,rpm,currency");
+
+    campaigns = data || [];
   }
 
   async function loadSubmissions() {
@@ -69,9 +89,9 @@
 
   function renderStats() {
     const total = submissions.length;
-    const pending = submissions.filter(s => statusClass(s.status) === "pending").length;
-    const approved = submissions.filter(s => statusClass(s.status) === "approved").length;
-    const rejected = submissions.filter(s => statusClass(s.status) === "rejected").length;
+    const pending = submissions.filter((s) => statusClass(s.status) === "pending").length;
+    const approved = submissions.filter((s) => statusClass(s.status) === "approved").length;
+    const rejected = submissions.filter((s) => statusClass(s.status) === "rejected").length;
 
     document.getElementById("review-stats").innerHTML = `
       <div class="staff-stat"><span>Total</span><strong>${total}</strong></div>
@@ -83,7 +103,9 @@
 
   function filteredRows() {
     return submissions.filter((row) => {
-      const statusMatches = currentFilter === "all" || statusClass(row.status) === currentFilter;
+      const rowStatus = statusClass(row.status);
+      const statusMatches = currentFilter === "all" || rowStatus === currentFilter;
+
       const haystack = [
         getTitle(row),
         getCreator(row),
@@ -111,7 +133,9 @@
       const id = row.id;
       const url = getUrl(row);
       const status = statusClass(row.status);
-      const earnings = Number(row.earnings || 0).toFixed(2);
+      const campaign = getCampaign(row);
+      const views = Number(row.views || 0);
+      const suggested = Number(row.earnings || estimatedEarnings(row, views)).toFixed(2);
       const submittedDate = row.submitted_at || row.created_at;
 
       return `
@@ -120,8 +144,10 @@
             <div>
               <h3>${escapeHtml(getTitle(row))}</h3>
               <p class="review-meta">
-                Creator: ${escapeHtml(getCreator(row))} ·
-                Submitted: ${submittedDate ? new Date(submittedDate).toLocaleString() : "Unknown"}
+                Creator: ${escapeHtml(getCreator(row))}
+                · Platform: ${escapeHtml(safe(row.platform, "Not set"))}
+                · Rate: ${money(campaign?.rpm || 0)} / 1M views
+                · Submitted: ${submittedDate ? new Date(submittedDate).toLocaleString() : "Unknown"}
               </p>
               <div class="review-card-header-line">
                 <span class="badge">${escapeHtml(safe(row.platform, "Platform not set"))}</span>
@@ -137,7 +163,7 @@
 
           <div class="review-actions" style="margin-top:14px">
             ${url ? `<a class="action-btn link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Open proof</a>` : ""}
-            <span class="badge">Earnings: ${money(earnings)}</span>
+            <span class="badge">Current earnings: ${money(row.earnings || 0)}</span>
           </div>
 
           <div class="review-form">
@@ -158,12 +184,12 @@
 
             <label>
               Earnings
-              <input type="number" min="0" step="0.01" data-field="earnings" value="${earnings}" />
+              <input type="number" min="0" step="0.01" data-field="earnings" value="${suggested}" />
             </label>
 
             <label>
               Review note
-              <textarea data-field="review_note" placeholder="Leave a clear note for the team">${escapeHtml(safe(row.review_note, ""))}</textarea>
+              <textarea data-field="review_note" placeholder="Leave a clear note for the team">${escapeHtml(safe(row.admin_note || row.review_note, ""))}</textarea>
             </label>
           </div>
 
@@ -175,20 +201,48 @@
         </article>
       `;
     }).join("");
+
+    bindAutoEarnings();
+  }
+
+  function bindAutoEarnings() {
+    document.querySelectorAll(".review-card").forEach((card) => {
+      const row = submissions.find((s) => String(s.id) === String(card.dataset.id));
+      const viewsInput = card.querySelector('[data-field="views"]');
+      const earningsInput = card.querySelector('[data-field="earnings"]');
+
+      if (!row || !viewsInput || !earningsInput) return;
+
+      viewsInput.addEventListener("input", () => {
+        earningsInput.value = estimatedEarnings(row, viewsInput.value).toFixed(2);
+      });
+    });
   }
 
   async function updateSubmission(card, status) {
     const id = card.getAttribute("data-id");
+
+    const payoutStatus =
+      status === "approved"
+        ? "payout_pending"
+        : status === "rejected"
+          ? "rejected"
+          : "not_ready";
+
+    const note = card.querySelector('[data-field="review_note"]').value || null;
 
     const payload = {
       views: Number(card.querySelector('[data-field="views"]').value || 0),
       likes: Number(card.querySelector('[data-field="likes"]').value || 0),
       comments: Number(card.querySelector('[data-field="comments"]').value || 0),
       earnings: Number(card.querySelector('[data-field="earnings"]').value || 0),
-      review_note: card.querySelector('[data-field="review_note"]').value || null,
+      review_note: note,
+      admin_note: note,
       status,
+      payout_status: payoutStatus,
       reviewed_by: accessContext.user.id,
-      reviewed_at: new Date().toISOString()
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { error } = await supabase()
@@ -255,6 +309,7 @@
     bindEvents();
 
     try {
+      await loadCampaigns();
       await loadSubmissions();
       renderStats();
       renderList();
