@@ -25,3 +25,53 @@ aside span {
   /* this stays harmless unless JS marks exact account label */
 }
 
+
+/* Explicit Profile button after Wallet */
+.cx-profile-nav-link {
+  min-height: 56px;
+  width: calc(100% - 32px);
+  margin: 6px 16px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 18px;
+  color: rgba(255,255,255,0.58);
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 800;
+  transition: background 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.cx-profile-nav-link:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.055);
+}
+
+.cx-profile-nav-link.active,
+body:has(.cx-profile-nav-link[aria-current="page"]) .cx-profile-nav-link.active {
+  color: #ffffff;
+  background: rgba(124,58,237,0.24);
+}
+
+.cx-profile-nav-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  color: #a78bfa;
+  flex: 0 0 auto;
+}
+
+.sidebar-profile,
+.sidebar-user,
+.bottom-profile-card {
+  cursor: pointer;
+}
+
+.sidebar-profile:hover,
+.sidebar-user:hover,
+.bottom-profile-card:hover {
+  border-color: rgba(167,139,250,0.18) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
