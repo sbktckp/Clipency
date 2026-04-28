@@ -9,3 +9,13 @@
 *.backup
 *.backup-*
 *.before-*
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Backups
+*.backup
+*.backup-*
+*.before-*
