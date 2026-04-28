@@ -891,7 +891,8 @@ function renderModal(campaign) {
         platform:       modalPlatform,
         account_handle: modalAccount,
         video_url:      urlInput.value,
-        views:    0,
+        
+            post_url: urlInput.value,views:    0,
         likes:    0,
         comments: 0,
         earnings: 0,
