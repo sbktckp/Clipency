@@ -17,6 +17,7 @@
   }
 
   function installCursor() {
+    if (window.ClipencyCursorInstalled) return;
     if (!cursorDot || !cursorRing || window.matchMedia("(max-width: 700px)").matches) return;
 
     window.addEventListener("mousemove", (event) => {

@@ -103,7 +103,7 @@
     const rows = filteredRows();
 
     if (!rows.length) {
-      target.innerHTML = `<div class="staff-card loading-card">No matching submissions found.</div>`;
+      target.innerHTML = `<div class="staff-card loading-card">No clips match this view yet.</div>`;
       return;
     }
 
@@ -133,10 +133,10 @@
             <span class="badge ${status}">${status}</span>
           </div>
 
-          ${url ? `<div class="review-proof-box">${escapeHtml(url)}</div>` : `<div class="review-proof-box">No proof URL attached.</div>`}
+          ${url ? `<div class="review-proof-box">${escapeHtml(url)}</div>` : `<div class="review-proof-box">No proof link was attached to this submission.</div>`}
 
           <div class="review-actions" style="margin-top:14px">
-            ${url ? `<a class="action-btn link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Open proof URL</a>` : ""}
+            ${url ? `<a class="action-btn link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Open proof</a>` : ""}
             <span class="badge">Earnings: ${money(earnings)}</span>
           </div>
 
@@ -163,14 +163,14 @@
 
             <label>
               Review note
-              <textarea data-field="review_note" placeholder="Add a short review note">${escapeHtml(safe(row.review_note, ""))}</textarea>
+              <textarea data-field="review_note" placeholder="Leave a clear note for the team">${escapeHtml(safe(row.review_note, ""))}</textarea>
             </label>
           </div>
 
           <div class="review-actions">
             <button class="action-btn primary" data-action="approved">Approve</button>
             <button class="action-btn danger" data-action="rejected">Reject</button>
-            <button class="action-btn" data-action="pending">Save pending</button>
+            <button class="action-btn" data-action="pending">Keep pending</button>
           </div>
         </article>
       `;
@@ -260,7 +260,7 @@
       renderList();
     } catch (error) {
       document.getElementById("review-list").innerHTML = `
-        <div class="staff-card loading-card">Could not load review queue: ${escapeHtml(error.message || "Unknown error")}</div>
+        <div class="staff-card loading-card">The review queue could not load: ${escapeHtml(error.message || "Unknown error")}</div>
       `;
     }
   }

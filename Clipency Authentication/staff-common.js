@@ -154,3 +154,36 @@
     boot();
   }
 })();
+
+/* Card glow tracking */
+(function () {
+  function installCardGlow() {
+    const cards = document.querySelectorAll(".review-card, .admin-panel, .workspace-card, .finance-launcher-hero");
+
+    cards.forEach((card) => {
+      if (card.dataset.cardGlowReady) return;
+      card.dataset.cardGlowReady = "true";
+
+      card.addEventListener("mousemove", (event) => {
+        const rect = card.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+        card.style.setProperty("--cx-card-x", `${x}%`);
+        card.style.setProperty("--cx-card-y", `${y}%`);
+      });
+    });
+  }
+
+  const observer = new MutationObserver(installCardGlow);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      installCardGlow();
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  } else {
+    installCardGlow();
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+})();

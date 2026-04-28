@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clipency | Review Clips</title>
   <link rel="stylesheet" href="/staff.css" />
+<link rel="stylesheet" href="/clipency-cursor.css" />
 </head>
 <body>
   <div class="staff-shell">
@@ -32,8 +33,8 @@
       <header class="staff-topbar">
         <div>
           <div class="eyebrow">CLIP REVIEW</div>
-          <h1>Review submitted clips.</h1>
-          <p>Open proof links, enter performance metrics, approve or reject submissions and add review notes.</p>
+          <h1>Let’s clear the clip queue.</h1>
+          <p>Open proof links, verify the numbers, approve what is clean, reject what is not, and leave notes the team can actually use.</p>
         </div>
 
         <div class="staff-top-actions">
@@ -50,7 +51,7 @@
       <section class="staff-grid" id="review-stats"></section>
 
       <div class="review-toolbar">
-        <input id="review-search" placeholder="Search by campaign, creator, platform or URL…" />
+        <input id="review-search" placeholder="Search campaign, creator, platform or proof link…" />
         <div class="filter-row" id="review-filters">
           <button class="active" data-filter="all">All</button>
           <button data-filter="pending">Pending</button>
@@ -70,5 +71,6 @@
   <script src="/access-control.js"></script>
   <script src="/staff-common.js"></script>
   <script src="/review.js"></script>
+<script src="/clipency-cursor.js"></script>
 </body>
 </html>

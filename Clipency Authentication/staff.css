@@ -949,3 +949,99 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   FINAL COHESION POLISH
+   ========================================================= */
+
+.staff-main,
+.workspace-inner {
+  animation: cxSoftEnter 520ms ease both;
+}
+
+@keyframes cxSoftEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.staff-nav a,
+.workspace-card,
+.admin-panel,
+.review-card,
+.finance-launcher-hero,
+.finance-launcher-side,
+.staff-stat,
+.action-btn {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.staff-nav a:hover,
+.workspace-card:hover,
+.admin-panel:hover,
+.review-card:hover,
+.action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.staff-topbar h1,
+.workspace-header h1,
+.finance-launcher-hero h2 {
+  text-wrap: balance;
+}
+
+.staff-topbar p,
+.workspace-header p,
+.finance-launcher-hero p,
+.admin-panel p,
+.review-card p {
+  text-wrap: pretty;
+}
+
+.staff-nav a.active {
+  box-shadow: inset 0 0 0 1px rgba(167,139,250,0.15), 0 14px 34px rgba(124,58,237,0.12);
+}
+
+.action-btn.primary {
+  box-shadow: 0 16px 42px rgba(124,58,237,0.24);
+}
+
+.review-card,
+.admin-panel,
+.workspace-card,
+.finance-launcher-hero,
+.finance-launcher-side {
+  isolation: isolate;
+}
+
+.review-card::after,
+.admin-panel::after,
+.workspace-card::after,
+.finance-launcher-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--cx-card-x, 50%) var(--cx-card-y, 0%), rgba(167,139,250,0.12), transparent 32%);
+  opacity: 0;
+  transition: opacity 180ms ease;
+  z-index: 0;
+}
+
+.review-card:hover::after,
+.admin-panel:hover::after,
+.workspace-card:hover::after,
+.finance-launcher-hero:hover::after {
+  opacity: 1;
+}

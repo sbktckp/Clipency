@@ -107,7 +107,7 @@
   }
 
   async function renderHome() {
-    setHeader("Platform operations.", "Your command center for campaigns, reviews, leads, payouts and access.");
+    setHeader("Platform operations.", "A calm command center for the work that keeps Clipency moving.");
 
     const submissions = await selectTable("submissions", "*", {
       order: { column: "submitted_at", ascending: false },
@@ -134,25 +134,25 @@
 
       <section class="admin-panel">
         <div class="eyebrow">LIVE OPERATING LAYER</div>
-        <h2>What needs attention right now</h2>
+        <h2>What needs attention today</h2>
 
         <div class="module-status-grid">
           <div class="module-status-card">
             <span>Pending review</span>
             <strong>${pending}</strong>
-            <p>Submissions waiting for admin or reviewer action.</p>
+            <p>Clips waiting for someone to verify and clear them.</p>
           </div>
 
           <div class="module-status-card">
             <span>Approved value</span>
             <strong>${money(approvedValue)}</strong>
-            <p>Total approved creator earnings visible to admin.</p>
+            <p>Approved creator value that finance can act on.</p>
           </div>
 
           <div class="module-status-card">
             <span>New leads</span>
             <strong>${leads.length}</strong>
-            <p>Recent inquiries from the public landing page.</p>
+            <p>Fresh client interest waiting for follow-up.</p>
           </div>
         </div>
       </section>
@@ -161,32 +161,32 @@
         <a class="admin-panel" href="/review">
           <div class="eyebrow">REVIEW QUEUE</div>
           <h2>Review submitted clips</h2>
-          <p>Open proof URLs, enter metrics, approve or reject submissions and add notes.</p>
+          <p>Verify proof, update metrics and clear the review queue with confidence.</p>
         </a>
 
         <a class="admin-panel" href="/admin/leads">
           <div class="eyebrow">CLIENT PIPELINE</div>
           <h2>View campaign inquiries</h2>
-          <p>Every contact form submission appears here for admin follow-up.</p>
+          <p>Every serious campaign inquiry lands here so the team can follow up quickly.</p>
         </a>
 
         <a class="admin-panel" href="/admin/campaigns">
           <div class="eyebrow">CAMPAIGNS</div>
           <h2>Campaign management</h2>
-          <p>Review active campaigns and prepare campaign creation controls in the next build phase.</p>
+          <p>See the campaign layer now; creation and edit controls can be wired next.</p>
         </a>
 
         <a class="admin-panel" href="/admin/users">
           <div class="eyebrow">ACCESS</div>
           <h2>User roles</h2>
-          <p>Add admin emails, invite reviewers and manage access cleanly.</p>
+          <p>Invite reviewers, add admins and keep access clean before the team grows.</p>
         </a>
       </div>
     `);
   }
 
   async function renderLeads() {
-    setHeader("Client leads.", "Campaign inquiries submitted from the public landing page.");
+    setHeader("Client leads.", "People who reached out from the website, organised for follow-up.");
     setContent(`<div class="staff-card loading-card">Loading leads securely…</div>`);
 
     const leads = await selectTable("contact_leads", "*", {
@@ -241,7 +241,7 @@
       <section class="admin-panel">
         <div class="eyebrow">INVITE ACCESS</div>
         <h2>Add admin or reviewer email</h2>
-        <p>Invited users receive their role automatically after signup. Existing users can be updated below.</p>
+        <p>Invite someone before they join, or update an existing teammate’s role instantly.</p>
 
         <div class="admin-two">
           <input class="admin-input" id="access-email" placeholder="person@example.com" />
@@ -313,7 +313,7 @@
   }
 
   async function renderCampaigns() {
-    setHeader("Campaign management.", "Monitor campaign inventory and prepare campaign controls.");
+    setHeader("Campaign management.", "Keep campaign finance, status and operations visible while we prepare full controls.");
 
     const campaigns = await selectTable("campaigns", "*", {
       order: { column: "created_at", ascending: false }
@@ -344,7 +344,7 @@
   }
 
   async function renderPayouts() {
-    setHeader("Payout operations.", "Track approved earnings and upcoming payout workload.");
+    setHeader("Payout operations.", "See approved creator value and what may need payout attention next.");
 
     const submissions = await selectTable("submissions", "*", {
       order: { column: "submitted_at", ascending: false }
