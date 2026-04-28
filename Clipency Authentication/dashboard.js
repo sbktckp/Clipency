@@ -252,7 +252,7 @@ function renderCampaigns() {
         <div style="flex:1;min-width:0">
           <div class="card-title">${c.title}</div>
           <div class="tag-row">
-            ${c.tags.map(t=>`<span class="tag">${t}</span>`).join("")}
+            ${[...new Set(c.tags)].map(t=>`<span class="tag">${t}</span>`).join("")}
             <span class="tag tag-green">New</span>
           </div>
         </div>
@@ -286,7 +286,7 @@ function buildDetail(c) {
     <div class="detail-header">
       <button class="back-btn">←</button>
       <div><p class="eyebrow">CAMPAIGN</p><h2 style="margin:0;font-size:22px;font-weight:800">${c.title}</h2></div>
-      <div style="margin-left:auto;display:flex;gap:8px">${c.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+      <div style="margin-left:auto;display:flex;gap:8px">${[...new Set(c.tags)].map(t=>`<span class="tag">${t}</span>`).join("")}</div>
     </div>
     <div class="detail-grid">
       <div class="card">
@@ -1008,38 +1008,190 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
 /* =========================
-   CLIPENCY PREMIUM ROUTING
-   /dashboard = Campaigns landing page
-   /stats = Stats
-   /payouts = Payouts
-   /wallet = Wallet
-   /profile = Profile
+   PREMIUM DASHBOARD OVERVIEW
+   ========================= */
+
+function clipencyMoney(amount) {
+  const n = Number(amount || 0);
+  return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function clipencyCompact(n) {
+  n = Number(n || 0);
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+}
+
+function getRecommendedCampaigns(submissions = []) {
+  const approved = submissions.filter(s => s.status === "approved");
+  const bestCampaignIds = new Set(approved.map(s => s.campaign_id).filter(Boolean));
+
+  const recommended = campaigns
+    .map(c => {
+      let score = 0;
+
+      if (bestCampaignIds.has(c.id)) score += 40;
+      score += Number(c.rpm || 0) / 40;
+      score += Number(c.creators || 0) / 10;
+
+      if ((c.tags || []).some(t => ["Music", "Clipping", "Edits"].includes(t))) score += 8;
+
+      return { ...c, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  return recommended;
+}
+
+async function renderPremiumDashboard() {
+  const root = document.getElementById("premium-dashboard-content");
+  if (!root) return;
+
+  let submissions = [];
+
+  try {
+    if (window.supabaseClient && _authUser) {
+      const { data, error } = await window.supabaseClient
+        .from("submissions")
+        .select("id, campaign_id, campaign_title, platform, views, likes, comments, earnings, status, submitted_at")
+        .eq("user_id", _authUser.id)
+        .order("submitted_at", { ascending: false });
+
+      if (!error && data) submissions = data;
+    }
+  } catch (err) {
+    console.warn("Dashboard summary fetch failed:", err);
+  }
+
+  const totalViews = submissions.reduce((sum, s) => sum + Number(s.views || 0), 0);
+  const approvedEarnings = submissions
+    .filter(s => s.status === "approved" || s.status === "paid")
+    .reduce((sum, s) => sum + Number(s.earnings || 0), 0);
+
+  const activeCampaigns = new Set(submissions.map(s => s.campaign_id).filter(Boolean)).size;
+  const pendingSubmissions = submissions.filter(s => s.status === "pending").length;
+  const recommended = getRecommendedCampaigns(submissions);
+
+  root.innerHTML = `
+    <div class="overview-grid">
+      <div class="overview-card hero-card">
+        <span class="card-label">Total Views</span>
+        <strong>${clipencyCompact(totalViews)}</strong>
+        <p>Generated across all submitted clips.</p>
+      </div>
+
+      <div class="overview-card hero-card">
+        <span class="card-label">Approved Earnings</span>
+        <strong>${clipencyMoney(approvedEarnings)}</strong>
+        <p>Cleared earnings from reviewed submissions.</p>
+      </div>
+
+      <div class="overview-card hero-card">
+        <span class="card-label">Active Campaigns</span>
+        <strong>${activeCampaigns}</strong>
+        <p>Campaigns you have submitted to.</p>
+      </div>
+
+      <div class="overview-card hero-card">
+        <span class="card-label">Pending Review</span>
+        <strong>${pendingSubmissions}</strong>
+        <p>Clips waiting for approval.</p>
+      </div>
+    </div>
+
+    <div class="dashboard-split">
+      <div class="overview-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">SMART MATCHING</span>
+            <h2>Best campaigns for you</h2>
+          </div>
+          <a class="premium-link" href="/campaigns">View all campaigns →</a>
+        </div>
+
+        <div class="recommended-list">
+          ${recommended.map(c => `
+            <div class="recommended-card">
+              <div class="campaign-mark" style="border-color:${c.color || '#6C5DD3'}">
+                ♫
+              </div>
+              <div class="recommended-main">
+                <h3>${c.title}</h3>
+                <p>${[...new Set(c.tags || [])].join(" · ") || c.genre || "Campaign"}</p>
+              </div>
+              <div class="recommended-metric">
+                <span>${clipencyMoney(c.rpm)}</span>
+                <small>per 1M views</small>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="overview-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">RECENT ACTIVITY</span>
+            <h2>Your latest clips</h2>
+          </div>
+          <a class="premium-link" href="/stats">Open stats →</a>
+        </div>
+
+        <div class="activity-list">
+          ${
+            submissions.length
+              ? submissions.slice(0, 5).map(s => `
+                  <div class="activity-row">
+                    <div>
+                      <strong>${s.campaign_title || "Campaign"}</strong>
+                      <span>${s.platform || "Submitted"} · ${new Date(s.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    </div>
+                    <div class="activity-status ${s.status || "pending"}">${s.status || "pending"}</div>
+                  </div>
+                `).join("")
+              : `<div class="empty-state">No clips submitted yet. Start with a campaign that matches your audience.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================
+   CLEAN PREMIUM ROUTING
    ========================= */
 
 (function setupClipencyPremiumRoutes() {
   const routeMap = {
-    "/dashboard": "campaigns",
+    "/dashboard": "dashboard",
     "/campaigns": "campaigns",
     "/stats": "stats",
-    "/payouts": "payouts",
-    "/wallet": "wallet",
+    "/payouts": "payout",
+    "/wallet": "payment",
     "/profile": "profile"
   };
 
   const pageToPath = {
-    campaigns: "/dashboard",
+    dashboard: "/dashboard",
+    campaigns: "/campaigns",
     stats: "/stats",
-    payouts: "/payouts",
-    wallet: "/wallet",
+    payout: "/payouts",
+    payment: "/wallet",
     profile: "/profile"
   };
 
   const labels = {
-    campaigns: ["campaigns", "campaign", "dashboard"],
+    dashboard: ["dashboard", "overview"],
+    campaigns: ["campaigns", "campaign"],
     stats: ["stats", "statistics"],
-    payouts: ["payouts", "payout"],
-    wallet: ["wallet"],
+    payout: ["payouts", "payout"],
+    payment: ["wallet", "payment"],
     profile: ["profile"]
   };
 
@@ -1050,37 +1202,39 @@ document.addEventListener("DOMContentLoaded", () => {
     if (routeMap[path]) return routeMap[path];
     if (query && pageToPath[query]) return query;
 
-    return "campaigns";
-  }
-
-  function findNavItem(page) {
-    const accepted = labels[page] || labels.campaigns;
-
-    const items = Array.from(
-      document.querySelectorAll(
-        "button, a, .nav-item, .sidebar-item, [data-section], [data-page], [data-tab]"
-      )
-    );
-
-    return items.find((el) => {
-      const text = (el.textContent || "").trim().toLowerCase();
-      const data = [
-        el.dataset.section || "",
-        el.dataset.page || "",
-        el.dataset.tab || ""
-      ].join(" ").toLowerCase();
-
-      const combined = `${text} ${data}`;
-
-      return accepted.some((word) => combined.includes(word));
-    });
+    return "dashboard";
   }
 
   function openPage(page, push = true) {
-    const cleanPage = pageToPath[page] ? page : "campaigns";
-    const nav = findNavItem(cleanPage);
+    const cleanPage = pageToPath[page] ? page : "dashboard";
 
-    if (nav) nav.click();
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+
+    const section = document.getElementById("section-" + cleanPage);
+    if (section) section.classList.add("active");
+
+    const nav = Array.from(document.querySelectorAll(".nav-item")).find(el => {
+      const text = (el.textContent || "").toLowerCase();
+      const data = (el.dataset.section || "").toLowerCase();
+      return (labels[cleanPage] || []).some(word => text.includes(word) || data.includes(word));
+    });
+
+    if (nav) nav.classList.add("active");
+
+    activeSection = cleanPage;
+
+    if (cleanPage === "dashboard") renderPremiumDashboard();
+    if (cleanPage === "campaigns") {
+      activeCampaign = null;
+      renderCampaigns();
+    }
+    if (cleanPage === "stats") renderStatsChart();
+    if (cleanPage === "payout") {
+      renderPayoutSection();
+      renderTransactions();
+    }
+    if (cleanPage === "payment") renderPayments();
 
     const targetPath = pageToPath[cleanPage] || "/dashboard";
 
@@ -1088,59 +1242,26 @@ document.addEventListener("DOMContentLoaded", () => {
       window.history.pushState({ page: cleanPage }, "", targetPath);
     }
 
-    const titleName = cleanPage === "campaigns" ? "Dashboard" : cleanPage.charAt(0).toUpperCase() + cleanPage.slice(1);
+    const titleName = cleanPage === "dashboard" ? "Dashboard" : cleanPage.charAt(0).toUpperCase() + cleanPage.slice(1);
     document.title = `Clipency | ${titleName}`;
   }
 
-  function inferClickedPage(el) {
-    const text = (el.textContent || "").trim().toLowerCase();
-    const data = [
-      el.dataset.section || "",
-      el.dataset.page || "",
-      el.dataset.tab || ""
-    ].join(" ").toLowerCase();
+  document.addEventListener("click", function(event) {
+    const nav = event.target.closest(".nav-item");
+    if (!nav) return;
 
-    const combined = `${text} ${data}`;
+    const section = nav.dataset.section;
+    if (!section) return;
 
-    for (const page of Object.keys(labels)) {
-      if (labels[page].some((word) => combined.includes(word))) {
-        return page;
-      }
-    }
-
-    return null;
-  }
-
-  document.addEventListener("click", function (event) {
-    const target = event.target.closest(
-      "button, a, .nav-item, .sidebar-item, [data-section], [data-page], [data-tab]"
-    );
-
-    if (!target) return;
-
-    const page = inferClickedPage(target);
-    if (!page) return;
-
-    setTimeout(() => {
-      const path = pageToPath[page] || "/dashboard";
-
-      if (window.location.pathname !== path) {
-        window.history.pushState({ page }, "", path);
-      }
-
-      const titleName = page === "campaigns" ? "Dashboard" : page.charAt(0).toUpperCase() + page.slice(1);
-      document.title = `Clipency | ${titleName}`;
-    }, 80);
+    setTimeout(() => openPage(section, true), 60);
   });
 
-  window.addEventListener("popstate", function () {
+  window.addEventListener("popstate", function() {
     openPage(pageFromUrl(), false);
   });
 
-  document.addEventListener("DOMContentLoaded", function () {
-    setTimeout(() => {
-      openPage(pageFromUrl(), false);
-    }, 1000);
+  document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(() => openPage(pageFromUrl(), false), 1200);
   });
 })();
 

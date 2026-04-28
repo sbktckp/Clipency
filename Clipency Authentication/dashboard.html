@@ -28,7 +28,13 @@
       <div class="sidebar-nav">
         <p class="nav-group-label">CLIPPERS</p>
         <nav class="nav-group">
-          <button class="nav-item active" data-section="campaigns" id="nav-campaigns">
+          
+<button class="nav-item active" data-section="dashboard">
+  <span class="nav-icon">⌂</span>
+  <span>Dashboard</span>
+</button>
+
+<button class="nav-item" data-section="campaigns" id="nav-campaigns">
             <span class="nav-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>
             </span>
@@ -104,7 +110,26 @@
     <!-- MAIN -->
     <main class="main">
       <!-- CAMPAIGNS SECTION -->
-      <section class="section active" id="section-campaigns">
+      
+<section class="section active" id="section-dashboard">
+  <div class="dashboard-hero">
+    <div>
+      <div class="eyebrow">CLIPENCY COMMAND CENTER</div>
+      <h1>Your Dashboard</h1>
+      <p>Track your creator performance, find the strongest campaigns, and manage your earnings from one clean workspace.</p>
+    </div>
+    <div class="dashboard-hero-badge">
+      <span>Live</span>
+      <strong>Creator OS</strong>
+    </div>
+  </div>
+
+  <div id="premium-dashboard-content">
+    <div class="premium-loader">Building your dashboard…</div>
+  </div>
+</section>
+
+<section class="section" id="section-campaigns">
         <div class="section-header">
           <div>
             <p class="eyebrow">CLIPENCY</p>

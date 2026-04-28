@@ -937,3 +937,233 @@ h4 { font-size: 15px; font-weight: 700; color: #fff; }
   border-color: rgba(255,255,255,0.2);
   color: #fff;
 }
+
+/* Premium dashboard overview */
+.dashboard-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 34px;
+  margin-bottom: 28px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.32), transparent 38%),
+    linear-gradient(135deg, rgba(28, 22, 55, 0.96), rgba(13, 10, 25, 0.96));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.26);
+}
+
+.dashboard-hero h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.dashboard-hero p {
+  max-width: 720px;
+  color: rgba(255,255,255,0.62);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.dashboard-hero-badge {
+  min-width: 170px;
+  padding: 20px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.dashboard-hero-badge span {
+  display: block;
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.dashboard-hero-badge strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.overview-card,
+.overview-panel {
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  border-radius: 26px;
+  background: linear-gradient(145deg, rgba(28, 23, 52, 0.96), rgba(16, 13, 30, 0.96));
+  box-shadow: 0 18px 70px rgba(0,0,0,0.22);
+}
+
+.hero-card {
+  padding: 24px;
+}
+
+.card-label,
+.eyebrow {
+  display: block;
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.hero-card strong {
+  display: block;
+  margin: 14px 0 8px;
+  font-size: 42px;
+  letter-spacing: -0.04em;
+}
+
+.hero-card p {
+  margin: 0;
+  color: rgba(255,255,255,0.56);
+}
+
+.dashboard-split {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 22px;
+}
+
+.overview-panel {
+  padding: 26px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.panel-head h2 {
+  margin: 8px 0 0;
+  font-size: 26px;
+  letter-spacing: -0.04em;
+}
+
+.premium-link {
+  color: #a78bfa;
+  text-decoration: none;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.recommended-list,
+.activity-list {
+  display: grid;
+  gap: 14px;
+}
+
+.recommended-card,
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.campaign-mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #6c5dd3;
+  color: #a78bfa;
+  font-size: 24px;
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.recommended-main {
+  flex: 1;
+}
+
+.recommended-main h3,
+.activity-row strong {
+  display: block;
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.recommended-main p,
+.activity-row span {
+  color: rgba(255,255,255,0.52);
+  font-size: 13px;
+}
+
+.recommended-metric {
+  text-align: right;
+}
+
+.recommended-metric span {
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.recommended-metric small {
+  color: rgba(255,255,255,0.48);
+}
+
+.activity-row {
+  justify-content: space-between;
+}
+
+.activity-status {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.14);
+  color: #c4b5fd;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.activity-status.approved,
+.activity-status.paid {
+  background: rgba(34, 197, 94, 0.14);
+  color: #22c55e;
+}
+
+.activity-status.pending {
+  background: rgba(250, 204, 21, 0.14);
+  color: #facc15;
+}
+
+.empty-state,
+.premium-loader {
+  padding: 24px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.58);
+}
+
+@media (max-width: 1100px) {
+  .overview-grid,
+  .dashboard-split {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

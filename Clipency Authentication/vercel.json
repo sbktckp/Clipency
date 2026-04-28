@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/dashboard",
-      "destination": "/dashboard.html?page=campaigns"
+      "destination": "/dashboard.html?page=dashboard"
     },
     {
       "source": "/campaigns",
@@ -18,7 +18,7 @@
     },
     {
       "source": "/wallet",
-      "destination": "/dashboard.html?page=wallet"
+      "destination": "/dashboard.html?page=payment"
     },
     {
       "source": "/profile",
