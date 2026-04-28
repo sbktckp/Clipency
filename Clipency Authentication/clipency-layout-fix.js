@@ -2,6 +2,8 @@
   if (window.__clipencyLayoutFixLoaded) return;
   window.__clipencyLayoutFixLoaded = true;
 
+  const path = window.location.pathname;
+
   const creatorRoutes = [
     "/dashboard",
     "/campaigns",
@@ -11,15 +13,11 @@
     "/profile"
   ];
 
-  const isCreatorRoute = creatorRoutes.includes(window.location.pathname);
+  const isCreatorRoute = creatorRoutes.includes(path);
 
-  function ensureBodyClass() {
-    if (isCreatorRoute) {
-      document.body.classList.add("cx-creator-route");
-    }
-    if (window.location.pathname === "/") {
-      document.body.classList.add("cx-landing-route");
-    }
+  function ensureBodyClasses() {
+    if (isCreatorRoute) document.body.classList.add("cx-creator-route");
+    if (path === "/") document.body.classList.add("cx-landing-route");
   }
 
   function addSidebarToggle() {
@@ -55,18 +53,77 @@
     });
   }
 
-  function shrinkQuickSwitch() {
-    const quick = document.querySelector(".cx-command-trigger");
-    if (quick) {
-      quick.style.transform = "scale(0.88)";
-      quick.style.transformOrigin = "left bottom";
+  function normalizeSidebarFooter() {
+    if (!isCreatorRoute) return;
+
+    const sidebar = document.querySelector(".sidebar, .dashboard-sidebar, aside.sidebar");
+    if (!sidebar) return;
+
+    let footer =
+      sidebar.querySelector(".sidebar-footer, .dashboard-sidebar-footer, .bottom-area");
+
+    if (!footer) {
+      footer = document.createElement("div");
+      footer.className = "sidebar-footer";
+      sidebar.appendChild(footer);
+    }
+
+    const quickSwitch = document.querySelector(".cx-command-trigger, .quick-switch, .command-trigger");
+    const adminLink = Array.from(sidebar.querySelectorAll("a")).find(a =>
+      /admin/i.test(a.textContent || "") || (a.getAttribute("href") || "").includes("admin")
+    );
+
+    const candidateUserCard =
+      sidebar.querySelector(".sidebar-user, .sidebar-profile, .bottom-profile-card") ||
+      Array.from(sidebar.querySelectorAll("a, div, button")).find(el => {
+        const txt = (el.textContent || "").toLowerCase();
+        return txt.includes("creator") && txt.includes("logout") === false;
+      });
+
+    if (candidateUserCard && candidateUserCard.parentElement !== footer) {
+      candidateUserCard.classList.add("sidebar-profile");
+      footer.prepend(candidateUserCard);
+    }
+
+    if (quickSwitch && quickSwitch.parentElement !== footer) {
+      footer.appendChild(quickSwitch);
+    }
+
+    if (adminLink && adminLink.parentElement !== footer) {
+      footer.appendChild(adminLink);
     }
   }
 
+  function makeTopPillClickable() {
+    const pills = document.querySelectorAll(".cx-user-pill, .page-user-pill, .top-user-pill, .page-identity-pill");
+    pills.forEach((pill) => {
+      if (pill.tagName.toLowerCase() !== "a") {
+        pill.style.cursor = "pointer";
+        pill.addEventListener("click", () => {
+          window.location.href = "/profile";
+        });
+      }
+    });
+  }
+
+  function improveResponsiveTables() {
+    document.querySelectorAll("table").forEach((table) => {
+      if (!table.parentElement.classList.contains("cx-table-wrap")) {
+        const wrap = document.createElement("div");
+        wrap.className = "cx-table-wrap";
+        wrap.style.overflowX = "auto";
+        table.parentElement.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      }
+    });
+  }
+
   function run() {
-    ensureBodyClass();
+    ensureBodyClasses();
     addSidebarToggle();
-    shrinkQuickSwitch();
+    normalizeSidebarFooter();
+    makeTopPillClickable();
+    improveResponsiveTables();
   }
 
   if (document.readyState === "loading") {
