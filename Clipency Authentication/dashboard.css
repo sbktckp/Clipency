@@ -2598,3 +2598,16 @@ aside {
 [class*="brand"] {
   cursor: pointer;
 }
+
+/* Official Clipency logo */
+.clipency-brand-logo,
+.logo img,
+.sidebar-logo img,
+.brand-logo img {
+  display: block !important;
+  width: 150px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

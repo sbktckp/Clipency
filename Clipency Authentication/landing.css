@@ -1571,3 +1571,55 @@ textarea:focus {
     letter-spacing: -1.9px !important;
   }
 }
+
+/* =========================================================
+   OFFICIAL CLIPENCY LOGO
+   Uses uploaded /assets/clipency-logo.png
+   ========================================================= */
+
+.cx-real-logo,
+.cx-real-logo *,
+.cx-real-scissors,
+.cx-real-word,
+.brand-logo-img,
+.brand-mark,
+.hero-brand-seal,
+.hero-brand-line {
+  display: none !important;
+}
+
+.brand-lockup,
+.footer-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  min-width: max-content !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.clipency-brand-logo {
+  display: block !important;
+  width: 154px !important;
+  height: auto !important;
+  max-height: 58px !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 10px 28px rgba(167,139,250,0.18));
+}
+
+.footer-brand .clipency-brand-logo {
+  width: 166px !important;
+  max-height: 64px !important;
+}
+
+@media (max-width: 700px) {
+  .clipency-brand-logo {
+    width: 132px !important;
+    max-height: 50px !important;
+  }
+}
