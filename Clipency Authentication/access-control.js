@@ -7,6 +7,7 @@
     "/admin/campaigns",
     "/admin/leads",
     "/admin/payouts",
+    "/admin/finance",
     "/admin/users"
   ];
 

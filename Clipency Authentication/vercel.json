@@ -16,6 +16,7 @@
     { "source": "/admin/campaigns", "destination": "/admin.html" },
     { "source": "/admin/leads", "destination": "/admin.html" },
     { "source": "/admin/payouts", "destination": "/admin.html" },
+    { "source": "/admin/finance", "destination": "/finance.html" },
     { "source": "/admin/users", "destination": "/admin.html" },
 
     { "source": "/dashboard", "destination": "/dashboard.html?page=dashboard" },

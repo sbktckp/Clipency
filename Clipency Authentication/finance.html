@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clipency | Finance OS</title>
+  <link rel="stylesheet" href="/staff.css" />
+</head>
+<body>
+  <div class="staff-shell">
+    <aside class="staff-sidebar">
+      <a class="staff-brand" href="/">
+        <img src="/assets/clipency-logo.png" alt="Clipency" />
+      </a>
+
+      <div class="staff-nav-section-label">Operations</div>
+      <nav class="staff-nav">
+        <a href="/admin">Command Center</a>
+        <a href="/review">Reviews</a>
+        <a href="/admin/campaigns">Campaigns</a>
+        <a href="/admin/leads">Leads</a>
+        <a href="/admin/payouts">Payouts</a>
+        <a class="active" href="/admin/finance">Finance OS</a>
+      </nav>
+
+      <div class="staff-nav-section-label">Access</div>
+      <nav class="staff-nav">
+        <a href="/admin/users">Users</a>
+        <a href="/workspace">Workspace</a>
+        <a href="/dashboard">Clipper View</a>
+      </nav>
+    </aside>
+
+    <main class="staff-main">
+      <header class="staff-topbar">
+        <div>
+          <div class="eyebrow">SECURE FINANCE LAUNCHER</div>
+          <h1>Finance OS stays separate.</h1>
+          <p>
+            Open Clipency Finance OS in a separate secure workspace for invoices, expenses, payouts, salaries, currency and financial operations.
+          </p>
+        </div>
+
+        <div class="staff-top-actions">
+          <div class="staff-identity-chip">
+            <span data-staff-initials>A</span>
+            <div>
+              <strong data-staff-name>Admin</strong>
+              <small data-staff-role>admin</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="finance-launcher-grid">
+        <article class="finance-launcher-hero">
+          <div class="eyebrow">FINANCE OS</div>
+          <h2>Open the dedicated finance dashboard.</h2>
+          <p>
+            Finance data remains isolated in its own Supabase project and Vercel deployment. Clipency only gives admins a clean, controlled entry point.
+          </p>
+
+          <div class="finance-security-list">
+            <span>Separate database</span>
+            <span>Separate authentication</span>
+            <span>No iframe embedding</span>
+            <span>No service key sharing</span>
+          </div>
+
+          <div class="review-actions">
+            <a
+              class="action-btn primary finance-open-btn"
+              href="https://v0-clipency-finance-dashboard.vercel.app/login"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Finance OS →
+            </a>
+
+            <a class="action-btn" href="/workspace">Back to workspace</a>
+          </div>
+        </article>
+
+        <aside class="finance-launcher-side">
+          <div class="module-status-card">
+            <span>Access model</span>
+            <strong>Admin only</strong>
+            <p>Only Clipency admins can access this launcher from the main workspace.</p>
+          </div>
+
+          <div class="module-status-card">
+            <span>Security boundary</span>
+            <strong>Separated</strong>
+            <p>Finance stays independent, reducing database and auth complexity.</p>
+          </div>
+
+          <div class="module-status-card">
+            <span>Recommended domain</span>
+            <strong>finance.clipency.in</strong>
+            <p>You can later map the Finance OS Vercel app to a premium subdomain.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabaseClient.js"></script>
+  <script src="/access-control.js"></script>
+  <script src="/staff-common.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      await window.ClipencyAccess.requireRole(["admin"]);
+    });
+  </script>
+</body>
+</html>

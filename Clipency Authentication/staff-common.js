@@ -49,6 +49,7 @@
           <a href="/workspace">Workspace</a>
           <a href="/admin">Admin command</a>
           <a href="/review">Review queue</a>
+          <a href="/admin/finance">Finance OS</a>
           <a href="/dashboard">Clipper view</a>
         </div>
       `;
