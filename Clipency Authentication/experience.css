@@ -1,0 +1,202 @@
+/* =========================================================
+   CLIPENCY EXPERIENCE SYSTEM
+   Site-wide cohesion, motion, loading, errors, flow
+   ========================================================= */
+
+:root {
+  --cx-bg: #07050e;
+  --cx-panel: rgba(24, 19, 45, 0.72);
+  --cx-panel-strong: rgba(31, 24, 58, 0.92);
+  --cx-border: rgba(167, 139, 250, 0.18);
+  --cx-border-strong: rgba(167, 139, 250, 0.36);
+  --cx-text: rgba(255, 255, 255, 0.96);
+  --cx-muted: rgba(255, 255, 255, 0.62);
+  --cx-faint: rgba(255, 255, 255, 0.38);
+  --cx-violet: #7c3aed;
+  --cx-violet-soft: #a78bfa;
+  --cx-teal: #14b8a6;
+  --cx-green: #22c55e;
+  --cx-red: #ef4444;
+  --cx-radius: 24px;
+  --cx-shadow: 0 26px 90px rgba(0, 0, 0, 0.36);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.cx-navigating main,
+body.cx-navigating .main-content,
+body.cx-navigating .dashboard-main {
+  opacity: 0.42;
+  transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+::selection {
+  color: white;
+  background: rgba(124, 58, 237, 0.68);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.035);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(167,139,250,0.55), rgba(124,58,237,0.42));
+  border-radius: 999px;
+  border: 2px solid rgba(8, 6, 16, 0.8);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+[role="button"] {
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+button:hover,
+a:hover,
+[role="button"]:hover {
+  transform: translateY(-1px);
+}
+
+input,
+select,
+textarea {
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(167,139,250,0.72) !important;
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.16) !important;
+}
+
+.cx-toast-stack {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 999999;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.cx-toast {
+  width: min(360px, calc(100vw - 36px));
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(167,139,250,0.22);
+  background:
+    radial-gradient(circle at top left, rgba(124,58,237,0.22), transparent 34%),
+    rgba(18, 14, 33, 0.94);
+  color: white;
+  box-shadow: var(--cx-shadow);
+  backdrop-filter: blur(18px);
+  transform: translateY(8px);
+  opacity: 0;
+  animation: cxToastIn 220ms ease forwards;
+}
+
+.cx-toast strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.cx-toast span {
+  color: var(--cx-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cx-toast.success {
+  border-color: rgba(34,197,94,0.32);
+}
+
+.cx-toast.error {
+  border-color: rgba(239,68,68,0.34);
+}
+
+@keyframes cxToastIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cx-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.055);
+}
+
+.cx-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+  animation: cxSkeleton 1.25s infinite;
+}
+
+@keyframes cxSkeleton {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.cx-empty-state,
+.cx-error-state {
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(167,139,250,0.18);
+  background:
+    radial-gradient(circle at top left, rgba(124,58,237,0.16), transparent 34%),
+    rgba(255,255,255,0.045);
+  color: white;
+}
+
+.cx-empty-state p,
+.cx-error-state p {
+  color: var(--cx-muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 700px) {
+  .cx-toast-stack {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .cx-toast {
+    width: 100%;
+  }
+}
