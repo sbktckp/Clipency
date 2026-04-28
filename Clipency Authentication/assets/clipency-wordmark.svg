@@ -1,0 +1,19 @@
+<svg width="760" height="170" viewBox="0 0 760 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="150" height="150" x="10" y="10" rx="42" fill="url(#bg)"/>
+  <path d="M103.5 54.2C96.9 49.3 89 46.8 79.9 46.8C59.3 46.8 44.4 62.5 44.4 82.6C44.4 102.9 59.7 117.6 80.1 117.6C89.7 117.6 98 114.8 104.6 109.6C107.9 107 108.1 102 105.1 99.1L98.3 92.5C95.9 90.2 92.2 90.1 89.5 91.9C86.9 93.6 83.9 94.5 80.5 94.5C73.5 94.5 68.1 89.3 68.1 82.4C68.1 75.6 73.3 70.2 80.4 70.2C83.9 70.2 86.8 71.1 89.3 72.8C92 74.7 95.8 74.5 98.1 72.3L104.9 65.9C108.1 62.9 107 56.8 103.5 54.2Z" fill="white"/>
+  <path d="M111.8 47.2H123C126.8 47.2 129.9 50.3 129.9 54.1V110.3C129.9 114.1 126.8 117.2 123 117.2H111.8C108 117.2 104.9 114.1 104.9 110.3V54.1C104.9 50.3 108 47.2 111.8 47.2Z" fill="url(#accent)"/>
+  <path d="M117.6 59.8C122.1 59.8 125.7 56.2 125.7 51.7C125.7 47.2 122.1 43.6 117.6 43.6C113.1 43.6 109.5 47.2 109.5 51.7C109.5 56.2 113.1 59.8 117.6 59.8Z" fill="#14B8A6"/>
+  <text x="190" y="106" fill="white" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="850" letter-spacing="-4">Clipency</text>
+  <text x="195" y="138" fill="#A78BFA" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="2">ATTENTION → DISTRIBUTION → GROWTH</text>
+  <defs>
+    <linearGradient id="bg" x1="26" y1="22" x2="148" y2="152" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14B8A6"/>
+      <stop offset="0.42" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#080610"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="104.9" y1="47.2" x2="135" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+</svg>

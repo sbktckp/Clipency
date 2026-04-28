@@ -10,24 +10,43 @@
 
   function revealOnScroll() {
     const items = document.querySelectorAll(
-      ".system-card, .insight-card, .process-step, .testimonial-card, .team-card, .contact-form, .client-panel"
+      ".system-card, .insight-card, .process-step, .testimonial-card, .team-card, .contact-form, .client-panel, .hero-product"
     );
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.style.opacity = "1";
-          entry.target.style.transform = "translateY(0)";
+          entry.target.style.transform = entry.target.classList.contains("hero-product")
+            ? "translateY(0)"
+            : "translateY(0)";
           observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.12 });
 
-    items.forEach((item) => {
+    items.forEach((item, index) => {
       item.style.opacity = "0";
-      item.style.transform = "translateY(16px)";
-      item.style.transition = "opacity 520ms ease, transform 520ms ease";
+      item.style.transform = "translateY(18px)";
+      item.style.transition = `opacity 560ms ease ${Math.min(index * 30, 240)}ms, transform 560ms ease ${Math.min(index * 30, 240)}ms`;
       observer.observe(item);
+    });
+  }
+
+  function magneticButtons() {
+    const buttons = document.querySelectorAll(".primary-btn, .secondary-btn, .nav-signup");
+
+    buttons.forEach((button) => {
+      button.addEventListener("mousemove", (event) => {
+        const rect = button.getBoundingClientRect();
+        const x = event.clientX - rect.left - rect.width / 2;
+        const y = event.clientY - rect.top - rect.height / 2;
+        button.style.transform = `translate(${x * 0.05}px, ${y * 0.08}px)`;
+      });
+
+      button.addEventListener("mouseleave", () => {
+        button.style.transform = "";
+      });
     });
   }
 
@@ -81,9 +100,14 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", revealOnScroll);
-  } else {
+  function boot() {
     revealOnScroll();
+    magneticButtons();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 })();
