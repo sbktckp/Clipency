@@ -1388,6 +1388,24 @@ async function renderPremiumProfilePage() {
   const activeCampaigns = new Set(submissions.map(s => s.campaign_id).filter(Boolean)).size;
   const approvedClips = submissions.filter(s => s.status === "approved" || s.status === "paid").length;
 
+  let clipencyRank = "—";
+  let totalCreators = "—";
+
+  try {
+    const { data: rankRows } = await window.supabaseClient
+      .from("creator_payout_rankings")
+      .select("user_id, clipency_rank")
+      .order("clipency_rank", { ascending: true });
+
+    if (rankRows && rankRows.length) {
+      totalCreators = rankRows.length;
+      const mine = rankRows.find(row => row.user_id === user.id);
+      if (mine) clipencyRank = mine.clipency_rank;
+    }
+  } catch (err) {
+    console.warn("Rank fetch failed:", err);
+  }
+
   section.innerHTML = `
     <div class="premium-profile-shell">
       <div class="premium-profile-hero">
@@ -1406,9 +1424,9 @@ async function renderPremiumProfilePage() {
         </div>
 
         <div class="profile-score-card">
-          <span>Creator Score</span>
-          <strong>${Math.min(100, Math.round((approvedClips * 12) + (totalViews / 1000)))}</strong>
-          <small>Growing profile</small>
+          <span>Clipency Rank</span>
+          <strong>${clipencyRank === "—" ? "—" : "#" + clipencyRank}</strong>
+          <small>By approved payouts across ${totalCreators} creators</small>
         </div>
       </div>
 
@@ -1435,6 +1453,11 @@ async function renderPremiumProfilePage() {
             <div class="profile-info-row">
               <span>Total Earned</span>
               <strong>$${Number(totalEarned || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            </div>
+
+            <div class="profile-info-row">
+              <span>Clipency Rank</span>
+              <strong>${clipencyRank === "—" ? "Not ranked yet" : "#" + clipencyRank + " of " + totalCreators}</strong>
             </div>
 
             <div class="profile-info-row">
