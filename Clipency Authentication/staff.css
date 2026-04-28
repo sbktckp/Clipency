@@ -1045,3 +1045,80 @@ a {
 .finance-launcher-hero:hover::after {
   opacity: 1;
 }
+
+/* =========================================================
+   STAFF EXPERIENCE UPGRADE PATCH
+   ========================================================= */
+
+.staff-topbar {
+  overflow: hidden;
+}
+
+.staff-topbar::after {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  right: -130px;
+  top: -160px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(20,184,166,0.13), transparent 66%);
+  pointer-events: none;
+}
+
+.workspace-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workspace-card {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.workspace-card p {
+  max-width: 560px;
+}
+
+.staff-nav-section-label {
+  padding-left: 6px;
+}
+
+.review-toolbar {
+  position: sticky;
+  top: 12px;
+  z-index: 8;
+  padding: 10px;
+  border: 1px solid rgba(167,139,250,0.12);
+  border-radius: 22px;
+  background: rgba(8,6,16,0.72);
+  backdrop-filter: blur(18px);
+}
+
+.finance-security-list span::before {
+  content: "✓";
+  margin-right: 8px;
+  color: var(--green);
+}
+
+.module-status-card,
+.staff-stat {
+  backdrop-filter: blur(16px);
+}
+
+.module-status-card strong,
+.staff-stat strong {
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .review-toolbar {
+    position: relative;
+    top: auto;
+  }
+}

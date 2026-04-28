@@ -1,0 +1,319 @@
+/* =========================================================
+   CLIPENCY PREMIUM SYSTEM POLISH
+   Global command palette, page transitions, micro-interactions,
+   cleaner operating feel across every page.
+   ========================================================= */
+
+:root {
+  --cx-polish-bg: #07050e;
+  --cx-polish-card: rgba(24, 19, 45, 0.82);
+  --cx-polish-border: rgba(167,139,250,0.18);
+  --cx-polish-border-strong: rgba(167,139,250,0.36);
+  --cx-polish-muted: rgba(255,255,255,0.62);
+  --cx-polish-violet: #7c3aed;
+  --cx-polish-violet-soft: #a78bfa;
+  --cx-polish-teal: #14b8a6;
+}
+
+body {
+  opacity: 0;
+}
+
+body.cx-polished {
+  opacity: 1;
+  transition: opacity 420ms ease;
+}
+
+body.cx-route-leaving main,
+body.cx-route-leaving .staff-main,
+body.cx-route-leaving .workspace-inner {
+  opacity: 0.45;
+  transform: translateY(5px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.cx-page-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  z-index: 2147483646;
+  background: linear-gradient(90deg, var(--cx-polish-teal), var(--cx-polish-violet), var(--cx-polish-violet-soft));
+  box-shadow: 0 0 22px rgba(167,139,250,0.72);
+}
+
+.cx-command-trigger {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  z-index: 999998;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(167,139,250,0.22);
+  color: rgba(255,255,255,0.82);
+  background:
+    radial-gradient(circle at top left, rgba(124,58,237,0.22), transparent 34%),
+    rgba(14, 10, 26, 0.92);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.36);
+  backdrop-filter: blur(18px);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cx-command-trigger kbd {
+  min-width: 28px;
+  min-height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  color: white;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.12);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.cx-command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: none;
+  place-items: start center;
+  padding: min(12vh, 90px) 18px 18px;
+  background: rgba(3, 2, 8, 0.68);
+  backdrop-filter: blur(18px);
+}
+
+.cx-command-backdrop.open {
+  display: grid;
+  animation: cxFadeIn 160ms ease both;
+}
+
+.cx-command-panel {
+  width: min(720px, 100%);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(167,139,250,0.24);
+  background:
+    radial-gradient(circle at top left, rgba(124,58,237,0.24), transparent 34%),
+    radial-gradient(circle at 90% 0%, rgba(20,184,166,0.10), transparent 28%),
+    rgba(13, 10, 25, 0.96);
+  box-shadow: 0 30px 110px rgba(0,0,0,0.55);
+}
+
+.cx-command-head {
+  padding: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.cx-command-head span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--cx-polish-violet-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cx-command-input {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  outline: none;
+  border-radius: 18px;
+  padding: 0 16px;
+  color: white;
+  background: rgba(255,255,255,0.065);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.cx-command-list {
+  max-height: 440px;
+  overflow: auto;
+  padding: 10px;
+}
+
+.cx-command-item {
+  width: 100%;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 20px;
+  color: white;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+}
+
+.cx-command-item:hover,
+.cx-command-item.active {
+  background: rgba(167,139,250,0.13);
+}
+
+.cx-command-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(20,184,166,0.8), rgba(124,58,237,0.9));
+  font-weight: 950;
+}
+
+.cx-command-item strong {
+  display: block;
+  font-size: 15px;
+}
+
+.cx-command-item small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,0.52);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cx-command-shortcut {
+  color: rgba(255,255,255,0.34);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cx-command-empty {
+  padding: 28px;
+  color: rgba(255,255,255,0.56);
+  text-align: center;
+}
+
+.cx-soft-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 620ms ease, transform 620ms ease;
+}
+
+.cx-soft-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cx-premium-divider {
+  height: 1px;
+  margin: 20px 0;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,0.24), transparent);
+}
+
+.staff-sidebar,
+.landing-nav {
+  box-shadow: 0 16px 70px rgba(0,0,0,0.24);
+}
+
+.staff-main {
+  max-width: 1680px;
+  width: 100%;
+}
+
+.staff-topbar::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(167,139,250,0.18), transparent 35%, rgba(20,184,166,0.10));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  padding: 1px;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.staff-stat strong,
+.metric-tile strong,
+.cx-stat-card strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.workspace-card,
+.admin-panel,
+.review-card,
+.staff-stat,
+.finance-launcher-hero,
+.finance-launcher-side,
+.system-card,
+.testimonial-card,
+.insight-card,
+.contact-form {
+  transform: translateZ(0);
+}
+
+.workspace-card:hover,
+.admin-panel:hover,
+.review-card:hover,
+.finance-launcher-hero:hover,
+.system-card:hover,
+.testimonial-card:hover,
+.insight-card:hover {
+  box-shadow:
+    0 26px 90px rgba(0,0,0,0.34),
+    0 0 0 1px rgba(167,139,250,0.14) inset;
+}
+
+.action-btn,
+.primary-btn,
+.secondary-btn,
+.nav-signup,
+.nav-login {
+  user-select: none;
+}
+
+.action-btn:active,
+.primary-btn:active,
+.secondary-btn:active,
+.nav-signup:active,
+.nav-login:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.cx-focus-ring:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(167,139,250,0.75);
+  outline-offset: 3px;
+}
+
+@keyframes cxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .cx-command-trigger {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    justify-content: center;
+  }
+
+  .cx-command-backdrop {
+    padding-top: 70px;
+  }
+
+  .cx-command-panel {
+    border-radius: 24px;
+  }
+}
