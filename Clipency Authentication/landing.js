@@ -213,3 +213,76 @@
     boot();
   }
 })();
+
+/* =========================================================
+   INDUSTRY-LEVEL INTERACTIONS
+   ========================================================= */
+(function () {
+  const spotlight = document.getElementById("spotlight-glow");
+  const nav = document.querySelector(".landing-nav");
+
+  function installSpotlight() {
+    if (!spotlight || window.matchMedia("(max-width: 700px)").matches) return;
+
+    window.addEventListener("mousemove", (event) => {
+      spotlight.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
+    }, { passive: true });
+  }
+
+  function installCompactNav() {
+    if (!nav) return;
+
+    function update() {
+      nav.classList.toggle("nav-compact", window.scrollY > 36);
+    }
+
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
+  function installUsecaseTabs() {
+    const tabs = document.querySelectorAll(".usecase-tab");
+    const panels = document.querySelectorAll(".usecase-content");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const id = tab.getAttribute("data-usecase");
+
+        tabs.forEach((item) => item.classList.remove("active"));
+        panels.forEach((panel) => panel.classList.remove("active"));
+
+        tab.classList.add("active");
+
+        const activePanel = document.querySelector(`[data-panel="${id}"]`);
+        if (activePanel) activePanel.classList.add("active");
+      });
+    });
+  }
+
+  function installFaq() {
+    const items = document.querySelectorAll(".faq-item");
+
+    items.forEach((item) => {
+      item.addEventListener("click", () => {
+        const alreadyActive = item.classList.contains("active");
+
+        items.forEach((entry) => entry.classList.remove("active"));
+
+        if (!alreadyActive) item.classList.add("active");
+      });
+    });
+  }
+
+  function bootIndustryLayer() {
+    installSpotlight();
+    installCompactNav();
+    installUsecaseTabs();
+    installFaq();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootIndustryLayer);
+  } else {
+    bootIndustryLayer();
+  }
+})();
