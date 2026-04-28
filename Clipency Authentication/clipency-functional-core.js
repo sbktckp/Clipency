@@ -387,14 +387,16 @@
   }
 
   function renderCampaignCard(campaign) {
+    const campaignCurrency = campaign.currency || "USD";
     const budget = Number(campaign.budget || 0);
     const budgetUsed = Number(campaign.budget_used || 0);
-    const budgetText = budget ? `${money(budgetUsed, campaign.currency || "USD")} / ${money(budget, campaign.currency || "USD")}` : "Budget not published";
+    const remainingBudget = budget ? Math.max(budget - budgetUsed, 0) : 0;
+    const budgetPercent = budget ? Math.min(100, Math.max(0, Math.round((budgetUsed / budget) * 100))) : 0;
 
     const alreadySubmitted = state.submissions.some((s) => s.campaign_id === campaign.id);
 
     return `
-      <article class="cx-core-card">
+      <article class="cx-core-card cx-core-campaign-card">
         <div class="cx-core-campaign-top">
           <div class="cx-core-icon">♫</div>
           <div>
@@ -416,9 +418,34 @@
         <p class="cx-core-muted">Rate per 1M views</p>
         <strong class="cx-core-value">${money(campaign.rpm || 0, campaign.currency || "USD")}</strong>
 
-        <p class="cx-core-muted">Budget: ${escapeHtml(budgetText)}</p>
-
         ${campaign.description ? `<p>${escapeHtml(campaign.description)}</p>` : ""}
+
+        <div class="cx-core-budget-hover">
+          ${
+            budget
+              ? `
+                <div class="cx-core-budget-row">
+                  <span>Remaining budget</span>
+                  <strong>${money(remainingBudget, campaignCurrency)}</strong>
+                </div>
+
+                <div class="cx-core-budget-track">
+                  <i style="width:${budgetPercent}%"></i>
+                </div>
+
+                <div class="cx-core-budget-meta">
+                  <span>Used ${money(budgetUsed, campaignCurrency)}</span>
+                  <span>Total ${money(budget, campaignCurrency)}</span>
+                </div>
+              `
+              : `
+                <div class="cx-core-budget-row">
+                  <span>Budget</span>
+                  <strong>Not published</strong>
+                </div>
+              `
+          }
+        </div>
 
         <div class="cx-core-actions">
           <button class="cx-core-btn primary" data-submit-campaign="${escapeHtml(campaign.id)}">

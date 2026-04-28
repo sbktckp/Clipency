@@ -341,3 +341,90 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   CAMPAIGN BUDGET HOVER
+   Shows remaining budget only when hovering campaign card
+   ========================================================= */
+
+.cx-core-campaign-card {
+  position: relative;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cx-core-campaign-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(167, 139, 250, 0.34);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.cx-core-budget-hover {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(8px);
+  transition:
+    max-height 220ms ease,
+    opacity 180ms ease,
+    transform 180ms ease,
+    margin 180ms ease;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.cx-core-campaign-card:hover .cx-core-budget-hover {
+  max-height: 130px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 16px;
+}
+
+.cx-core-budget-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cx-core-budget-row span {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cx-core-budget-row strong {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.cx-core-budget-track {
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cx-core-budget-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+}
+
+.cx-core-budget-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 12px;
+  font-weight: 700;
+}
+
