@@ -242,6 +242,7 @@ function renderCampaigns() {
   detail.classList.add("hidden");
   const filtered = campaigns.filter(c => selectedGenre==="All" || c.genre===selectedGenre || c.tags.includes(selectedGenre) || c.type===selectedGenre);
   document.getElementById("campaign-count").textContent = filtered.length + " campaigns";
+  grid.innerHTML = "";
   grid.innerHTML = filtered.map(c => {
     const used = (c.budgetUsed/100)*c.budget;
     return `
@@ -272,7 +273,7 @@ function renderCampaigns() {
   `}).join("");
   grid.querySelectorAll(".campaign-card").forEach(card => {
     card.addEventListener("click", () => {
-      activeCampaign = campaigns.find(c=>c.id===+card.dataset.id);
+      activeCampaign = campaigns.find(c => String(c.id) === String(card.dataset.id));
       renderCampaigns();
     });
   });
@@ -949,22 +950,27 @@ async function loadLiveCampaignsFromSupabase() {
 
     campaigns.length = 0;
 
-    data.forEach((campaign) => {
+    data.forEach((campaign, index) => {
       campaigns.push({
         id: campaign.id,
         title: campaign.title,
         category: campaign.genre || campaign.type || "Campaign",
         type: campaign.type || campaign.genre || "Campaign",
+        genre: campaign.genre || campaign.type || "Campaign",
         tags: [campaign.genre, campaign.type].filter(Boolean),
         rate: campaign.rpm || 0,
         rpm: campaign.rpm || 0,
         budget: campaign.budget || 0,
+        budgetUsed: 0,
         currency: campaign.currency || "USD",
         creators: campaign.creators_count || 0,
         isNew: campaign.is_new ?? true,
         description: campaign.description || "",
         requirements: campaign.requirements || "",
-        status: campaign.status || "active"
+        status: campaign.status || "active",
+        color: ["#6C5DD3", "#14B8A6", "#FACC15", "#EC4899", "#F97316", "#A78BFA"][index % 6],
+        platforms: ["Instagram", "TikTok", "YouTube Shorts"],
+        views: [80, 160, 240, 360, 480, 620, 760, 900, 1050, 1200, 1380, 1550]
       });
     });
 
