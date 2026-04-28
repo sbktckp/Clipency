@@ -205,6 +205,25 @@
       .slice(0, 3);
   }
 
+
+  function bindFunctionalSidebarActions() {
+    document.querySelectorAll('[data-logout], .logout, .logout-btn, [aria-label="Logout"]').forEach((button) => {
+      if (button.dataset.cxLogoutBound) return;
+      button.dataset.cxLogoutBound = "true";
+
+      button.addEventListener("click", async (event) => {
+        event.preventDefault();
+
+        try {
+          const supabase = await waitForSupabase();
+          await supabase.auth.signOut();
+        } finally {
+          window.location.href = "/login";
+        }
+      });
+    });
+  }
+
   function renderShell(root, html) {
     root.innerHTML = `<section class="cx-core-shell">${html}</section>`;
   }
@@ -744,6 +763,7 @@
 
     try {
       await loadContext();
+      bindFunctionalSidebarActions();
 
       if (window.location.pathname === "/dashboard") renderDashboard(root);
       if (window.location.pathname === "/campaigns") renderCampaigns(root);

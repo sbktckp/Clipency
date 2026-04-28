@@ -1,3 +1,12 @@
+// LEGACY APP WRAPPED FOR FUNCTIONAL CORE
+(function () {
+  const functionalCoreRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts"];
+
+  if (functionalCoreRoutes.includes(window.location.pathname)) {
+    console.info("Legacy app.js skipped. Functional core owns this route:", window.location.pathname);
+    return;
+  }
+
 
 // Functional core owns creator routes now.
 // Prevent legacy dashboard rendering/toasts from fighting the new operating loop.
@@ -357,4 +366,7 @@ window.supabaseClient.auth.onAuthStateChange((event, session) => {
   if (session?.user) {
     window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/dashboard');
   }
+})();
+
+
 })();
