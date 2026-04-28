@@ -193,6 +193,7 @@
     `;
 
     bind();
+    window.ClipencyRevealPage?.();
   }
 
   function cardHtml(campaign) {
@@ -539,12 +540,13 @@
         </section>
       `;
       console.error("Classic campaigns error:", error);
+      window.ClipencyRevealPage?.();
     }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 700));
+    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 80));
   } else {
-    setTimeout(boot, 700);
+    setTimeout(boot, 80);
   }
 })();

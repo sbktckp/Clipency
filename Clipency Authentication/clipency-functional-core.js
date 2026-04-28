@@ -796,6 +796,8 @@
       if (window.location.pathname === "/campaigns") renderCampaigns(root);
       if (window.location.pathname === "/stats") renderStats(root);
       if (window.location.pathname === "/payouts") renderPayouts(root);
+
+      window.ClipencyRevealPage?.();
     } catch (error) {
       root.innerHTML = `
         <section class="cx-core-shell">
@@ -807,6 +809,7 @@
         </section>
       `;
       console.error("Clipency functional core error:", error);
+      window.ClipencyRevealPage?.();
     }
   }
 
@@ -815,8 +818,8 @@
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 350));
+    document.addEventListener("DOMContentLoaded", () => setTimeout(boot, 80));
   } else {
-    setTimeout(boot, 350);
+    setTimeout(boot, 80);
   }
 })();

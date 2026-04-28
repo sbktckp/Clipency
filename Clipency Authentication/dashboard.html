@@ -3,6 +3,50 @@
 <head>
 
 <script>
+  (function () {
+    var protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+
+    if (protectedRoutes.indexOf(window.location.pathname) !== -1) {
+      document.documentElement.classList.add("cx-smooth-booting");
+    }
+
+    if (window.location.pathname === "/dashboard") {
+      window.location.replace("/stats");
+    }
+  })();
+</script>
+
+<style>
+  html.cx-smooth-booting body {
+    opacity: 0;
+    background: #050509 !important;
+  }
+
+  html.cx-smooth-ready body {
+    opacity: 1;
+    transition: opacity 220ms ease;
+  }
+
+  html.cx-smooth-booting::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(124,58,237,0.16), transparent 34%),
+      radial-gradient(circle at 80% 0%, rgba(20,184,166,0.08), transparent 32%),
+      #050509;
+    pointer-events: none;
+  }
+
+  html.cx-smooth-ready::before {
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+</style>
+
+
+<script>
   // Clipency: Dashboard has been merged into Stats.
   // Redirect immediately before any old dashboard renderer runs.
   if (window.location.pathname === "/dashboard") {
@@ -250,5 +294,6 @@
   <script src="/clipency-sidebar-nav.js"></script>
   <script src="/clipency-remove-dashboard.js"></script>
   <script src="/clipency-force-profile-button.js"></script>
+  <script src="/clipency-smooth-boot.js"></script>
 </body>
 </html>
