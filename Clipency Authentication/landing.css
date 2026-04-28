@@ -1147,3 +1147,36 @@ textarea:focus {
     flex-direction: column;
   }
 }
+
+/* Logo visibility fix */
+.brand-lockup {
+  min-width: max-content;
+}
+
+.brand-logo-img {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  display: block !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #14b8a6, #7c3aed);
+}
+
+.hero-brand-seal img {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+@media (max-width: 700px) {
+  .brand-logo-img {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+  }
+}
