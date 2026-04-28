@@ -1,5 +1,5 @@
 (function () {
-  const protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts"];
+  const protectedRoutes = ["/dashboard", "/stats", "/payouts"];
   if (!protectedRoutes.includes(window.location.pathname)) return;
 
   function removeLegacyToast() {

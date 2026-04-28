@@ -2,7 +2,7 @@
   if (window.__clipencyFunctionalCoreLoaded) return;
   window.__clipencyFunctionalCoreLoaded = true;
 
-  const creatorRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts"];
+  const creatorRoutes = ["/dashboard", "/stats", "/payouts"];
 
   const state = {
     user: null,
