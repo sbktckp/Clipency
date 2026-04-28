@@ -4,6 +4,35 @@
 
 <script>
   (function () {
+    var titles = {
+      "/": "Clipency | Modern Distribution Platform",
+      "/campaigns": "Clipency | Campaigns",
+      "/stats": "Clipency | Creator Stats",
+      "/payouts": "Clipency | Payouts",
+      "/wallet": "Clipency | Wallet",
+      "/profile": "Clipency | Profile",
+      "/admin": "Clipency | Admin Command Center",
+      "/admin/reviews": "Clipency | Review Queue",
+      "/admin/campaigns": "Clipency | Campaign Control",
+      "/admin/leads": "Clipency | Client Leads",
+      "/review": "Clipency | Review Workspace",
+      "/workspace": "Clipency | Workspace",
+      "/login": "Clipency | Login",
+      "/signup": "Clipency | Sign Up"
+    };
+
+    if (window.location.pathname === "/dashboard") {
+      window.location.replace("/stats");
+      return;
+    }
+
+    document.title = titles[window.location.pathname] || "Clipency";
+  })();
+</script>
+
+
+<script>
+  (function () {
     var keys = ["clipency.selectedCurrency", "clipency.currency", "selectedCurrency", "currency"];
     var selected = "USD";
 
@@ -78,7 +107,7 @@
 <meta name="theme-color" content="#080610">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clipency — Dashboard</title>
+  <title>Clipency</title>
   <meta name="description" content="Clipency creator dashboard — manage campaigns, track stats, and handle payouts.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -320,5 +349,6 @@
   <script src="/clipency-smooth-boot.js"></script>
   <script src="/clipency-profile-final.js"></script>
   <script src="/clipency-live-currency.js"></script>
+  <script src="/clipency-premium-titles.js"></script>
 </body>
 </html>
