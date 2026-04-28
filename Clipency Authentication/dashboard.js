@@ -1620,3 +1620,298 @@ if (oldRenderPremiumProfilePageForUsername) {
     });
   };
 }
+
+/* ================================
+   MASTERCLASS PERSONALISED DASHBOARD
+   ================================ */
+
+async function clipencyDashboardIdentity() {
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user || window._authUser || _authUser;
+
+    if (!user) return { user: null, profile: null };
+
+    const { data: profile } = await window.supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    return { user, profile };
+  } catch {
+    return { user: window._authUser || _authUser || null, profile: null };
+  }
+}
+
+function clipencyName(profile, user) {
+  const meta = user?.user_metadata || {};
+  const fromParts = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
+
+  return (
+    profile?.full_name ||
+    fromParts ||
+    meta.full_name ||
+    meta.name ||
+    [meta.first_name, meta.last_name].filter(Boolean).join(" ").trim() ||
+    user?.email?.split("@")[0] ||
+    "Creator"
+  );
+}
+
+function clipencyUsername(profile, user) {
+  return (
+    profile?.username ||
+    user?.email?.split("@")[0] ||
+    "creator"
+  );
+}
+
+function clipencyGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function clipencyFormatMoney(value) {
+  return `$${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function clipencyFormatCompact(value) {
+  const n = Number(value || 0);
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return `${n}`;
+}
+
+async function clipencyGetRank(userId) {
+  try {
+    const { data } = await window.supabaseClient
+      .from("creator_payout_rankings")
+      .select("user_id, clipency_rank")
+      .order("clipency_rank", { ascending: true });
+
+    if (!data || !data.length) return { rank: "—", total: "—" };
+
+    const mine = data.find(row => row.user_id === userId);
+
+    return {
+      rank: mine?.clipency_rank || "—",
+      total: data.length
+    };
+  } catch {
+    return { rank: "—", total: "—" };
+  }
+}
+
+function clipencyPickRecommendations(submissions) {
+  const submittedTypes = new Set(
+    submissions
+      .map(s => (s.campaign_title || "").toLowerCase())
+      .filter(Boolean)
+  );
+
+  return campaigns
+    .map(c => {
+      let score = 0;
+      score += Number(c.rpm || 0) / 35;
+      score += Number(c.creators || 0) / 12;
+
+      if ((c.tags || []).some(t => ["Music", "Clipping", "Edits"].includes(t))) score += 10;
+      if (submittedTypes.has((c.title || "").toLowerCase())) score -= 8;
+
+      return { ...c, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+}
+
+async function renderPremiumDashboard() {
+  const root = document.getElementById("premium-dashboard-content");
+  const section = document.getElementById("section-dashboard");
+
+  if (!root || !section) return;
+
+  const { user, profile } = await clipencyDashboardIdentity();
+  if (!user) return;
+
+  const name = clipencyName(profile, user);
+  const username = clipencyUsername(profile, user);
+
+  let submissions = [];
+
+  try {
+    const { data } = await window.supabaseClient
+      .from("submissions")
+      .select("id, campaign_id, campaign_title, platform, views, likes, comments, earnings, status, submitted_at")
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false });
+
+    submissions = data || [];
+  } catch {}
+
+  const totalViews = submissions.reduce((sum, s) => sum + Number(s.views || 0), 0);
+  const approvedEarnings = submissions
+    .filter(s => s.status === "approved" || s.status === "paid")
+    .reduce((sum, s) => sum + Number(s.earnings || 0), 0);
+
+  const pending = submissions.filter(s => s.status === "pending").length;
+  const activeCampaigns = new Set(submissions.map(s => s.campaign_id).filter(Boolean)).size;
+  const rank = await clipencyGetRank(user.id);
+  const recommendations = clipencyPickRecommendations(submissions);
+
+  root.innerHTML = `
+    <div class="master-dashboard-shell">
+      <section class="master-welcome">
+        <div class="master-welcome-copy">
+          <div class="master-kicker">Personal Creator Intelligence</div>
+          <h1>${clipencyGreeting()}, <span>${name}</span></h1>
+
+          <div class="master-username-line">
+            <span>Your creator handle</span>
+            <span class="master-username-pill">${username}</span>
+          </div>
+
+          <p class="master-helper">
+            Your dashboard is now tuned around your submissions, approved payouts and campaign performance.
+            Start with the campaigns that fit your momentum, then track every clip from submission to payout.
+          </p>
+
+          <div class="master-actions">
+            <a class="master-btn primary" href="/campaigns">Explore campaigns</a>
+            <a class="master-btn" href="/stats">Review performance</a>
+            <a class="master-btn" href="/profile">Edit profile</a>
+          </div>
+        </div>
+
+        <aside class="master-side-card">
+          <div class="master-side-top">
+            <div class="master-avatar">${name.charAt(0).toUpperCase()}</div>
+            <div>
+              <strong>${name}</strong>
+              <span>@${username}</span>
+            </div>
+          </div>
+
+          <div class="master-rank-strip">
+            <div class="master-mini-stat">
+              <span>Clipency Rank</span>
+              <strong>${rank.rank === "—" ? "—" : "#" + rank.rank}</strong>
+            </div>
+
+            <div class="master-mini-stat">
+              <span>Creators</span>
+              <strong>${rank.total}</strong>
+            </div>
+
+            <div class="master-mini-stat">
+              <span>Views</span>
+              <strong>${clipencyFormatCompact(totalViews)}</strong>
+            </div>
+
+            <div class="master-mini-stat">
+              <span>Earned</span>
+              <strong>${clipencyFormatMoney(approvedEarnings)}</strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="overview-grid">
+        <div class="overview-card hero-card">
+          <span class="card-label">Total Views</span>
+          <strong>${clipencyFormatCompact(totalViews)}</strong>
+          <p>Across all submitted clips.</p>
+        </div>
+
+        <div class="overview-card hero-card">
+          <span class="card-label">Approved Earnings</span>
+          <strong>${clipencyFormatMoney(approvedEarnings)}</strong>
+          <p>Cleared from approved submissions.</p>
+        </div>
+
+        <div class="overview-card hero-card">
+          <span class="card-label">Pending Review</span>
+          <strong>${pending}</strong>
+          <p>Clips waiting for admin approval.</p>
+        </div>
+
+        <div class="overview-card hero-card">
+          <span class="card-label">Active Campaigns</span>
+          <strong>${activeCampaigns}</strong>
+          <p>Campaigns you have submitted to.</p>
+        </div>
+      </div>
+
+      <section class="master-guidance-grid">
+        <div class="master-panel">
+          <div class="master-panel-head">
+            <div>
+              <span class="eyebrow">RECOMMENDED FOR YOU</span>
+              <h2>Best campaigns to attack next</h2>
+            </div>
+            <a class="premium-link" href="/campaigns">View all →</a>
+          </div>
+
+          <div class="master-recommend-list">
+            ${recommendations.map(c => `
+              <div class="master-recommend-card">
+                <div class="master-campaign-icon">♫</div>
+                <div class="master-recommend-main">
+                  <strong>${c.title}</strong>
+                  <span>${[...new Set(c.tags || [])].join(" · ") || c.genre || "Campaign"}</span>
+                </div>
+                <div class="master-recommend-money">
+                  <strong>${clipencyFormatMoney(c.rpm)}</strong>
+                  <span>per 1M views</span>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="master-panel">
+          <div class="master-panel-head">
+            <div>
+              <span class="eyebrow">WHAT TO DO NOW</span>
+              <h2>Your next best moves</h2>
+            </div>
+          </div>
+
+          <div class="master-next-steps">
+            <div class="master-step">
+              <div class="master-step-index">1</div>
+              <div>
+                <strong>Submit to one high-RPM campaign</strong>
+                <span>Prioritise campaigns with strong payout per million views and matching content style.</span>
+              </div>
+            </div>
+
+            <div class="master-step">
+              <div class="master-step-index">2</div>
+              <div>
+                <strong>Keep proof links clean</strong>
+                <span>Submit direct public URLs so approvals and payouts move faster.</span>
+              </div>
+            </div>
+
+            <div class="master-step">
+              <div class="master-step-index">3</div>
+              <div>
+                <strong>Track approvals from Stats</strong>
+                <span>Use your Stats page to see views, earnings and pending submissions in one place.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.querySelectorAll("body *").forEach((el) => {
+    if (!el.children.length && (el.textContent || "").trim() === username) {
+      el.textContent = name;
+    }
+  });
+}
