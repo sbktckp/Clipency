@@ -1,14 +1,34 @@
 (function () {
+  const ADMIN_ROUTES = [
+    "/workspace",
+    "/review",
+    "/admin",
+    "/admin/reviews",
+    "/admin/campaigns",
+    "/admin/leads",
+    "/admin/payouts",
+    "/admin/users"
+  ];
+
+  const CREATOR_ROUTES = [
+    "/dashboard",
+    "/campaigns",
+    "/stats",
+    "/payouts",
+    "/wallet",
+    "/profile"
+  ];
+
   async function waitForSupabase() {
     let attempts = 0;
 
-    while (!window.supabaseClient && attempts < 50) {
+    while (!window.supabaseClient && attempts < 80) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       attempts++;
     }
 
     if (!window.supabaseClient) {
-      throw new Error("Supabase client is not available.");
+      throw new Error("Supabase client failed to load.");
     }
 
     return window.supabaseClient;
@@ -36,40 +56,60 @@
     }
 
     let profile = null;
+    let role = null;
 
-    const { data, error } = await supabase
+    const profileResult = await supabase
       .from("profiles")
       .select("id,email,full_name,username,avatar_url,role")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (!error && data) {
-      profile = data;
+    if (!profileResult.error && profileResult.data) {
+      profile = profileResult.data;
+      role = profile.role;
     }
-
-    let role = profile?.role || null;
 
     if (!role) {
-      const { data: roleData } = await supabase.rpc("current_user_role");
-      role = roleData || "clipper";
+      const rpcResult = await supabase.rpc("current_user_role");
+
+      if (!rpcResult.error && rpcResult.data) {
+        role = rpcResult.data;
+      }
     }
+
+    role = role || "clipper";
 
     return {
       user: session.user,
       profile,
-      role: role || "clipper"
+      role
     };
   }
 
-  function accessDenied(requiredRoles, currentRole) {
+  function renderAccessDenied(requiredRoles, currentRole) {
     document.body.innerHTML = `
       <main class="access-denied-shell">
         <section class="access-denied-card">
           <div class="access-denied-mark">!</div>
           <h1>Access denied</h1>
-          <p>This page is reserved for <strong>${requiredRoles.join(" / ")}</strong>. Your current access is <strong>${currentRole || "not signed in"}</strong>.</p>
+          <p>This area is protected for <strong>${requiredRoles.join(" / ")}</strong>. Your current role is <strong>${currentRole || "not signed in"}</strong>.</p>
           <div class="access-denied-actions">
             <a href="/dashboard">Go to dashboard</a>
+            <a href="/login">Login again</a>
+          </div>
+        </section>
+      </main>
+    `;
+  }
+
+  function renderAccessError(error) {
+    document.body.innerHTML = `
+      <main class="access-denied-shell">
+        <section class="access-denied-card">
+          <div class="access-denied-mark">!</div>
+          <h1>Security check failed</h1>
+          <p>${error.message || "Could not verify your access. Please refresh once."}</p>
+          <div class="access-denied-actions">
             <a href="/login">Login again</a>
           </div>
         </section>
@@ -82,53 +122,82 @@
       const context = await getRole();
 
       if (!context.user) {
-        window.location.href = "/login";
+        window.location.replace("/login");
         return null;
       }
 
       if (!allowedRoles.includes(context.role)) {
-        accessDenied(allowedRoles, context.role);
+        renderAccessDenied(allowedRoles, context.role);
         return null;
       }
 
       return context;
     } catch (error) {
-      document.body.innerHTML = `
-        <main class="access-denied-shell">
-          <section class="access-denied-card">
-            <div class="access-denied-mark">!</div>
-            <h1>Could not verify access</h1>
-            <p>${error.message || "Please refresh once."}</p>
-            <div class="access-denied-actions">
-              <a href="/login">Login again</a>
-            </div>
-          </section>
-        </main>
-      `;
-
+      renderAccessError(error);
       return null;
     }
   }
 
   async function redirectByRole() {
-    const { role } = await getRole();
+    const context = await getRole();
 
-    if (role === "admin") {
-      window.location.href = "/workspace";
+    if (!context.user) {
+      window.location.replace("/login");
       return;
     }
 
-    if (role === "reviewer") {
-      window.location.href = "/review";
+    if (context.role === "admin") {
+      window.location.replace("/workspace");
       return;
     }
 
-    window.location.href = "/dashboard";
+    if (context.role === "reviewer") {
+      window.location.replace("/review");
+      return;
+    }
+
+    window.location.replace("/dashboard");
+  }
+
+  async function protectCurrentRoute() {
+    const path = window.location.pathname;
+
+    if (!ADMIN_ROUTES.includes(path) && !CREATOR_ROUTES.includes(path)) {
+      return;
+    }
+
+    const context = await getRole();
+
+    if (!context.user) {
+      window.location.replace("/login");
+      return;
+    }
+
+    if (path === "/workspace" && context.role !== "admin") {
+      renderAccessDenied(["admin"], context.role);
+      return;
+    }
+
+    if (path.startsWith("/admin") && context.role !== "admin") {
+      renderAccessDenied(["admin"], context.role);
+      return;
+    }
+
+    if (path === "/review" && !["admin", "reviewer"].includes(context.role)) {
+      renderAccessDenied(["admin", "reviewer"], context.role);
+      return;
+    }
+
+    if (CREATOR_ROUTES.includes(path) && context.role === "reviewer") {
+      window.location.replace("/review");
+    }
   }
 
   window.ClipencyAccess = {
     getRole,
+    getSession,
     requireRole,
-    redirectByRole
+    redirectByRole,
+    protectCurrentRoute
   };
 })();

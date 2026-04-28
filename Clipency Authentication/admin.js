@@ -1,6 +1,21 @@
 (function () {
+  let booted = false;
+
   function supabase() {
     return window.supabaseClient;
+  }
+
+  function setContent(html) {
+    const target = document.getElementById("admin-content");
+    if (target) target.innerHTML = html;
+  }
+
+  function setHeader(title, subtitle) {
+    const titleEl = document.getElementById("admin-title");
+    const subtitleEl = document.getElementById("admin-subtitle");
+
+    if (titleEl) titleEl.textContent = title;
+    if (subtitleEl) subtitleEl.textContent = subtitle;
   }
 
   function pathMode() {
@@ -12,6 +27,19 @@
     if (path.includes("/users")) return "users";
 
     return "home";
+  }
+
+  function safe(value, fallback = "—") {
+    return value === null || value === undefined || value === "" ? fallback : value;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   async function countTable(table) {
@@ -28,6 +56,16 @@
   }
 
   async function renderStats() {
+    const target = document.getElementById("admin-stats");
+    if (!target) return;
+
+    target.innerHTML = `
+      <div class="staff-stat"><span>Submissions</span><strong>—</strong></div>
+      <div class="staff-stat"><span>Client Leads</span><strong>—</strong></div>
+      <div class="staff-stat"><span>Campaigns</span><strong>—</strong></div>
+      <div class="staff-stat"><span>Users</span><strong>—</strong></div>
+    `;
+
     const [submissions, leads, campaigns, profiles] = await Promise.all([
       countTable("submissions"),
       countTable("contact_leads"),
@@ -35,7 +73,7 @@
       countTable("profiles")
     ]);
 
-    document.getElementById("admin-stats").innerHTML = `
+    target.innerHTML = `
       <div class="staff-stat"><span>Submissions</span><strong>${submissions}</strong></div>
       <div class="staff-stat"><span>Client Leads</span><strong>${leads}</strong></div>
       <div class="staff-stat"><span>Campaigns</span><strong>${campaigns}</strong></div>
@@ -56,7 +94,9 @@
   }
 
   async function renderHome() {
-    document.getElementById("admin-content").innerHTML = `
+    setHeader("Platform operations.", "Manage Clipency campaigns, reviews, leads, payouts and access from one place.");
+
+    setContent(`
       <div class="admin-two">
         <a class="admin-panel" href="/review">
           <div class="eyebrow">REVIEW QUEUE</div>
@@ -82,12 +122,13 @@
           <p>Add reviewer emails, manage access and keep Clipency roles clean.</p>
         </a>
       </div>
-    `;
+    `);
   }
 
   async function renderLeads() {
-    document.getElementById("admin-title").textContent = "Client leads.";
-    document.getElementById("admin-subtitle").textContent = "Campaign inquiries submitted from the public landing page.";
+    setHeader("Client leads.", "Campaign inquiries submitted from the public landing page.");
+
+    setContent(`<div class="staff-card loading-card">Loading leads securely…</div>`);
 
     const { data, error } = await supabase()
       .from("contact_leads")
@@ -96,30 +137,48 @@
 
     if (error) throw error;
 
-    document.getElementById("admin-content").innerHTML = `
+    const leads = data || [];
+
+    if (!leads.length) {
+      setContent(`
+        <section class="admin-panel">
+          <div class="eyebrow">CLIENT PIPELINE</div>
+          <h2>No leads yet.</h2>
+          <p>When someone submits the contact form from the landing page, it will appear here.</p>
+        </section>
+      `);
+      return;
+    }
+
+    setContent(`
       <section class="admin-list">
-        ${(data || []).map((lead) => `
+        ${leads.map((lead) => `
           <article class="admin-panel">
             <div class="review-head">
               <div>
-                <h3>${lead.full_name || "Lead"}</h3>
-                <p>${lead.email || "No email"} · ${lead.company || "No company"} · ${lead.budget_range || "No budget"}</p>
+                <h3>${escapeHtml(safe(lead.full_name, "Lead"))}</h3>
+                <p>
+                  ${escapeHtml(safe(lead.email, "No email"))}
+                  · ${escapeHtml(safe(lead.company, "No company"))}
+                  · ${escapeHtml(safe(lead.budget_range, "No budget"))}
+                </p>
               </div>
-              <span class="badge">${lead.status || "new"}</span>
+              <span class="badge">${escapeHtml(safe(lead.status, "new"))}</span>
             </div>
-            <p><strong>Goal:</strong> ${lead.campaign_goal || "Not specified"}</p>
-            <p>${lead.message || "No message added."}</p>
+
+            <p><strong>Goal:</strong> ${escapeHtml(safe(lead.campaign_goal, "Not specified"))}</p>
+            <p>${escapeHtml(safe(lead.message, "No message added."))}</p>
+            <p class="review-meta">Received: ${lead.created_at ? new Date(lead.created_at).toLocaleString() : "Unknown"}</p>
           </article>
-        `).join("") || `<div class="admin-panel">No leads yet.</div>`}
+        `).join("")}
       </section>
-    `;
+    `);
   }
 
   async function renderUsers() {
-    document.getElementById("admin-title").textContent = "Access control.";
-    document.getElementById("admin-subtitle").textContent = "Invite reviewers or change existing user roles.";
+    setHeader("Access control.", "Invite reviewers or change existing user roles.");
 
-    document.getElementById("admin-content").innerHTML = `
+    setContent(`
       <section class="admin-panel">
         <div class="eyebrow">INVITE ACCESS</div>
         <h2>Add admin or reviewer email</h2>
@@ -141,7 +200,7 @@
 
         <p id="access-message"></p>
       </section>
-    `;
+    `);
 
     document.getElementById("invite-btn").addEventListener("click", async () => {
       await saveAccess(false);
@@ -185,25 +244,27 @@
       payouts: "Payout operations."
     };
 
-    document.getElementById("admin-title").textContent = titles[mode] || "Admin module.";
-    document.getElementById("admin-subtitle").textContent = "The access foundation is ready. We can wire the full module in the next build phase.";
+    setHeader(titles[mode] || "Admin module.", "The access foundation is ready. We can wire the full module in the next build phase.");
 
-    document.getElementById("admin-content").innerHTML = `
+    setContent(`
       <section class="admin-panel">
         <div class="eyebrow">COMING NEXT</div>
         <h2>${titles[mode] || "Admin module"}</h2>
         <p>This module is prepared. Next, we connect real campaign creation/editing and payout workflows.</p>
       </section>
-    `;
+    `);
   }
 
   async function boot() {
+    if (booted) return;
+    booted = true;
+
+    const mode = pathMode();
+    setActiveNav(mode);
+
     const access = await window.ClipencyAccess.requireRole(["admin"]);
     if (!access) return;
 
-    const mode = pathMode();
-
-    setActiveNav(mode);
     await renderStats();
 
     try {
@@ -212,14 +273,40 @@
       else if (mode === "users") await renderUsers();
       else renderPlaceholder(mode);
     } catch (error) {
-      document.getElementById("admin-content").innerHTML = `
+      setContent(`
         <section class="admin-panel">
           <h2>Could not load this admin page.</h2>
-          <p>${error.message}</p>
+          <p>${escapeHtml(error.message || "Unknown error.")}</p>
         </section>
-      `;
+      `);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", boot);
+  function bootWhenReady() {
+    if (!window.ClipencyAccess || !window.supabaseClient) {
+      setTimeout(bootWhenReady, 120);
+      return;
+    }
+
+    boot();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootWhenReady);
+  } else {
+    bootWhenReady();
+  }
+
+  setTimeout(() => {
+    const target = document.getElementById("admin-content");
+
+    if (target && target.textContent.includes("Loading admin dashboard")) {
+      target.innerHTML = `
+        <section class="admin-panel">
+          <h2>Admin page is taking longer than expected.</h2>
+          <p>Refresh once. If this repeats, check browser console and Supabase RLS permissions for this role.</p>
+        </section>
+      `;
+    }
+  }, 8000);
 })();
