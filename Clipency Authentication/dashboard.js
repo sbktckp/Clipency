@@ -1915,3 +1915,216 @@ async function renderPremiumDashboard() {
     }
   });
 }
+
+/* ================================
+   EDIT PROFILE: NAME + AVATAR
+   ================================ */
+
+let clipencySelectedAvatarFile = null;
+
+function clipencyAvatarMarkup(profile, name) {
+  if (profile?.avatar_url) {
+    return `<img src="${profile.avatar_url}" alt="${name}">`;
+  }
+
+  return `${(name || "C").trim().charAt(0).toUpperCase()}`;
+}
+
+function clipencyInjectProfileEditor(profile, user) {
+  const infoList = document.querySelector(".profile-info-list");
+  if (!infoList || document.getElementById("clipency-profile-edit-card")) return;
+
+  const name = clipencyDisplayName(profile, user);
+  const firstName = profile?.first_name || "";
+  const lastName = profile?.last_name || "";
+  const fullName = profile?.full_name || name || "";
+
+  const card = document.createElement("div");
+  card.className = "profile-edit-card";
+  card.id = "clipency-profile-edit-card";
+
+  card.innerHTML = `
+    <h3>Edit Profile</h3>
+    <p>Keep your creator identity polished. Your name and profile picture will be visible across your Clipency dashboard.</p>
+
+    <div class="profile-edit-grid">
+      <div class="profile-photo-editor">
+        <div class="profile-photo-preview" id="clipency-avatar-preview">
+          ${clipencyAvatarMarkup(profile, name)}
+        </div>
+
+        <label class="profile-photo-label">
+          Change photo
+          <input id="clipency-avatar-input" type="file" accept="image/png,image/jpeg,image/webp">
+        </label>
+      </div>
+
+      <div class="profile-edit-fields">
+        <div class="profile-edit-two">
+          <div class="profile-edit-field">
+            <label>First Name</label>
+            <input id="clipency-first-name-input" value="${firstName}" placeholder="First name">
+          </div>
+
+          <div class="profile-edit-field">
+            <label>Last Name</label>
+            <input id="clipency-last-name-input" value="${lastName}" placeholder="Last name">
+          </div>
+        </div>
+
+        <div class="profile-edit-field">
+          <label>Display Name</label>
+          <input id="clipency-full-name-input" value="${fullName}" placeholder="Display name">
+        </div>
+
+        <div class="profile-edit-actions">
+          <button class="profile-edit-save" id="clipency-profile-save">Save Profile</button>
+          <span class="profile-edit-message" id="clipency-profile-message"></span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  infoList.appendChild(card);
+
+  const avatarInput = document.getElementById("clipency-avatar-input");
+  const preview = document.getElementById("clipency-avatar-preview");
+
+  avatarInput?.addEventListener("change", function () {
+    const file = this.files?.[0];
+    if (!file) return;
+
+    clipencySelectedAvatarFile = file;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      preview.innerHTML = `<img src="${event.target.result}" alt="Profile preview">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document
+    .getElementById("clipency-profile-save")
+    ?.addEventListener("click", clipencySaveProfileEdits);
+}
+
+async function clipencyUploadAvatar(user, file) {
+  if (!file) return null;
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+  const allowed = ["png", "jpg", "jpeg", "webp"];
+
+  if (!allowed.includes(ext)) {
+    throw new Error("Only PNG, JPG, JPEG and WEBP images are allowed.");
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("Profile picture must be under 2MB.");
+  }
+
+  const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await window.supabaseClient.storage
+    .from("avatars")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = window.supabaseClient.storage
+    .from("avatars")
+    .getPublicUrl(filePath);
+
+  return data?.publicUrl || null;
+}
+
+async function clipencySaveProfileEdits() {
+  const message = document.getElementById("clipency-profile-message");
+  const button = document.getElementById("clipency-profile-save");
+
+  const firstName = document.getElementById("clipency-first-name-input")?.value.trim() || "";
+  const lastName = document.getElementById("clipency-last-name-input")?.value.trim() || "";
+  const displayNameInput = document.getElementById("clipency-full-name-input")?.value.trim() || "";
+
+  const fullName = displayNameInput || [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  if (!fullName) {
+    message.className = "profile-edit-message error";
+    message.textContent = "Please enter your display name.";
+    return;
+  }
+
+  message.className = "profile-edit-message";
+  message.textContent = "Saving profile…";
+  button.disabled = true;
+  button.style.opacity = "0.6";
+
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user || window._authUser || _authUser;
+
+    if (!user) throw new Error("You must be logged in.");
+
+    let avatarUrl = null;
+
+    if (clipencySelectedAvatarFile) {
+      avatarUrl = await clipencyUploadAvatar(user, clipencySelectedAvatarFile);
+    }
+
+    const updates = {
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      updated_at: new Date().toISOString()
+    };
+
+    if (avatarUrl) {
+      updates.avatar_url = avatarUrl;
+    }
+
+    const { error } = await window.supabaseClient
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id);
+
+    if (error) throw error;
+
+    message.className = "profile-edit-message success";
+    message.textContent = "Profile updated successfully.";
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 900);
+  } catch (err) {
+    message.className = "profile-edit-message error";
+    message.textContent = err.message || "Profile update failed.";
+  } finally {
+    button.disabled = false;
+    button.style.opacity = "1";
+  }
+}
+
+const oldRenderPremiumProfilePageForProfileEdit =
+  typeof renderPremiumProfilePage === "function" ? renderPremiumProfilePage : null;
+
+if (oldRenderPremiumProfilePageForProfileEdit) {
+  renderPremiumProfilePage = async function () {
+    await oldRenderPremiumProfilePageForProfileEdit();
+
+    const { user, profile } = await clipencyGetProfile();
+
+    if (user) {
+      clipencyInjectProfileEditor(profile, user);
+    }
+
+    if (profile?.avatar_url) {
+      document.querySelectorAll(".premium-avatar-xl, .master-avatar, .avatar, .user-avatar, [class*='avatar']").forEach((el) => {
+        if (!el.querySelector("img")) {
+          el.innerHTML = `<img src="${profile.avatar_url}" alt="${clipencyDisplayName(profile, user)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+        }
+      });
+    }
+  };
+}
