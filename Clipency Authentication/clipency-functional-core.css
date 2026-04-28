@@ -428,3 +428,93 @@
   font-weight: 700;
 }
 
+
+/* =========================================================
+   CAMPAIGN DETAILS MODAL — RESTORED OLD BEHAVIOUR
+   Click campaign card → details open
+   ========================================================= */
+
+.cx-core-campaign-card {
+  cursor: pointer;
+}
+
+.cx-core-campaign-card .cx-core-btn {
+  cursor: pointer;
+}
+
+.cx-campaign-details-card {
+  width: min(720px, 100%);
+  padding: 28px;
+}
+
+.cx-campaign-detail-top {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 22px;
+}
+
+.cx-campaign-detail-top h2 {
+  margin: 12px 0 0;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.cx-campaign-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.cx-campaign-detail-tile {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(255,255,255,.045);
+}
+
+.cx-campaign-detail-tile span,
+.cx-campaign-detail-section span {
+  display: block;
+  color: rgba(255,255,255,.46);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.cx-campaign-detail-tile strong {
+  display: block;
+  margin-top: 10px;
+  color: white;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.cx-core-budget-detail {
+  margin: 18px 0 22px;
+}
+
+.cx-campaign-detail-section {
+  margin-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 18px;
+}
+
+.cx-campaign-detail-section p {
+  margin: 10px 0 0;
+  color: rgba(255,255,255,.68);
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .cx-campaign-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
