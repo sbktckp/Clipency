@@ -3,7 +3,13 @@
   window.__clipencyProfileEntryLoaded = true;
 
   const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+  const authRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
+
+  if (authRoutes.includes(window.location.pathname)) return;
   if (!routes.includes(window.location.pathname)) return;
+
+  let scheduled = false;
+  const readyCards = new WeakSet();
 
   function text(el) {
     return (el?.textContent || "").trim().toLowerCase();
@@ -37,19 +43,27 @@
     return link;
   }
 
-  function removeOldProfileButtons(sidebar) {
+  function cleanupOldDuplicateProfileButtons(sidebar) {
     sidebar
-      .querySelectorAll(
-        ".cx-sidebar-profile-only-link, .cx-final-profile-button, .cx-forced-profile-link, .cx-profile-nav-link, .cx-profile-entry-link"
-      )
+      .querySelectorAll(".cx-sidebar-profile-only-link, .cx-final-profile-button, .cx-forced-profile-link, .cx-profile-nav-link")
       .forEach((el) => el.remove());
+
+    const profileLinks = Array.from(sidebar.querySelectorAll(".cx-profile-entry-link"));
+    profileLinks.slice(1).forEach((el) => el.remove());
   }
 
   function insertProfileButton() {
     const sidebar = getSidebar();
     if (!sidebar) return;
 
-    removeOldProfileButtons(sidebar);
+    cleanupOldDuplicateProfileButtons(sidebar);
+
+    const existing = sidebar.querySelector(".cx-profile-entry-link");
+
+    if (existing) {
+      existing.classList.toggle("active", window.location.pathname === "/profile");
+      return;
+    }
 
     const profileButton = createProfileButton();
 
@@ -72,7 +86,8 @@
       return;
     }
 
-    sidebar.appendChild(profileButton);
+    const nav = sidebar.querySelector("nav") || sidebar;
+    nav.appendChild(profileButton);
   }
 
   function isLogoutTarget(event) {
@@ -80,20 +95,17 @@
   }
 
   function makeNameCardsOpenProfile() {
-    document.querySelectorAll("body *").forEach((el) => {
-      const t = text(el);
+    const candidates = Array.from(document.querySelectorAll("a, button, div, span"))
+      .filter((el) => text(el).includes("smit bharat patil"));
 
-      if (!t.includes("smit bharat patil")) return;
-      if (t.includes("campaigns")) return;
-      if (el.dataset.cxProfileClickReady) return;
-
+    candidates.forEach((el) => {
       const card =
         el.closest("a, button, [role='button'], .profile-chip, .user-chip, .sidebar-user, .sidebar-profile, .bottom-profile-card, div") ||
         el;
 
-      if (!card || card.dataset.cxProfileClickReady) return;
+      if (!card || readyCards.has(card)) return;
 
-      card.dataset.cxProfileClickReady = "true";
+      readyCards.add(card);
       card.style.cursor = "pointer";
       card.setAttribute("title", "Open profile");
 
@@ -112,6 +124,21 @@
   function boot() {
     insertProfileButton();
     makeNameCardsOpenProfile();
+
+    document.documentElement.classList.remove("cx-route-booting");
+    document.documentElement.classList.remove("cx-smooth-booting");
+    document.documentElement.classList.add("cx-route-ready");
+  }
+
+  function scheduleBoot() {
+    if (scheduled) return;
+
+    scheduled = true;
+
+    requestAnimationFrame(function () {
+      scheduled = false;
+      boot();
+    });
   }
 
   if (document.readyState === "loading") {
@@ -120,10 +147,13 @@
     boot();
   }
 
-  setInterval(boot, 800);
+  const observer = new MutationObserver(scheduleBoot);
 
-  new MutationObserver(boot).observe(document.documentElement, {
+  observer.observe(document.body || document.documentElement, {
     childList: true,
     subtree: true
   });
+
+  setTimeout(boot, 400);
+  setTimeout(boot, 1200);
 })();
