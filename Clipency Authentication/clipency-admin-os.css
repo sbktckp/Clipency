@@ -557,3 +557,187 @@ body.cx-admin-os-active .cx-admin-button:hover,
 body.cx-admin-os-active .cx-admin-actions button:hover {
   transform: translateY(-1px);
 }
+
+/* =========================================================
+   ADMIN REVIEW ACTIONS
+   ========================================================= */
+
+.cx-review-summary-grid {
+  margin-bottom: 24px;
+}
+
+.cx-review-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 18px;
+}
+
+.cx-review-filterbar button {
+  min-height: 38px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.045);
+  color: rgba(255,255,255,0.58);
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.cx-review-filterbar button.active {
+  color: white;
+  background: rgba(124,58,237,0.26);
+  border-color: rgba(167,139,250,0.24);
+}
+
+.cx-review-table th:nth-child(1),
+.cx-review-table td:nth-child(1) {
+  width: 22%;
+}
+
+.cx-review-table th:nth-child(2),
+.cx-review-table td:nth-child(2) {
+  width: 21%;
+}
+
+.cx-review-table th:nth-child(3),
+.cx-review-table td:nth-child(3) {
+  width: 14%;
+}
+
+.cx-review-table th:nth-child(4),
+.cx-review-table td:nth-child(4) {
+  width: 12%;
+}
+
+.cx-review-table th:nth-child(5),
+.cx-review-table td:nth-child(5) {
+  width: 17%;
+}
+
+.cx-review-table th:nth-child(6),
+.cx-review-table td:nth-child(6) {
+  width: 24%;
+}
+
+.cx-admin-badge.approved {
+  color: #86efac;
+  background: rgba(34,197,94,0.14);
+}
+
+.cx-admin-badge.rejected {
+  color: #fecaca;
+  background: rgba(248,113,113,0.13);
+}
+
+.cx-muted {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255,255,255,0.42);
+  font-size: 12px;
+}
+
+.cx-proof-link {
+  color: #c4b5fd;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.cx-proof-link:hover {
+  text-decoration: underline;
+}
+
+.cx-reject-reason {
+  color: #fecaca;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cx-reject-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483600;
+  display: none;
+  place-items: center;
+  background: rgba(5,5,9,0.72);
+  backdrop-filter: blur(18px);
+  padding: 24px;
+}
+
+.cx-reject-modal.open {
+  display: grid;
+}
+
+.cx-reject-card {
+  width: min(560px, 100%);
+  border: 1px solid rgba(248,113,113,0.20);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(248,113,113,0.12), transparent 34%),
+    rgba(17,13,31,0.96);
+  box-shadow: 0 30px 90px rgba(0,0,0,0.48);
+  padding: 28px;
+}
+
+.cx-reject-card span {
+  color: #fca5a5;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+
+.cx-reject-card h2 {
+  margin: 10px 0 8px;
+  color: white;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.cx-reject-card p {
+  margin: 0;
+  color: rgba(255,255,255,0.58);
+  line-height: 1.55;
+}
+
+.cx-reject-card textarea {
+  width: 100%;
+  min-height: 140px;
+  box-sizing: border-box;
+  margin-top: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  color: white;
+  padding: 14px;
+  outline: none;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.cx-reject-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.cx-reject-actions button {
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.cx-reject-actions button.danger {
+  border-color: rgba(248,113,113,0.30);
+  background: rgba(248,113,113,0.14);
+  color: #fecaca;
+}
