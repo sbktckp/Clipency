@@ -1,0 +1,219 @@
+/* =========================================================
+   CLIPENCY SEAMLESS FLOW
+   Smooth creator page transitions without heavy JS loops.
+   ========================================================= */
+
+:root {
+  --cx-ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --cx-page-bg: #050509;
+  --cx-panel: rgba(17, 13, 31, 0.78);
+  --cx-border: rgba(167, 139, 250, 0.16);
+}
+
+html {
+  background: var(--cx-page-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at 22% 8%, rgba(124, 58, 237, 0.12), transparent 34%),
+    radial-gradient(circle at 88% 0%, rgba(20, 184, 166, 0.075), transparent 30%),
+    var(--cx-page-bg) !important;
+  transition: background 260ms var(--cx-ease-premium);
+}
+
+/* Remove eye-strain white flash during physical route loads */
+html.cx-route-booting body {
+  opacity: 0;
+  background: var(--cx-page-bg) !important;
+}
+
+html.cx-route-ready body {
+  opacity: 1;
+  transition: opacity 220ms var(--cx-ease-premium);
+}
+
+/* Page exit */
+html.cx-page-leaving body {
+  pointer-events: none;
+}
+
+html.cx-page-leaving main,
+html.cx-page-leaving .dashboard-content,
+html.cx-page-leaving .main-content,
+html.cx-page-leaving .page-content {
+  opacity: 0;
+  transform: translateY(8px) scale(0.992);
+  filter: blur(6px);
+}
+
+/* Page enter */
+main,
+.dashboard-content,
+.main-content,
+.page-content {
+  animation: cxPageEnter 420ms var(--cx-ease-premium) both;
+  will-change: opacity, transform;
+}
+
+@keyframes cxPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+    filter: blur(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Premium overlay during route change */
+.cx-route-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(124, 58, 237, 0.16), transparent 34%),
+    radial-gradient(circle at 84% 8%, rgba(20, 184, 166, 0.09), transparent 32%),
+    rgba(5, 5, 9, 0.72);
+  backdrop-filter: blur(14px);
+  transition: opacity 180ms var(--cx-ease-premium);
+}
+
+html.cx-page-leaving .cx-route-transition-overlay {
+  opacity: 1;
+}
+
+.cx-route-transition-mark {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  z-index: 2147483001;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  background: rgba(17, 13, 31, 0.82);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  backdrop-filter: blur(16px);
+  transition:
+    opacity 180ms var(--cx-ease-premium),
+    transform 180ms var(--cx-ease-premium);
+}
+
+html.cx-page-leaving .cx-route-transition-mark {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.cx-route-transition-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #a78bfa;
+  box-shadow: 0 0 18px rgba(167, 139, 250, 0.9);
+}
+
+/* Sidebar cohesion */
+.sidebar,
+.dashboard-sidebar,
+aside {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent),
+    rgba(10, 8, 18, 0.86) !important;
+  backdrop-filter: blur(22px);
+}
+
+.sidebar a,
+.sidebar button,
+.dashboard-sidebar a,
+.dashboard-sidebar button,
+aside a,
+aside button {
+  transition:
+    background 180ms var(--cx-ease-premium),
+    color 180ms var(--cx-ease-premium),
+    transform 180ms var(--cx-ease-premium),
+    opacity 180ms var(--cx-ease-premium),
+    border-color 180ms var(--cx-ease-premium) !important;
+}
+
+.sidebar a:hover,
+.sidebar button:hover,
+.dashboard-sidebar a:hover,
+.dashboard-sidebar button:hover,
+aside a:hover,
+aside button:hover {
+  transform: translateX(2px);
+}
+
+/* Cards feel softer and more consistent */
+.cx-core-card,
+.classic-campaign-card,
+.verify-card,
+.classic-details-card {
+  transition:
+    transform 220ms var(--cx-ease-premium),
+    border-color 220ms var(--cx-ease-premium),
+    box-shadow 220ms var(--cx-ease-premium),
+    background 220ms var(--cx-ease-premium) !important;
+}
+
+.cx-core-card:hover,
+.classic-campaign-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Reduce cursor glow eye strain */
+.cursor-glow,
+.cursor,
+.custom-cursor,
+.cursor-orb {
+  opacity: 0.58 !important;
+  mix-blend-mode: screen;
+}
+
+/* Scrollbar should feel premium, not harsh */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.025);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(167,139,250,0.32);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(167,139,250,0.48);
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
