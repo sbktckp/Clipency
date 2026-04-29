@@ -3,14 +3,19 @@
   window.__clipencyAuthUxGuardLoaded = true;
 
   const AUTH_FLAG = "clipency_auth_in_progress";
+  const MAX_AUTH_WAIT = 12000;
+  let loaderTimer = null;
 
-  function isAuthRelatedPath() {
-    return ["/login", "/signup", "/auth", "/index.html"].includes(window.location.pathname);
+  function path() {
+    return window.location.pathname;
   }
 
-  function isDashboardLikePath() {
+  function isAuthPath() {
+    return ["/login", "/signup", "/auth", "/index.html", "/"].includes(path());
+  }
+
+  function isWorkspacePath() {
     return [
-      "/dashboard",
       "/campaigns",
       "/stats",
       "/payouts",
@@ -18,7 +23,7 @@
       "/profile",
       "/admin",
       "/workspace"
-    ].some((path) => window.location.pathname === path || window.location.pathname.startsWith(path + "/"));
+    ].some((p) => path() === p || path().startsWith(p + "/"));
   }
 
   function ensureLoader() {
@@ -56,14 +61,14 @@
 
       document.getElementById("cx-auth-toast-login")?.addEventListener("click", function () {
         toast.classList.remove("active");
-        switchToLogin();
+        goLogin();
       });
     }
 
     return toast;
   }
 
-  function showLoader(title, text) {
+  function showLoader(title, text, options = {}) {
     const loader = ensureLoader();
 
     document.getElementById("cx-auth-loader-title").textContent = title || "Signing you in.";
@@ -76,56 +81,75 @@
       text: text || "Preparing your workspace. Please hold on for a moment.",
       at: Date.now()
     }));
+
+    clearTimeout(loaderTimer);
+
+    if (!options.noTimeout) {
+      loaderTimer = setTimeout(function () {
+        if (isAuthPath()) {
+          hideLoader();
+          showToast(
+            "Could not continue",
+            "Please check your details and try again. If you already have an account, kindly login."
+          );
+        }
+      }, MAX_AUTH_WAIT);
+    }
   }
 
   function hideLoader() {
+    clearTimeout(loaderTimer);
+    loaderTimer = null;
+
     const loader = document.getElementById("clipency-auth-loader");
     if (loader) loader.classList.remove("active");
+
     localStorage.removeItem(AUTH_FLAG);
   }
 
-  function showAlreadySignedUp() {
+  function showToast(title, text) {
     hideLoader();
 
     const toast = ensureToast();
 
-    document.getElementById("cx-auth-toast-title").textContent = "Already signed up";
-    document.getElementById("cx-auth-toast-text").textContent = "Kindly login with the same email to continue.";
+    document.getElementById("cx-auth-toast-title").textContent = title;
+    document.getElementById("cx-auth-toast-text").textContent = text;
 
     toast.classList.add("active");
 
     setTimeout(function () {
       toast.classList.remove("active");
-    }, 8000);
-
-    switchToLogin();
+    }, 8500);
   }
 
-  function switchToLogin() {
-    const candidates = Array.from(document.querySelectorAll("button, a, [role='button']"));
-    const loginTab = candidates.find((el) => {
-      const text = (el.textContent || "").trim().toLowerCase();
-      return text === "sign in" || text === "login" || text === "log in";
+  function goLogin() {
+    hideLoader();
+
+    const tabs = Array.from(document.querySelectorAll("button, a, [role='button']"));
+    const signInTab = tabs.find((el) => {
+      const txt = (el.textContent || "").trim().toLowerCase();
+      return txt === "sign in" || txt === "login" || txt === "log in";
     });
 
-    if (loginTab) {
-      setTimeout(() => loginTab.click(), 80);
+    if (signInTab) {
+      setTimeout(() => signInTab.click(), 50);
       return;
     }
 
-    if (window.location.pathname !== "/login") {
-      window.history.replaceState({}, "", "/login");
+    if (path() !== "/login") {
+      window.location.href = "/login";
     }
   }
 
-  function isExistingSignupResponse(result) {
-    const errorMessage = String(result?.error?.message || "").toLowerCase();
+  function isExistingSignup(result) {
+    const message = String(result?.error?.message || "").toLowerCase();
 
     if (
-      errorMessage.includes("already registered") ||
-      errorMessage.includes("already exists") ||
-      errorMessage.includes("user already") ||
-      errorMessage.includes("user_exists")
+      message.includes("already registered") ||
+      message.includes("already exists") ||
+      message.includes("user already") ||
+      message.includes("duplicate") ||
+      message.includes("user_exists")
     ) {
       return true;
     }
@@ -139,23 +163,33 @@
     return false;
   }
 
-  function patchSupabaseClient(client) {
-    if (!client || !client.auth || client.__clipencyAuthUxPatched) return;
+  function patchClient(client) {
+    if (!client || !client.auth || client.__clipencyAuthUxPatched) return client;
 
     client.__clipencyAuthUxPatched = true;
 
     const originalSignUp = client.auth.signUp?.bind(client.auth);
     const originalSignInWithPassword = client.auth.signInWithPassword?.bind(client.auth);
     const originalSignInWithOAuth = client.auth.signInWithOAuth?.bind(client.auth);
+    const originalSignOut = client.auth.signOut?.bind(client.auth);
 
     if (originalSignUp) {
       client.auth.signUp = async function () {
         showLoader("Creating your account.", "Welcome to Clipency. Setting up your creator workspace.");
 
-        const result = await originalSignUp.apply(null, arguments);
+        let result;
 
-        if (isExistingSignupResponse(result)) {
-          showAlreadySignedUp();
+        try {
+          result = await originalSignUp.apply(null, arguments);
+        } catch (error) {
+          hideLoader();
+          showToast("Signup failed", error.message || "Please try again.");
+          throw error;
+        }
+
+        if (isExistingSignup(result)) {
+          showToast("Already signed up", "Kindly login with the same email to continue.");
+          setTimeout(goLogin, 500);
 
           return {
             data: result.data || null,
@@ -167,10 +201,11 @@
 
         if (result?.error) {
           hideLoader();
+          showToast("Signup failed", result.error.message || "Please try again.");
           return result;
         }
 
-        showLoader("Welcome to Clipency.", "Your account is ready. Taking you to the right workspace.");
+        showLoader("Welcome to Clipency.", "Your account is ready. Opening your workspace.", { noTimeout: false });
         return result;
       };
     }
@@ -179,137 +214,190 @@
       client.auth.signInWithPassword = async function () {
         showLoader("Logging you in.", "Welcome to Clipency. Verifying your session.");
 
-        const result = await originalSignInWithPassword.apply(null, arguments);
+        let result;
+
+        try {
+          result = await originalSignInWithPassword.apply(null, arguments);
+        } catch (error) {
+          hideLoader();
+          showToast("Login failed", error.message || "Please try again.");
+          throw error;
+        }
 
         if (result?.error) {
           hideLoader();
+          showToast("Login failed", result.error.message || "Please check your email and password.");
           return result;
         }
 
-        showLoader("Welcome to Clipency.", "Opening your workspace.");
+        showLoader("Welcome to Clipency.", "Opening your workspace.", { noTimeout: false });
         return result;
       };
     }
 
     if (originalSignInWithOAuth) {
       client.auth.signInWithOAuth = async function () {
-        showLoader("Redirecting securely.", "Welcome to Clipency. Taking you to Google login.");
+        showLoader("Redirecting securely.", "Welcome to Clipency. Taking you to Google login.", { noTimeout: true });
 
-        const result = await originalSignInWithOAuth.apply(null, arguments);
+        let result;
+
+        try {
+          result = await originalSignInWithOAuth.apply(null, arguments);
+        } catch (error) {
+          hideLoader();
+          showToast("Google login failed", error.message || "Please try again.");
+          throw error;
+        }
 
         if (result?.error) {
           hideLoader();
-          return result;
+          showToast("Google login failed", result.error.message || "Please try again.");
         }
 
         return result;
       };
     }
-  }
 
-  function waitAndPatchSupabase() {
-    let tries = 0;
+    if (originalSignOut) {
+      client.auth.signOut = async function () {
+        showLoader("Signing you out.", "Closing your Clipency session.");
 
-    const timer = setInterval(function () {
-      tries++;
+        const result = await originalSignOut.apply(null, arguments);
 
-      if (window.supabaseClient) {
-        patchSupabaseClient(window.supabaseClient);
-      }
-
-      if (window.supabase?.createClient && window.supabaseClient) {
-        patchSupabaseClient(window.supabaseClient);
-      }
-
-      if (tries > 160) clearInterval(timer);
-    }, 80);
-  }
-
-  function inferAuthActionFromText(text) {
-    const value = String(text || "").toLowerCase();
-
-    if (
-      value.includes("become a clipper") ||
-      value.includes("create account") ||
-      value.includes("sign up") ||
-      value.includes("signup")
-    ) {
-      return "signup";
+        hideLoader();
+        return result;
+      };
     }
 
-    if (
-      value.includes("login") ||
-      value.includes("log in") ||
-      value.includes("sign in") ||
-      value.includes("continue with google")
-    ) {
-      return "login";
-    }
-
-    return null;
+    return client;
   }
 
-  function bindVisualSubmitLoader() {
+  function patchCreateClient() {
+    if (!window.supabase || !window.supabase.createClient || window.supabase.__clipencyCreateClientPatched) return;
+
+    const originalCreateClient = window.supabase.createClient.bind(window.supabase);
+
+    window.supabase.createClient = function () {
+      const client = originalCreateClient.apply(null, arguments);
+      return patchClient(client);
+    };
+
+    window.supabase.__clipencyCreateClientPatched = true;
+  }
+
+  function patchKnownClients() {
+    patchCreateClient();
+
+    if (window.supabaseClient) patchClient(window.supabaseClient);
+    if (window.sb) patchClient(window.sb);
+    if (window.client) patchClient(window.client);
+  }
+
+  function bindOnlyRealSubmitLoaders() {
     document.addEventListener("submit", function (event) {
-      const formText = event.target?.textContent || "";
-      const action = inferAuthActionFromText(formText);
+      if (!isAuthPath()) return;
 
-      if (action === "signup") {
-        showLoader("Creating your account.", "Welcome to Clipency. Setting up your creator workspace.");
+      const form = event.target;
+      const text = (form.textContent || "").toLowerCase();
+
+      const hasInvalidRequired = Array.from(form.querySelectorAll("input[required]")).some((input) => !input.value);
+
+      if (hasInvalidRequired) {
+        hideLoader();
+        return;
       }
 
-      if (action === "login") {
+      if (text.includes("become a clipper") || text.includes("create account") || text.includes("sign up")) {
+        showLoader("Creating your account.", "Welcome to Clipency. Setting up your creator workspace.");
+      } else if (text.includes("login") || text.includes("log in") || text.includes("sign in")) {
         showLoader("Logging you in.", "Welcome to Clipency. Verifying your session.");
       }
     }, true);
 
     document.addEventListener("click", function (event) {
+      if (!isAuthPath()) return;
+
       const target = event.target.closest("button, a, [role='button']");
       if (!target) return;
 
-      const action = inferAuthActionFromText(target.textContent || "");
+      const text = (target.textContent || "").trim().toLowerCase();
 
-      if (action === "signup" && isAuthRelatedPath()) {
-        showLoader("Creating your account.", "Welcome to Clipency. Setting up your creator workspace.");
-      }
+      // Do NOT show loader when switching tabs between create account/sign in.
+      if (text === "create account" || text === "sign in") return;
 
-      if (action === "login" && isAuthRelatedPath()) {
-        showLoader("Logging you in.", "Welcome to Clipency. Verifying your session.");
+      if (text.includes("continue with google") || text.includes("google")) {
+        showLoader("Redirecting securely.", "Welcome to Clipency. Taking you to Google login.", { noTimeout: true });
       }
     }, true);
   }
 
-  function coverDashboardFlash() {
-    try {
-      const raw = localStorage.getItem(AUTH_FLAG);
-      if (!raw) return;
+  function handleWorkspaceFlash() {
+    const raw = localStorage.getItem(AUTH_FLAG);
+    if (!raw) return;
 
+    try {
       const parsed = JSON.parse(raw);
       const age = Date.now() - Number(parsed.at || 0);
 
       if (age > 15000) {
-        localStorage.removeItem(AUTH_FLAG);
+        hideLoader();
         return;
       }
 
-      if (isDashboardLikePath()) {
+      if (isWorkspacePath()) {
         showLoader("Welcome to Clipency.", "Opening your workspace.");
-
-        setTimeout(function () {
-          hideLoader();
-        }, 1500);
+        setTimeout(hideLoader, 1200);
       }
     } catch {
-      localStorage.removeItem(AUTH_FLAG);
+      hideLoader();
     }
+  }
+
+  function bindSupabaseAuthState() {
+    let attempts = 0;
+
+    const timer = setInterval(function () {
+      attempts++;
+      patchKnownClients();
+
+      const client = window.supabaseClient || window.sb || window.client;
+
+      if (client?.auth?.onAuthStateChange && !client.__clipencyAuthStateBound) {
+        client.__clipencyAuthStateBound = true;
+
+        client.auth.onAuthStateChange(function (event) {
+          if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+            if (isAuthPath()) {
+              showLoader("Welcome to Clipency.", "Opening your workspace.");
+            }
+          }
+
+          if (event === "SIGNED_OUT") {
+            hideLoader();
+          }
+        });
+      }
+
+      if (attempts > 180) clearInterval(timer);
+    }, 80);
+  }
+
+  function emergencyEscape() {
+    window.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") hideLoader();
+    });
   }
 
   function boot() {
     ensureLoader();
     ensureToast();
-    waitAndPatchSupabase();
-    bindVisualSubmitLoader();
-    coverDashboardFlash();
+    patchKnownClients();
+    bindOnlyRealSubmitLoaders();
+    bindSupabaseAuthState();
+    handleWorkspaceFlash();
+    emergencyEscape();
+
+    setInterval(patchKnownClients, 500);
   }
 
   if (document.readyState === "loading") {
@@ -318,5 +406,5 @@
     boot();
   }
 
-  window.addEventListener("clipency:supabase-ready", waitAndPatchSupabase);
+  window.addEventListener("clipency:supabase-ready", patchKnownClients);
 })();
