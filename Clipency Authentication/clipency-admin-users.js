@@ -165,13 +165,13 @@
         <div class="cx-admin-users-hero">
           <span>ACCESS CONTROL</span>
           <h1>Users & roles</h1>
-          <p>Control who can operate Clipency as an admin or reviewer. Clippers remain normal users by default.</p>
+          <p>Add, upgrade, downgrade or revoke access for the people who operate Clipency. Admins control the workspace. Reviewers only verify submissions.</p>
         </div>
 
         <section class="cx-role-create-card">
           <div>
             <h2>Add or update access</h2>
-            <p>Enter an email and choose whether they should be an admin or reviewer.</p>
+            <p>Enter the person’s email, choose the role, and save. Changes apply the next time they sign in or refresh.</p>
           </div>
 
           <form id="cx-role-form">
@@ -201,7 +201,7 @@
                 </tr>
               </thead>
               <tbody>
-                ${rows || `<tr><td colspan="4">No admin or reviewer access has been added yet.</td></tr>`}
+                ${rows || `<tr><td colspan="4"><div class="cx-admin-empty">No admin or reviewer access has been added yet.</div></td></tr>`}
               </tbody>
             </table>
           </div>
