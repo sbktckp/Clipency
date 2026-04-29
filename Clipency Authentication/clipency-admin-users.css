@@ -1,0 +1,197 @@
+.cx-admin-users-shell {
+  width: min(1180px, calc(100vw - 64px));
+  margin: 0 auto;
+  padding: 64px 0 90px;
+}
+
+.cx-admin-users-hero {
+  margin-bottom: 30px;
+}
+
+.cx-admin-users-hero span {
+  color: #a78bfa;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.cx-admin-users-hero h1 {
+  margin: 10px 0 10px;
+  color: white;
+  font-size: clamp(48px, 6vw, 84px);
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+}
+
+.cx-admin-users-hero p {
+  max-width: 760px;
+  color: rgba(255,255,255,0.58);
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.cx-role-create-card,
+.cx-role-table-card {
+  border: 1px solid rgba(167,139,250,0.16);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(124,58,237,0.14), transparent 32%),
+    rgba(255,255,255,0.035);
+  padding: 28px;
+  margin-top: 22px;
+}
+
+.cx-role-create-card {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(420px, 0.8fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.cx-role-create-card h2,
+.cx-role-table-head h2 {
+  margin: 0;
+  color: white;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+}
+
+.cx-role-create-card p {
+  margin: 8px 0 0;
+  color: rgba(255,255,255,0.55);
+}
+
+#cx-role-form {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 150px 150px;
+  gap: 10px;
+}
+
+#cx-role-form input,
+#cx-role-form select {
+  height: 48px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  color: white;
+  padding: 0 14px;
+  outline: none;
+  font: inherit;
+  font-weight: 750;
+}
+
+#cx-role-form button,
+.cx-user-actions button {
+  min-height: 42px;
+  border: 1px solid rgba(167,139,250,0.26);
+  border-radius: 999px;
+  background: rgba(124,58,237,0.22);
+  color: white;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+#cx-role-form button {
+  height: 48px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+}
+
+#cx-role-form button:disabled,
+.cx-user-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cx-user-actions button.danger {
+  border-color: rgba(248,113,113,0.28);
+  background: rgba(248,113,113,0.10);
+  color: #fecaca;
+}
+
+.cx-role-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.cx-role-table-head span {
+  color: rgba(255,255,255,0.46);
+  font-weight: 850;
+}
+
+.cx-role-table-wrap {
+  overflow-x: auto;
+}
+
+.cx-role-table-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cx-role-table-card th {
+  text-align: left;
+  color: rgba(255,255,255,0.45);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.cx-role-table-card td {
+  color: rgba(255,255,255,0.76);
+  padding: 18px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  vertical-align: middle;
+}
+
+.cx-user-email {
+  color: white;
+  font-weight: 850;
+}
+
+.cx-user-note {
+  margin-top: 4px;
+  color: rgba(255,255,255,0.42);
+  font-size: 12px;
+}
+
+.cx-role-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.cx-role-badge.admin {
+  color: #c4b5fd;
+  background: rgba(124,58,237,0.18);
+}
+
+.cx-role-badge.reviewer {
+  color: #86efac;
+  background: rgba(34,197,94,0.14);
+}
+
+.cx-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .cx-role-create-card {
+    grid-template-columns: 1fr;
+  }
+
+  #cx-role-form {
+    grid-template-columns: 1fr;
+  }
+}
