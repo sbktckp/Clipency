@@ -686,5 +686,21 @@
 <script src="/clipency-premium-titles.js"></script>
   <script src="/clipency-premium-url-cleaner.js"></script>
   <script src="/clipency-global-auth-actions.js"></script>
+
+<script id="clipency-section-route-helper">
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(function () {
+      var section =
+        document.getElementById("team") ||
+        document.querySelector('[data-section="team"]') ||
+        document.querySelector('section[id*="team"]');
+
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 400);
+  });
+</script>
+
 </body>
 </html>
