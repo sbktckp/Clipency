@@ -83,15 +83,29 @@
 
     currentUser = data.user;
 
-    const { data: adminRows, error: adminError } = await supabaseClient
-      .from("admin_users")
-      .select("email")
-      .eq("email", cleanEmail(currentUser.email))
-      .limit(1);
+    let currentRole = "clipper";
 
-    if (adminError) throw adminError;
+    try {
+      const { data: roleData, error: roleError } = await supabaseClient.rpc("current_clipency_role");
 
-    if (!adminRows || adminRows.length === 0) {
+      if (roleError) throw roleError;
+
+      currentRole = roleData || "clipper";
+    } catch (roleError) {
+      console.warn("Role RPC failed. Falling back to email admin check.", roleError);
+
+      const { data: adminRows, error: adminError } = await supabaseClient
+        .from("admin_users")
+        .select("email,user_id")
+        .or(`email.eq.${cleanEmail(currentUser.email)},user_id.eq.${currentUser.id}`)
+        .limit(1);
+
+      if (adminError) throw adminError;
+
+      currentRole = adminRows && adminRows.length ? "admin" : "clipper";
+    }
+
+    if (currentRole !== "admin") {
       window.location.replace("/campaigns");
       return false;
     }

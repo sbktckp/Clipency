@@ -30,11 +30,7 @@
       event.stopImmediatePropagation();
     }
 
-    document.documentElement.classList.add("cx-page-leaving");
-
-    setTimeout(function () {
-      window.location.href = "/admin";
-    }, 80);
+    window.location.href = "/admin";
   }
 
   function addButton() {
@@ -64,12 +60,7 @@
       if (currencyLabel) {
         currencyLabel.insertAdjacentElement("beforebegin", link);
       } else {
-        const bottom = sidebar.querySelector(".sidebar-bottom, .dashboard-sidebar-bottom") || sidebar.lastElementChild;
-        if (bottom) {
-          bottom.insertAdjacentElement("beforebegin", link);
-        } else {
-          sidebar.appendChild(link);
-        }
+        sidebar.appendChild(link);
       }
     }
 
@@ -85,40 +76,22 @@
       const supabase = await waitForSupabase();
       if (!supabase) return;
 
-      const { data } = await supabase.auth.getUser();
-      const email = data?.user?.email?.toLowerCase();
-
-      if (!email) return;
-
-      const { data: adminRows, error } = await supabase
-        .from("admin_users")
-        .select("email")
-        .eq("email", email)
-        .limit(1);
+      const { data: roleData, error } = await supabase.rpc("current_clipency_role");
 
       if (error) return;
 
-      if (adminRows && adminRows.length) {
+      if (roleData === "admin") {
         addButton();
       }
     } catch {}
   }
 
-  // Global capture fallback in case another script blocks the anchor.
   document.addEventListener("click", function (event) {
     const adminButton = event.target.closest(".cx-admin-return-link, [data-admin-return]");
 
     if (!adminButton) return;
 
     goAdmin(event);
-  }, true);
-
-  document.addEventListener("pointerdown", function (event) {
-    const adminButton = event.target.closest(".cx-admin-return-link, [data-admin-return]");
-
-    if (!adminButton) return;
-
-    event.stopPropagation();
   }, true);
 
   if (document.readyState === "loading") {
@@ -129,13 +102,4 @@
 
   setTimeout(boot, 400);
   setTimeout(boot, 1000);
-
-  new MutationObserver(function () {
-    if (!document.querySelector(".cx-admin-return-link")) {
-      boot();
-    }
-  }).observe(document.documentElement, {
-    childList: true,
-    subtree: true
-  });
 })();
