@@ -86,30 +86,26 @@
     let currentRole = "clipper";
 
     try {
+      const { data: accessData, error: accessError } = await supabaseClient.rpc("admin_access_check");
+
+      if (accessError) throw accessError;
+
+      currentRole = accessData?.role || "clipper";
+    } catch (accessError) {
+      console.warn("admin_access_check failed. Trying direct admin_users lookup.", accessError);
+
       const email = cleanEmail(currentUser.email);
       const uid = currentUser.id;
 
-      // Direct linked admin check first. This avoids false "clipper" detection.
-      const { data: linkedAdminRows, error: linkedAdminError } = await supabaseClient
+      const { data: directRows, error: directError } = await supabaseClient
         .from("admin_users")
         .select("email,user_id")
         .or(`user_id.eq.${uid},email.eq.${email}`)
         .limit(1);
 
-      if (linkedAdminError) throw linkedAdminError;
+      if (directError) throw directError;
 
-      if (linkedAdminRows && linkedAdminRows.length) {
-        currentRole = "admin";
-      } else {
-        const { data: roleData, error: roleError } = await supabaseClient.rpc("current_clipency_role");
-
-        if (roleError) throw roleError;
-
-        currentRole = roleData || "clipper";
-      }
-    } catch (roleError) {
-      console.warn("Admin role check failed.", roleError);
-      currentRole = "clipper";
+      currentRole = directRows && directRows.length ? "admin" : "clipper";
     }
 
     if (currentRole !== "admin") {
@@ -119,7 +115,7 @@
             <div style="color:#a78bfa;font-weight:900;letter-spacing:.18em;font-size:12px;">ACCESS DENIED</div>
             <h1 style="font-size:56px;line-height:.95;margin:12px 0;">Admin access required.</h1>
             <p style="color:rgba(255,255,255,.62);font-size:18px;line-height:1.55;">
-              Signed in as <b>${currentUser.email}</b>, but this browser session is still being detected as <b>${currentRole}</b>.
+              Signed in as <b>${currentUser.email}</b>, but this session is detected as <b>${currentRole}</b>.
             </p>
             <a href="/campaigns" style="display:inline-flex;margin-top:18px;color:white;background:#7c3aed;padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Go to Clipper View</a>
             <a href="/login" style="display:inline-flex;margin-top:18px;margin-left:10px;color:white;border:1px solid rgba(255,255,255,.18);padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Login again</a>
