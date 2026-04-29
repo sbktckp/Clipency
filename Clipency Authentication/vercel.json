@@ -1,64 +1,82 @@
 {
-  "rewrites": [
-    { "source": "/system", "destination": "/index.html" },
-    { "source": "/clients", "destination": "/index.html" },
-    { "source": "/creators", "destination": "/index.html" },
-    { "source": "/proof", "destination": "/index.html" },
-    { "source": "/team", "destination": "/index.html" },
-    { "source": "/contact", "destination": "/index.html" },
-    { "source": "/use-cases", "destination": "/index.html" },
-    { "source": "/command-center", "destination": "/index.html" },
-
-    { "source": "/workspace", "destination": "/workspace.html" },
-    { "source": "/review", "destination": "/review.html" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin/reviews", "destination": "/review.html" },
-    { "source": "/admin/campaigns", "destination": "/admin.html" },
-    { "source": "/admin/leads", "destination": "/admin.html" },
-    { "source": "/admin/payouts", "destination": "/admin.html" },
-    { "source": "/admin/finance", "destination": "/finance.html" },
-    { "source": "/admin/users", "destination": "/admin.html" },
-
-    { "source": "/dashboard", "destination": "/dashboard.html?page=dashboard" },
-    { "source": "/campaigns", "destination": "/dashboard.html?page=campaigns" },
-    { "source": "/stats", "destination": "/dashboard.html?page=stats" },
-    { "source": "/payouts", "destination": "/dashboard.html?page=payouts" },
-    { "source": "/wallet", "destination": "/dashboard.html?page=payment" },
-    { "source": "/profile", "destination": "/dashboard.html?page=profile" },
-
-    { "source": "/auth", "destination": "/auth.html" },
-    { "source": "/login", "destination": "/auth.html" },
-    { "source": "/signup", "destination": "/auth.html" }
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/campaigns",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard.html",
+      "destination": "/campaigns",
+      "permanent": false
+    },
+    {
+      "source": "/auth.html",
+      "destination": "/login",
+      "permanent": false
+    },
+    {
+      "source": "/login.html",
+      "destination": "/login",
+      "permanent": true
+    },
+    {
+      "source": "/signup.html",
+      "destination": "/signup",
+      "permanent": true
+    }
   ],
-  "headers": [
+  "rewrites": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.googleusercontent.com; font-src 'self' data:; connect-src 'self' https://spwtkdgpgeutrhwcjrpy.supabase.co wss://spwtkdgpgeutrhwcjrpy.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests" }
-      ]
+      "source": "/login",
+      "destination": "/auth.html"
     },
     {
-      "source": "/admin/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "source": "/signup",
+      "destination": "/auth.html"
     },
     {
-      "source": "/review",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "source": "/campaigns",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/stats",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/payouts",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/wallet",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/dashboard.html"
     },
     {
       "source": "/workspace",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/review",
+      "destination": "/dashboard.html"
     }
   ]
 }

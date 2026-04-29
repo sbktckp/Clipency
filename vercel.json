@@ -1,36 +1,82 @@
 {
-  "rewrites": [
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
     {
       "source": "/dashboard",
-      "destination": "/dashboard.html?page=campaigns"
+      "destination": "/campaigns",
+      "permanent": false
     },
     {
-      "source": "/campaigns",
-      "destination": "/dashboard.html?page=campaigns"
+      "source": "/dashboard.html",
+      "destination": "/campaigns",
+      "permanent": false
     },
     {
-      "source": "/stats",
-      "destination": "/dashboard.html?page=stats"
+      "source": "/auth.html",
+      "destination": "/login",
+      "permanent": false
     },
     {
-      "source": "/payouts",
-      "destination": "/dashboard.html?page=payouts"
+      "source": "/login.html",
+      "destination": "/login",
+      "permanent": true
     },
     {
-      "source": "/wallet",
-      "destination": "/dashboard.html?page=wallet"
-    },
-    {
-      "source": "/profile",
-      "destination": "/dashboard.html?page=profile"
-    },
+      "source": "/signup.html",
+      "destination": "/signup",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
     {
       "source": "/login",
-      "destination": "/index.html"
+      "destination": "/auth.html"
     },
     {
       "source": "/signup",
-      "destination": "/index.html"
+      "destination": "/auth.html"
+    },
+    {
+      "source": "/campaigns",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/stats",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/payouts",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/wallet",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/workspace",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/review",
+      "destination": "/dashboard.html"
     }
   ]
 }
