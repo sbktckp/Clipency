@@ -1,10 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script id="clipency-auth-premium-routes">
+  (function () {
+    var path = window.location.pathname;
+    window.CLIPENCY_AUTH_MODE = path === "/signup" ? "signup" : "login";
+
+    document.title = window.CLIPENCY_AUTH_MODE === "signup"
+      ? "Clipency | Sign Up"
+      : "Clipency | Login";
+
+    document.addEventListener("DOMContentLoaded", function () {
+      setTimeout(function () {
+        var wanted = window.CLIPENCY_AUTH_MODE === "signup"
+          ? "create account"
+          : "sign in";
+
+        var tabs = Array.from(document.querySelectorAll("button, a, [role='button'], .tab, .auth-tab"));
+
+        var target = tabs.find(function (el) {
+          return (el.textContent || "").trim().toLowerCase().includes(wanted);
+        });
+
+        if (target) target.click();
+      }, 200);
+    });
+  })();
+</script>
+
 <meta name="theme-color" content="#080610">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clipency — Sign In or Create Account</title>
+  <title>Clipency | Login</title>
   <meta name="description" content="Sign in or create your Clipency account. The platform where brands discover clippers and clippers land real projects.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
