@@ -69,7 +69,7 @@ function switchTab(panelId, btn) {
 
 /* ── Redirect to Dashboard ─────────────────────────── */
 function showSuccessView(user) {
-  window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/dashboard');
+  window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/campaigns');
 }
 
 /* ── Show Auth View (restore forms) ────────────────── */
@@ -346,7 +346,7 @@ let _initialCheckDone = false;
 window.supabaseClient.auth.onAuthStateChange((event, session) => {
   // Only redirect on a real user sign-in action, not the initial session restore
   if (event === 'SIGNED_IN' && session?.user && _initialCheckDone) {
-    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/dashboard');
+    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/campaigns');
   }
 
   if (event === 'SIGNED_OUT') {
@@ -355,7 +355,7 @@ window.supabaseClient.auth.onAuthStateChange((event, session) => {
 
   if (event === 'USER_UPDATED' && session?.user) {
     showToast('Email verified successfully!', 'success');
-    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/dashboard');
+    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/campaigns');
   }
 });
 
@@ -364,7 +364,7 @@ window.supabaseClient.auth.onAuthStateChange((event, session) => {
   const { data: { session } } = await window.supabaseClient.auth.getSession();
   _initialCheckDone = true;
   if (session?.user) {
-    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/dashboard');
+    window.ClipencyRedirectAfterAuth ? window.ClipencyRedirectAfterAuth() : (window.location.href = '/campaigns');
   }
 })();
 

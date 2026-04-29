@@ -18,7 +18,7 @@
 
   function applyTitle() {
     if (window.location.pathname === "/dashboard") {
-      window.location.replace("/stats");
+      window.location.replace("/campaigns");
       return;
     }
 

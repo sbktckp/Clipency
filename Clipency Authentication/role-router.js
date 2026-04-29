@@ -14,7 +14,7 @@
     const access = await waitForAccess();
 
     if (!access) {
-      window.location.replace("/dashboard");
+      window.location.replace("/campaigns");
       return;
     }
 

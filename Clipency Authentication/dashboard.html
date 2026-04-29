@@ -3,6 +3,14 @@
 <head>
 
 <script>
+  // Clipency: Dashboard has been removed. Campaigns is the clipper home.
+  if (window.location.pathname === "/dashboard") {
+    window.location.replace("/campaigns");
+  }
+</script>
+
+
+<script>
   (function () {
     var titles = {
       "/": "Clipency | Modern Distribution Platform",

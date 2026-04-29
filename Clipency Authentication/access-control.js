@@ -157,7 +157,7 @@
       return;
     }
 
-    window.location.replace("/dashboard");
+    window.location.replace("/campaigns");
   }
 
   async function protectCurrentRoute() {
