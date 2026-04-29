@@ -118,22 +118,3 @@
   font-weight: 900;
   cursor: pointer;
 }
-
-[data-auth-tab] {
-  cursor: pointer !important;
-  transition: color 160ms ease, opacity 160ms ease;
-}
-
-[data-auth-tab].cx-auth-tab-active {
-  color: #111 !important;
-  opacity: 1 !important;
-}
-
-[data-auth-tab]:not(.cx-auth-tab-active) {
-  opacity: 0.45 !important;
-}
-
-body[data-auth-mode="login"] input[placeholder*="Jordan" i],
-body[data-auth-mode="login"] input[placeholder*="Rivera" i] {
-  display: none !important;
-}
