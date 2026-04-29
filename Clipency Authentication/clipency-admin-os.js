@@ -63,12 +63,26 @@
   }
 
   async function waitForSupabase() {
-    for (let i = 0; i < 80; i++) {
+    if (window.supabaseClient) return window.supabaseClient;
+
+    if (!document.querySelector('script[src="/clipency-admin-supabase-hardboot.js"]')) {
+      const script = document.createElement("script");
+      script.src = "/clipency-admin-supabase-hardboot.js";
+      script.async = false;
+      document.head.appendChild(script);
+    }
+
+    for (let i = 0; i < 160; i++) {
       if (window.supabaseClient) return window.supabaseClient;
+
+      if (window.__clipencySupabaseBootError) {
+        throw window.__clipencySupabaseBootError;
+      }
+
       await wait(80);
     }
 
-    throw new Error("Supabase client not loaded.");
+    throw new Error("Supabase client not loaded. Please hard refresh once.");
   }
 
   async function initAuth() {
