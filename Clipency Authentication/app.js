@@ -1,6 +1,6 @@
 // LEGACY APP WRAPPED FOR FUNCTIONAL CORE
 (function () {
-  const functionalCoreRoutes = ["/dashboard", "/stats", "/payouts", "/login", "/signup"];
+  const functionalCoreRoutes = ["/dashboard", "/stats", "/payouts"];
 
   if (functionalCoreRoutes.includes(window.location.pathname)) {
     console.info("Legacy app.js skipped. Functional core owns this route:", window.location.pathname);

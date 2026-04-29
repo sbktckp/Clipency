@@ -1,4 +1,8 @@
 (function () {
+
+  const cxAuthRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
+  if (cxAuthRoutes.includes(window.location.pathname)) return;
+
   if (window.__clipencyFinalLogoutLoaded) return;
   window.__clipencyFinalLogoutLoaded = true;
 
