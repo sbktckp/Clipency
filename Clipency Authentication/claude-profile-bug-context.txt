@@ -1,0 +1,634 @@
+CLIPENCY CAMPAIGN CARD PROFILE REDIRECT BUG CONTEXT
+
+Problem:
+On /campaigns, clicking campaign cards or even random areas redirects to /profile.
+Campaign cards must use the original/native campaign-card behavior only.
+Profile should open only from the explicit profile button/profile area.
+
+Files requested by Claude are below.
+
+==============================
+1. clipency-profile-entry.js
+==============================
+     1	(function () {
+     2	  if (window.__clipencyProfileEntryLoaded) return;
+     3	  window.__clipencyProfileEntryLoaded = true;
+     4	
+     5	  const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+     6	  const authRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
+     7	
+     8	  if (authRoutes.includes(window.location.pathname)) return;
+     9	  if (!routes.includes(window.location.pathname)) return;
+    10	
+    11	  let scheduled = false;
+    12	  const readyCards = new WeakSet();
+    13	
+    14	  function text(el) {
+    15	    return (el?.textContent || "").trim().toLowerCase();
+    16	  }
+    17	
+    18	  function getSidebar() {
+    19	    return document.querySelector(".sidebar, .dashboard-sidebar, aside");
+    20	  }
+    21	
+    22	  function createProfileButton() {
+    23	    const link = document.createElement("a");
+    24	    link.href = "/profile";
+    25	    link.className = "cx-profile-entry-link";
+    26	    link.setAttribute("data-route", "/profile");
+    27	
+    28	    if (window.location.pathname === "/profile") {
+    29	      link.classList.add("active");
+    30	      link.setAttribute("aria-current", "page");
+    31	    }
+    32	
+    33	    link.innerHTML = `
+    34	      <span class="cx-profile-entry-icon" aria-hidden="true">
+    35	        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    36	          <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    37	          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+    38	        </svg>
+    39	      </span>
+    40	      <span>Profile</span>
+    41	    `;
+    42	
+    43	    return link;
+    44	  }
+    45	
+    46	  function cleanupOldDuplicateProfileButtons(sidebar) {
+    47	    sidebar
+    48	      .querySelectorAll(".cx-sidebar-profile-only-link, .cx-final-profile-button, .cx-forced-profile-link, .cx-profile-nav-link")
+    49	      .forEach((el) => el.remove());
+    50	
+    51	    const profileLinks = Array.from(sidebar.querySelectorAll(".cx-profile-entry-link"));
+    52	    profileLinks.slice(1).forEach((el) => el.remove());
+    53	  }
+    54	
+    55	  function insertProfileButton() {
+    56	    const sidebar = getSidebar();
+    57	    if (!sidebar) return;
+    58	
+    59	    cleanupOldDuplicateProfileButtons(sidebar);
+    60	
+    61	    const existing = sidebar.querySelector(".cx-profile-entry-link");
+    62	
+    63	    if (existing) {
+    64	      existing.classList.toggle("active", window.location.pathname === "/profile");
+    65	      return;
+    66	    }
+    67	
+    68	    const profileButton = createProfileButton();
+    69	
+    70	    const currencyLabel = Array.from(sidebar.querySelectorAll("*")).find((el) => {
+    71	      return text(el) === "currency";
+    72	    });
+    73	
+    74	    if (currencyLabel) {
+    75	      currencyLabel.insertAdjacentElement("beforebegin", profileButton);
+    76	      return;
+    77	    }
+    78	
+    79	    const walletNode = Array.from(sidebar.querySelectorAll("*")).find((el) => {
+    80	      return text(el) === "wallet";
+    81	    });
+    82	
+    83	    if (walletNode) {
+    84	      const row = walletNode.closest("a, button, li, .nav-item, .nav-link, .sidebar-link, div") || walletNode;
+    85	      row.insertAdjacentElement("afterend", profileButton);
+    86	      return;
+    87	    }
+    88	
+    89	    const nav = sidebar.querySelector("nav") || sidebar;
+    90	    nav.appendChild(profileButton);
+    91	  }
+    92	
+    93	  function isLogoutTarget(event) {
+    94	    return !!event.target.closest("[data-logout], .logout, .logout-btn, [title='Logout'], [aria-label*='Logout'], [aria-label*='logout']");
+    95	  }
+    96	
+    97	  function makeNameCardsOpenProfile() {
+    98	    const candidates = Array.from(document.querySelectorAll("a, button, div, span"))
+    99	      .filter((el) => text(el).includes("smit bharat patil"));
+   100	
+   101	    candidates.forEach((el) => {
+   102	      const card =
+   103	        el.closest("a, button, [role='button'], .profile-chip, .user-chip, .sidebar-user, .sidebar-profile, .bottom-profile-card, div") ||
+   104	        el;
+   105	
+   106	      if (!card || readyCards.has(card)) return;
+   107	
+   108	      readyCards.add(card);
+   109	      card.style.cursor = "pointer";
+   110	      card.setAttribute("title", "Open profile");
+   111	
+   112	      card.addEventListener("click", function (event) {
+   113	        if (isLogoutTarget(event)) return;
+   114	
+   115	        event.preventDefault();
+   116	        event.stopPropagation();
+   117	        event.stopImmediatePropagation();
+   118	
+   119	        window.location.href = "/profile";
+   120	      }, true);
+   121	    });
+   122	  }
+   123	
+   124	  function boot() {
+   125	    insertProfileButton();
+   126	    makeNameCardsOpenProfile();
+   127	
+   128	    document.documentElement.classList.remove("cx-route-booting");
+   129	    document.documentElement.classList.remove("cx-smooth-booting");
+   130	    document.documentElement.classList.add("cx-route-ready");
+   131	  }
+   132	
+   133	  function scheduleBoot() {
+   134	    if (scheduled) return;
+   135	
+   136	    scheduled = true;
+   137	
+   138	    requestAnimationFrame(function () {
+   139	      scheduled = false;
+   140	      boot();
+   141	    });
+   142	  }
+   143	
+   144	  if (document.readyState === "loading") {
+   145	    document.addEventListener("DOMContentLoaded", boot);
+   146	  } else {
+   147	    boot();
+   148	  }
+   149	
+   150	  const observer = new MutationObserver(scheduleBoot);
+   151	
+   152	  observer.observe(document.body || document.documentElement, {
+   153	    childList: true,
+   154	    subtree: true
+   155	  });
+   156	
+   157	  setTimeout(boot, 400);
+   158	  setTimeout(boot, 1200);
+   159	})();
+
+==============================
+2. clipency-profile-nav.js
+==============================
+     1	(function () {
+     2	
+     3	  const cxAuthRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
+     4	  if (cxAuthRoutes.includes(window.location.pathname)) return;
+     5	
+     6	  if (window.__clipencyProfileNavLoaded) return;
+     7	  window.__clipencyProfileNavLoaded = true;
+     8	
+     9	  const creatorRoutes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile", "/dashboard"];
+    10	
+    11	  if (!creatorRoutes.includes(window.location.pathname)) return;
+    12	
+    13	  function getSidebar() {
+    14	    return document.querySelector(".sidebar, .dashboard-sidebar, aside");
+    15	  }
+    16	
+    17	  function hasProfileLink(sidebar) {
+    18	    return Array.from(sidebar.querySelectorAll("a, button")).some((el) => {
+    19	      const text = (el.textContent || "").trim().toLowerCase();
+    20	      const href = el.getAttribute("href") || "";
+    21	      const route = el.dataset.route || el.dataset.page || el.dataset.nav || "";
+    22	
+    23	      return text === "profile" || href === "/profile" || route === "/profile" || route === "profile";
+    24	    });
+    25	  }
+    26	
+    27	  function findWalletItem(sidebar) {
+    28	    return Array.from(sidebar.querySelectorAll("a, button, [role='button']")).find((el) => {
+    29	      const text = (el.textContent || "").trim().toLowerCase();
+    30	      const href = el.getAttribute("href") || "";
+    31	      const route = el.dataset.route || el.dataset.page || el.dataset.nav || "";
+    32	
+    33	      return text.includes("wallet") || href === "/wallet" || route === "/wallet" || route === "wallet";
+    34	    });
+    35	  }
+    36	
+    37	  function createProfileLink() {
+    38	    const link = document.createElement("a");
+    39	    link.href = "/profile";
+    40	    link.className = "cx-profile-nav-link";
+    41	    link.setAttribute("data-route", "/profile");
+    42	
+    43	    link.innerHTML = `
+    44	      <span class="cx-profile-nav-icon" aria-hidden="true">
+    45	        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    46	          <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    47	          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+    48	        </svg>
+    49	      </span>
+    50	      <span>Profile</span>
+    51	    `;
+    52	
+    53	    return link;
+    54	  }
+    55	
+    56	  function addProfileNav() {
+    57	    const sidebar = getSidebar();
+    58	    if (!sidebar || sidebar.dataset.cxProfileNavReady) return;
+    59	
+    60	    if (hasProfileLink(sidebar)) {
+    61	      sidebar.dataset.cxProfileNavReady = "true";
+    62	      return;
+    63	    }
+    64	
+    65	    const profileLink = createProfileLink();
+    66	    const walletItem = findWalletItem(sidebar);
+    67	
+    68	    if (walletItem) {
+    69	      const row = walletItem.closest("li, .nav-item, .sidebar-link, .nav-link, a, button") || walletItem;
+    70	      row.insertAdjacentElement("afterend", profileLink);
+    71	    } else {
+    72	      const nav = sidebar.querySelector("nav") || sidebar;
+    73	      nav.appendChild(profileLink);
+    74	    }
+    75	
+    76	    sidebar.dataset.cxProfileNavReady = "true";
+    77	  }
+    78	
+    79	  function makeBottomProfileClickable() {
+    80	    document.querySelectorAll(".sidebar-user, .sidebar-profile, .bottom-profile-card").forEach((card) => {
+    81	      if (card.dataset.cxProfileCardReady) return;
+    82	
+    83	      card.dataset.cxProfileCardReady = "true";
+    84	      card.style.cursor = "pointer";
+    85	      card.setAttribute("title", "Open profile");
+    86	
+    87	      card.addEventListener("click", (event) => {
+    88	        const logoutClicked = event.target.closest(".logout, .logout-btn, [data-logout], [aria-label='Logout']");
+    89	        if (logoutClicked) return;
+    90	
+    91	        window.location.href = "/profile";
+    92	      });
+    93	    });
+    94	  }
+    95	
+    96	  function markActiveProfile() {
+    97	    if (window.location.pathname !== "/profile") return;
+    98	
+    99	    document.querySelectorAll(".cx-profile-nav-link").forEach((link) => {
+   100	      link.classList.add("active");
+   101	      link.setAttribute("aria-current", "page");
+   102	    });
+   103	  }
+   104	
+   105	  function boot() {
+   106	    addProfileNav();
+   107	    makeBottomProfileClickable();
+   108	    markActiveProfile();
+   109	  }
+   110	
+   111	  if (document.readyState === "loading") {
+   112	    document.addEventListener("DOMContentLoaded", boot);
+   113	  } else {
+   114	    boot();
+   115	  }
+   116	
+   117	  new MutationObserver(boot).observe(document.documentElement, {
+   118	    childList: true,
+   119	    subtree: true
+   120	  });
+   121	})();
+
+==============================
+3. campaigns/index.html script references
+==============================
+5:  <script src="/clipency-auth-entry-guard.js"></script>
+7:<script>
+10:    window.location.replace("/campaigns");
+12:</script>
+15:<script>
+19:      "/campaigns": "Clipency | Campaigns",
+23:      "/profile": "Clipency | Profile",
+26:      "/admin/campaigns": "Clipency | Campaign Control",
+41:</script>
+42:<script>
+44:    var protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+54:</script>
+86:<script>
+92:</script>
+98:  <meta name="description" content="Clipency creator dashboard — manage campaigns, track stats, and handle payouts.">
+100:  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+102:  <link rel="stylesheet" href="dashboard.css">
+103:<link rel="stylesheet" href="clipency-core.css?v=1777378153">
+106:<link rel="stylesheet" href="/experience.css" />
+107:<link rel="stylesheet" href="/dashboard-insights.css" />
+108:<link rel="stylesheet" href="/clipency-cursor.css" />
+109:  <link rel="stylesheet" href="/clipency-desktop-stable.css" />
+110:  <link rel="stylesheet" href="/clipency-functional-core.css" />
+112:<script>
+114:</script>
+115:  <link rel="stylesheet" href="/clipency-remove-dashboard.css" />
+116:<link rel="stylesheet" href="/clipency-seamless-flow.css" />
+117:  <script src="/clipency-seamless-boot.js"></script>
+118:  <link rel="stylesheet" href="/clipency-final-logout.css" />
+119:  <link rel="stylesheet" href="/clipency-profile-entry.css" />
+120:  <script src="/clipency-unhang-guard.js"></script>
+121:  <link rel="stylesheet" href="/clipency-logo-home.css" />
+122:  <link rel="stylesheet" href="/clipency-admin-os.css" />
+123:<link rel="stylesheet" href="/clipency-clipper-review-status.css" />
+124:  <link rel="stylesheet" href="/clipency-admin-return.css" />
+129:  <link rel="stylesheet" href="/clipency-auth-ux-guard.css" />
+132:  <script src="/clipency-final-logout.js"></script>
+156:<button class="nav-item" data-section="campaigns" id="nav-campaigns">
+184:          <button class="nav-item" data-section="profile" id="nav-profile">
+214:      <!-- User profile at bottom -->
+237:<section class="section" id="section-campaigns">
+258:          <span class="campaign-count" id="campaign-count">8 campaigns</span>
+262:        <div class="campaign-grid" id="campaign-grid"></div>
+265:        <div class="campaign-detail hidden" id="campaign-detail"></div>
+319:      <section class="section" id="section-profile">
+321:        <div class="profile-hero card card-purple" id="profile-hero"></div>
+333:<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+334:<script src="supabaseClient.js?v=1777372502"></script>
+335:<script src="dashboard.js?v=1777372502"></script>
+337:<script src="clipency-core.js?v=1777378153"></script>
+338:<script src="/experience.js"></script>
+339:<script src="/dashboard-insights.js"></script>
+340:<script src="/access-control.js"></script>
+341:<script src="/role-router.js"></script>
+342:<script src="/clipency-cursor.js"></script>
+343:  <script src="/clipency-functional-core.js"></script>
+344:  <script src="/clipency-toast-guard.js"></script>
+345:  <script src="/clipency-sidebar-nav.js"></script>
+346:  <script src="/clipency-remove-dashboard.js"></script>
+347:<script src="/clipency-smooth-boot.js"></script>
+348:<script src="/clipency-premium-titles.js"></script>
+349:  <script src="/clipency-premium-url-cleaner.js"></script>
+350:  <script src="/clipency-seamless-flow.js"></script>
+351:  <script src="/clipency-profile-entry.js"></script>
+352:  <script src="/clipency-logo-home.js"></script>
+353:<script src="/clipency-admin-os.js"></script>
+354:  <script src="/clipency-admin-review-actions.js"></script>
+355:  <script src="/clipency-clipper-review-status.js"></script>
+356:  <script src="/clipency-admin-campaigns.js"></script>
+357:  <script src="/clipency-admin-return.js"></script>
+358:  <script src="/clipency-performance-guard.js"></script>
+359:  <script src="/clipency-security-audit.js"></script>
+360:  <script src="/clipency-auth-ux-guard.js"></script>
+
+==============================
+4. dashboard.html script references
+==============================
+5:  <script src="/clipency-auth-entry-guard.js"></script>
+7:<script>
+10:    window.location.replace("/campaigns");
+12:</script>
+15:<script>
+19:      "/campaigns": "Clipency | Campaigns",
+23:      "/profile": "Clipency | Profile",
+26:      "/admin/campaigns": "Clipency | Campaign Control",
+41:</script>
+42:<script>
+44:    var protectedRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+54:</script>
+86:<script>
+92:</script>
+98:  <meta name="description" content="Clipency creator dashboard — manage campaigns, track stats, and handle payouts.">
+100:  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+102:  <link rel="stylesheet" href="dashboard.css">
+103:<link rel="stylesheet" href="clipency-core.css?v=1777378153">
+106:<link rel="stylesheet" href="/experience.css" />
+107:<link rel="stylesheet" href="/dashboard-insights.css" />
+108:<link rel="stylesheet" href="/clipency-cursor.css" />
+109:  <link rel="stylesheet" href="/clipency-desktop-stable.css" />
+110:  <link rel="stylesheet" href="/clipency-functional-core.css" />
+112:<script>
+114:</script>
+115:  <link rel="stylesheet" href="/clipency-remove-dashboard.css" />
+116:<link rel="stylesheet" href="/clipency-seamless-flow.css" />
+117:  <script src="/clipency-seamless-boot.js"></script>
+118:  <link rel="stylesheet" href="/clipency-final-logout.css" />
+119:  <link rel="stylesheet" href="/clipency-profile-entry.css" />
+120:  <script src="/clipency-unhang-guard.js"></script>
+121:  <link rel="stylesheet" href="/clipency-logo-home.css" />
+122:  <link rel="stylesheet" href="/clipency-admin-os.css" />
+123:<link rel="stylesheet" href="/clipency-clipper-review-status.css" />
+124:  <link rel="stylesheet" href="/clipency-admin-return.css" />
+129:  <link rel="stylesheet" href="/clipency-auth-ux-guard.css" />
+132:  <script src="/clipency-final-logout.js"></script>
+156:<button class="nav-item" data-section="campaigns" id="nav-campaigns">
+184:          <button class="nav-item" data-section="profile" id="nav-profile">
+214:      <!-- User profile at bottom -->
+237:<section class="section" id="section-campaigns">
+258:          <span class="campaign-count" id="campaign-count">8 campaigns</span>
+262:        <div class="campaign-grid" id="campaign-grid"></div>
+265:        <div class="campaign-detail hidden" id="campaign-detail"></div>
+319:      <section class="section" id="section-profile">
+321:        <div class="profile-hero card card-purple" id="profile-hero"></div>
+333:<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+334:<script src="supabaseClient.js?v=1777372502"></script>
+335:<script src="dashboard.js?v=1777372502"></script>
+337:<script src="clipency-core.js?v=1777378153"></script>
+338:<script src="/experience.js"></script>
+339:<script src="/dashboard-insights.js"></script>
+340:<script src="/access-control.js"></script>
+341:<script src="/role-router.js"></script>
+342:<script src="/clipency-cursor.js"></script>
+343:  <script src="/clipency-functional-core.js"></script>
+344:  <script src="/clipency-toast-guard.js"></script>
+345:  <script src="/clipency-sidebar-nav.js"></script>
+346:  <script src="/clipency-remove-dashboard.js"></script>
+347:<script src="/clipency-smooth-boot.js"></script>
+348:<script src="/clipency-premium-titles.js"></script>
+349:  <script src="/clipency-premium-url-cleaner.js"></script>
+350:  <script src="/clipency-seamless-flow.js"></script>
+351:  <script src="/clipency-profile-entry.js"></script>
+352:  <script src="/clipency-logo-home.js"></script>
+353:<script src="/clipency-admin-os.js"></script>
+354:  <script src="/clipency-admin-review-actions.js"></script>
+355:  <script src="/clipency-clipper-review-status.js"></script>
+356:  <script src="/clipency-admin-campaigns.js"></script>
+357:  <script src="/clipency-admin-return.js"></script>
+358:  <script src="/clipency-performance-guard.js"></script>
+359:  <script src="/clipency-security-audit.js"></script>
+360:  <script src="/clipency-auth-ux-guard.js"></script>
+
+==============================
+5. profile redirect grep
+==============================
+access-control.js:20:    "/profile"
+admin.js:279:    document.getElementById("invite-btn").addEventListener("click", async () => {
+admin.js:283:    document.getElementById("update-role-btn").addEventListener("click", async () => {
+clipency-admin-campaigns.js:400:    document.getElementById("cx-new-campaign-btn")?.addEventListener("click", () => openModal(null));
+clipency-admin-campaigns.js:401:    document.getElementById("cx-campaign-modal-close")?.addEventListener("click", closeModal);
+clipency-admin-campaigns.js:402:    document.getElementById("cx-campaign-cancel")?.addEventListener("click", closeModal);
+clipency-admin-campaigns.js:409:      button.addEventListener("click", () => {
+clipency-admin-campaigns.js:416:      button.addEventListener("click", async () => {
+clipency-admin-os.js:499:    document.getElementById("cx-admin-logout")?.addEventListener("click", async () => {
+clipency-admin-os.js:526:      button.addEventListener("click", async () => {
+clipency-admin-return.js:5:  const clipperRoutes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-admin-return.js:100:  document.addEventListener("click", function (event) {
+clipency-admin-review-actions.js:206:      button.addEventListener("click", async () => {
+clipency-admin-review-actions.js:231:      button.addEventListener("click", () => {
+clipency-admin-review-actions.js:244:    document.getElementById("cx-reject-cancel")?.addEventListener("click", closeRejectModal);
+clipency-admin-review-actions.js:246:    document.getElementById("cx-reject-confirm")?.addEventListener("click", async () => {
+clipency-admin-users.js:254:        button.addEventListener("click", async () => {
+clipency-apple.js:26:      "/profile": "Your Clipency identity"
+clipency-auth-ux-guard.js:23:      "/profile",
+clipency-auth-ux-guard.js:62:      document.getElementById("cx-auth-toast-login")?.addEventListener("click", function () {
+clipency-auth-ux-guard.js:317:    document.addEventListener("click", function (event) {
+clipency-campaign-detail-bridge.js:67:    modal.addEventListener("click", (event) => {
+clipency-campaign-detail-bridge.js:180:    body.querySelector("[data-close-details]")?.addEventListener("click", closeModal);
+clipency-campaign-detail-bridge.js:182:    body.querySelector("[data-submit-from-details]")?.addEventListener("click", () => {
+clipency-campaign-detail-bridge.js:235:      card.addEventListener("click", (event) => {
+clipency-campaigns-classic.js:400:      btn.addEventListener("click", closeDetails);
+clipency-campaigns-classic.js:403:    body.querySelector("[data-open-submit]")?.addEventListener("click", () => {
+clipency-campaigns-classic.js:485:      button.addEventListener("click", () => {
+clipency-campaigns-classic.js:492:      card.addEventListener("click", () => openDetails(card.dataset.campaignId));
+clipency-campaigns-classic.js:502:      button.addEventListener("click", closeDetails);
+clipency-campaigns-classic.js:506:      button.addEventListener("click", closeSubmit);
+clipency-campaigns-classic.js:509:    document.getElementById("classic-details-modal")?.addEventListener("click", (event) => {
+clipency-campaigns-classic.js:513:    document.getElementById("classic-submit-modal")?.addEventListener("click", (event) => {
+clipency-clipper-review-status.js:5:  const routes = ["/stats", "/payouts", "/profile"];
+clipency-core.js:19:    "/profile": "profile"
+clipency-core.js:37:      profile: "/profile"
+clipency-core.js:186:    const target = "/profile";
+clipency-core.js:237:          el.addEventListener("click", (event) => {
+clipency-core.js:278:        el.addEventListener("click", (event) => {
+clipency-core.js:412:    document.addEventListener("click", () => {
+clipency-final-logout.js:127:  document.addEventListener("click", function (event) {
+clipency-final-polish.js:15:    "/profile": "profile"
+clipency-final-polish.js:83:    if (window.location.pathname !== "/profile") {
+clipency-final-polish.js:84:      window.history.pushState({ page: "profile" }, "", "/profile");
+clipency-final-polish.js:130:          el.addEventListener("click", (event) => {
+clipency-final-polish.js:159:    document.addEventListener("click", schedulePolish);
+clipency-force-profile-button.js:9:  const creatorRoutes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile", "/dashboard"];
+clipency-force-profile-button.js:26:      href === "/profile" ||
+clipency-force-profile-button.js:27:      route === "/profile" ||
+clipency-force-profile-button.js:47:    link.href = "/profile";
+clipency-force-profile-button.js:49:    link.setAttribute("data-route", "/profile");
+clipency-force-profile-button.js:51:    if (window.location.pathname === "/profile") {
+clipency-force-profile-button.js:66:    link.addEventListener("click", function (event) {
+clipency-force-profile-button.js:68:      window.location.href = "/profile";
+clipency-force-profile-button.js:130:    bottomProfile.addEventListener("click", function (event) {
+clipency-force-profile-button.js:132:      window.location.href = "/profile";
+clipency-functional-core.js:214:      button.addEventListener("click", async (event) => {
+clipency-functional-core.js:254:            <a class="cx-core-btn" href="/profile">Edit profile</a>
+clipency-functional-core.js:461:      button.addEventListener("click", () => {
+clipency-functional-core.js:468:      button.addEventListener("click", () => {
+clipency-functional-core.js:477:    root.querySelector("[data-close-modal]")?.addEventListener("click", closeSubmissionModal);
+clipency-functional-core.js:479:    modal?.addEventListener("click", (event) => {
+clipency-global-auth-actions.js:99:  document.addEventListener("click", function (event) {
+clipency-layout-fix.js:13:    "/profile"
+clipency-layout-fix.js:34:    btn.addEventListener("click", function () {
+clipency-layout-fix.js:38:    document.addEventListener("click", function (e) {
+clipency-layout-fix.js:102:        pill.addEventListener("click", () => {
+clipency-layout-fix.js:103:          window.location.href = "/profile";
+clipency-logo-home.js:5:  const clipperRoutes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-logo-home.js:27:    link.addEventListener("click", function (event) {
+clipency-polish.js:10:    { title: "Profile", description: "Manage identity and creator profile", href: "/profile", icon: "U", roles: ["clipper", "admin"] },
+clipency-polish.js:99:    trigger.addEventListener("click", openPalette);
+clipency-polish.js:101:    backdrop.addEventListener("click", (event) => {
+clipency-polish.js:170:      item.addEventListener("click", () => navigate(item.dataset.href));
+clipency-polish.js:247:    document.addEventListener("click", (event) => {
+clipency-premium-titles.js:8:    "/profile": "Clipency | Profile",
+clipency-premium-url-cleaner.js:12:    "/profile.html": "/profile",
+clipency-profile-entry.js:5:  const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-profile-entry.js:24:    link.href = "/profile";
+clipency-profile-entry.js:26:    link.setAttribute("data-route", "/profile");
+clipency-profile-entry.js:28:    if (window.location.pathname === "/profile") {
+clipency-profile-entry.js:64:      existing.classList.toggle("active", window.location.pathname === "/profile");
+clipency-profile-entry.js:112:      card.addEventListener("click", function (event) {
+clipency-profile-entry.js:119:        window.location.href = "/profile";
+clipency-profile-final.js:9:  const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile", "/dashboard"];
+clipency-profile-final.js:22:    a.href = "/profile";
+clipency-profile-final.js:34:    if (window.location.pathname === "/profile") {
+clipency-profile-final.js:38:    a.addEventListener("click", function (e) {
+clipency-profile-final.js:40:      window.location.href = "/profile";
+clipency-profile-final.js:57:      return href === "/profile" || route === "/profile" || route === "profile" || text(el) === "profile";
+clipency-profile-final.js:101:    profileCard.addEventListener("click", function (e) {
+clipency-profile-final.js:103:      window.location.href = "/profile";
+clipency-profile-nav.js:9:  const creatorRoutes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile", "/dashboard"];
+clipency-profile-nav.js:23:      return text === "profile" || href === "/profile" || route === "/profile" || route === "profile";
+clipency-profile-nav.js:39:    link.href = "/profile";
+clipency-profile-nav.js:41:    link.setAttribute("data-route", "/profile");
+clipency-profile-nav.js:87:      card.addEventListener("click", (event) => {
+clipency-profile-nav.js:91:        window.location.href = "/profile";
+clipency-profile-nav.js:97:    if (window.location.pathname !== "/profile") return;
+clipency-seamless-boot.js:2:  const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-seamless-flow.js:10:    "/profile"
+clipency-seamless-flow.js:18:    "/profile": "Profile"
+clipency-seamless-flow.js:67:      if (text.includes("profile")) return "/profile";
+clipency-seamless-flow.js:113:  document.addEventListener("click", function (event) {
+clipency-sidebar-nav.js:6:  const creatorRoutes = ["/dashboard", "/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-sidebar-nav.js:16:    profile: "/profile"
+clipency-sidebar-nav.js:27:    if (clean.includes("profile")) return "/profile";
+clipency-sidebar-nav.js:69:    sidebar.addEventListener("click", (event) => {
+clipency-sidebar-nav.js:98:      area.addEventListener("click", (event) => {
+clipency-sidebar-nav.js:102:        window.location.href = "/profile";
+clipency-sidebar-nav.js:112:      button.addEventListener("click", async (event) => {
+clipency-sidebar-profile-only.js:5:  const routes = ["/campaigns", "/stats", "/payouts", "/wallet", "/profile"];
+clipency-sidebar-profile-only.js:18:    link.href = "/profile";
+clipency-sidebar-profile-only.js:20:    link.setAttribute("data-route", "/profile");
+clipency-sidebar-profile-only.js:22:    if (window.location.pathname === "/profile") {
+clipency-sidebar-profile-only.js:47:        href === "/profile" ||
+clipency-sidebar-profile-only.js:48:        route === "/profile" ||
+clipency-sidebar-profile-only.js:96:      card.addEventListener("click", function (event) {
+clipency-smooth-boot.js:11:    "/profile"
+clipency-spacex.js:11:    "/profile"
+clipency-spacex.js:42:    button.addEventListener("click", () => {
+clipency-spacex.js:55:    document.addEventListener("click", (event) => {
+dashboard-insights.js:569:    document.addEventListener("click", (event) => {
+dashboard.js:174:document.getElementById("btn-signout").addEventListener("click", async () => {
+dashboard.js:180:  btn.addEventListener("click", () => {
+dashboard.js:248:    detail.querySelector(".back-btn").addEventListener("click", () => { activeCampaign=null; renderCampaigns(); });
+dashboard.js:249:    detail.querySelector(".submit-btn").addEventListener("click", () => openModal(activeCampaign));
+dashboard.js:287:    card.addEventListener("click", () => {
+dashboard.js:373:document.getElementById("genre-filters").addEventListener("click", e => {
+dashboard.js:534:    btn.addEventListener("click", (e) => {
+dashboard.js:547:    btn.addEventListener("click", (e) => {
+dashboard.js:575:document.getElementById("pay-modal")?.addEventListener("click", e => {
+dashboard.js:579:document.getElementById("btn-add-payment")?.addEventListener("click", () => openPayModal('add'));
+dashboard.js:580:document.getElementById("btn-change-payment")?.addEventListener("click", () => {
+dashboard.js:623:  box.querySelector("#pay-close").addEventListener("click", closePayModal);
+dashboard.js:625:    btn.addEventListener("click", () => {
+dashboard.js:670:  box.querySelector("#pay-close").addEventListener("click", closePayModal);
+dashboard.js:671:  box.querySelector("#crypto-back").addEventListener("click", () => renderPayModalStep1());
+dashboard.js:673:    btn.addEventListener("click", () => renderPayModalForm('Crypto', btn.dataset.token));
+dashboard.js:703:  box.querySelector("#pay-close").addEventListener("click", closePayModal);
+dashboard.js:704:  box.querySelector("#pay-form-back").addEventListener("click", () => {
+dashboard.js:710:  box.querySelector("#pay-form-save").addEventListener("click", () => {
+dashboard.js:759:  document.getElementById("edit-name-btn").addEventListener("click", () => {
+dashboard.js:765:  document.getElementById("cancel-name-btn").addEventListener("click", () => {
+dashboard.js:770:  document.getElementById("save-name-btn").addEventListener("click", async () => {
+dashboard.js:820:document.getElementById("submit-modal").addEventListener("click", e => {
+dashboard.js:870:  box.querySelector("#modal-close").addEventListener("click", closeModal);
+dashboard.js:874:      btn.addEventListener("click",()=>{ modalPlatform=btn.dataset.plat; modalStep=2; renderModal(campaign); });
+dashboard.js:878:      btn.addEventListener("click",()=>{ modalAccount=btn.dataset.acc; modalStep=3; renderModal(campaign); });
+dashboard.js:880:    box.querySelector("#modal-back1").addEventListener("click",()=>{ modalStep=1; renderModal(campaign); });
+dashboard.js:893:    submitBtn.addEventListener("click", async () => {
+dashboard.js:934:    box.querySelector("#modal-back2").addEventListener("click",()=>{ modalStep=2; renderModal(campaign); });
+dashboard.js:1189:    "/profile": "profile"
+dashboard.js:1198:    profile: "/profile"
+dashboard.js:1261:  document.addEventListener("click", function(event) {
+dashboard.js:1515:document.addEventListener("click", () => {
+dashboard.js:1600:    ?.addEventListener("click", clipencyUpdateUsername);
+dashboard.js:1784:            <a class="master-btn" href="/profile">Edit profile</a>
+dashboard.js:2008:    ?.addEventListener("click", clipencySaveProfileEdits);
+dashboard.js:2134:   Top-right and bottom sidebar identity open /profile
+dashboard.js:2139:  if (window.location.pathname !== "/profile") {
+dashboard.js:2140:    window.history.pushState({ page: "profile" }, "", "/profile");
+dashboard.js:2187:        el.addEventListener("click", function (event) {
+dashboard.js:2217:document.addEventListener("click", () => {
+dashboard.js:2264:      el.addEventListener("click", function (event) {
+dashboard.js:2284:document.addEventListener("click", () => {
+experience.js:31:    document.addEventListener("click", (event) => {
+landing.js:249:      tab.addEventListener("click", () => {
+landing.js:267:      item.addEventListener("click", () => {
+landing.js:342:  document.addEventListener("click", function (event) {
+premium-polish.js:37:    btn.addEventListener("click", () => {
+premium-polish.js:43:    document.addEventListener("click", (event) => {
+premium-polish.js:134:      profile: "/profile"
+premium-polish.js:137:    document.addEventListener("click", (event) => {
+review.js:261:    document.getElementById("review-filters").addEventListener("click", (event) => {
+review.js:278:    document.getElementById("review-list").addEventListener("click", async (event) => {
+review.js:298:    document.getElementById("logout-link")?.addEventListener("click", async (event) => {
+staff-common.js:74:    trigger.addEventListener("click", () => {
+staff-common.js:78:    document.addEventListener("click", (event) => {
+staff-common.js:84:    switcher.querySelector("[data-staff-logout]")?.addEventListener("click", async (event) => {
