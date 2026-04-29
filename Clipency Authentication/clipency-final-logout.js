@@ -1,24 +1,16 @@
 (function () {
-
-  const cxAuthRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
-  if (cxAuthRoutes.includes(window.location.pathname)) return;
-
   if (window.__clipencyFinalLogoutLoaded) return;
   window.__clipencyFinalLogoutLoaded = true;
 
+  const authRoutes = ["/login", "/signup", "/auth.html", "/login.html", "/signup.html"];
+  if (authRoutes.includes(window.location.pathname)) return;
+
   let loggingOut = false;
 
-  function text(el) {
-    return (el?.textContent || "").trim().toLowerCase();
-  }
-
-  function sidebarOf(el) {
-    return el?.closest?.(".sidebar, .dashboard-sidebar, aside");
-  }
-
-  function isKnownLogout(el) {
+  function isExplicitLogout(el) {
     if (!el) return false;
 
+    const text = (el.textContent || "").trim().toLowerCase();
     const href = el.getAttribute?.("href") || "";
     const aria = (el.getAttribute?.("aria-label") || "").toLowerCase();
     const title = (el.getAttribute?.("title") || "").toLowerCase();
@@ -31,9 +23,9 @@
     ].filter(Boolean).join(" ").toLowerCase();
 
     return (
-      text(el) === "logout" ||
-      text(el) === "log out" ||
-      text(el) === "sign out" ||
+      text === "logout" ||
+      text === "log out" ||
+      text === "sign out" ||
       href === "/logout" ||
       href === "/signout" ||
       aria.includes("logout") ||
@@ -48,35 +40,33 @@
     );
   }
 
-  function isBottomRightSidebarIcon(el) {
-    const sidebar = sidebarOf(el);
+  function isSmallBottomLogoutButton(el) {
+    const sidebar = el?.closest?.(".sidebar, .dashboard-sidebar, aside");
     if (!sidebar) return false;
 
-    const clickable = el.closest("button, a, [role='button'], div");
-    if (!clickable) return false;
+    const button = el.closest("button, a, [role='button']");
+    if (!button) return false;
 
     const sidebarBox = sidebar.getBoundingClientRect();
-    const box = clickable.getBoundingClientRect();
+    const box = button.getBoundingClientRect();
 
-    const isNearBottom = box.top > sidebarBox.bottom - 170;
-    const isNearRight = box.right > sidebarBox.right - 92;
-    const hasIcon = !!clickable.querySelector("svg, img") || clickable.children.length > 0;
+    const smallEnough = box.width <= 72 && box.height <= 72;
+    const nearBottom = box.top > sidebarBox.bottom - 170;
+    const nearRight = box.left > sidebarBox.right - 96;
 
-    return isNearBottom && isNearRight && hasIcon;
+    return smallEnough && nearBottom && nearRight;
   }
 
-  function isLogoutTarget(event) {
-    const clicked = event.target.closest("a, button, [role='button'], [data-logout], .logout, .logout-btn, div");
+  function isLogoutClick(event) {
+    const explicit = event.target.closest("[data-logout], .logout, .logout-btn, a, button, [role='button']");
 
-    if (!clicked) return false;
+    if (explicit && isExplicitLogout(explicit)) return true;
 
-    if (isKnownLogout(clicked)) return true;
-
-    return isBottomRightSidebarIcon(clicked);
+    return isSmallBottomLogoutButton(event.target);
   }
 
   function clearStoredAuth() {
-    const removeFrom = (storage) => {
+    const clear = (storage) => {
       const keys = [];
 
       for (let i = 0; i < storage.length; i++) {
@@ -98,8 +88,8 @@
       keys.forEach((key) => storage.removeItem(key));
     };
 
-    try { removeFrom(localStorage); } catch {}
-    try { removeFrom(sessionStorage); } catch {}
+    try { clear(localStorage); } catch {}
+    try { clear(sessionStorage); } catch {}
   }
 
   async function waitForSupabase() {
@@ -124,36 +114,30 @@
         await supabase.auth.signOut({ scope: "global" });
       }
     } catch (error) {
-      console.warn("Logout signOut failed, clearing local auth anyway.", error);
+      console.warn("Logout failed, clearing local session anyway.", error);
     }
 
     clearStoredAuth();
 
     setTimeout(function () {
-      window.location.replace("/login?logged_out=1");
+      window.location.replace("/login");
     }, 80);
   }
 
-  function handleLogoutEvent(event) {
-    if (!isLogoutTarget(event)) return;
+  document.addEventListener("click", function (event) {
+    if (!isLogoutClick(event)) return;
 
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
 
     logoutNow();
-  }
+  }, true);
 
-  document.addEventListener("pointerdown", handleLogoutEvent, true);
-  document.addEventListener("mousedown", handleLogoutEvent, true);
-  document.addEventListener("click", handleLogoutEvent, true);
-
-  function markLogoutIcon() {
+  function markOnlyLogoutButton() {
     document.querySelectorAll(".sidebar, .dashboard-sidebar, aside").forEach((sidebar) => {
-      const candidates = Array.from(sidebar.querySelectorAll("button, a, [role='button'], div"));
-
-      candidates.forEach((el) => {
-        if (isKnownLogout(el) || isBottomRightSidebarIcon(el)) {
+      sidebar.querySelectorAll("[data-logout], .logout, .logout-btn, a, button, [role='button']").forEach((el) => {
+        if (isExplicitLogout(el) || isSmallBottomLogoutButton(el)) {
           el.setAttribute("data-logout", "true");
           el.setAttribute("title", "Logout");
           el.style.cursor = "pointer";
@@ -163,12 +147,12 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", markLogoutIcon);
+    document.addEventListener("DOMContentLoaded", markOnlyLogoutButton);
   } else {
-    markLogoutIcon();
+    markOnlyLogoutButton();
   }
 
-  new MutationObserver(markLogoutIcon).observe(document.documentElement, {
+  new MutationObserver(markOnlyLogoutButton).observe(document.documentElement, {
     childList: true,
     subtree: true
   });
