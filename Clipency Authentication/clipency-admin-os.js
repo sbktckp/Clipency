@@ -86,27 +86,46 @@
     let currentRole = "clipper";
 
     try {
-      const { data: roleData, error: roleError } = await supabaseClient.rpc("current_clipency_role");
+      const email = cleanEmail(currentUser.email);
+      const uid = currentUser.id;
 
-      if (roleError) throw roleError;
-
-      currentRole = roleData || "clipper";
-    } catch (roleError) {
-      console.warn("Role RPC failed. Falling back to email admin check.", roleError);
-
-      const { data: adminRows, error: adminError } = await supabaseClient
+      // Direct linked admin check first. This avoids false "clipper" detection.
+      const { data: linkedAdminRows, error: linkedAdminError } = await supabaseClient
         .from("admin_users")
         .select("email,user_id")
-        .or(`email.eq.${cleanEmail(currentUser.email)},user_id.eq.${currentUser.id}`)
+        .or(`user_id.eq.${uid},email.eq.${email}`)
         .limit(1);
 
-      if (adminError) throw adminError;
+      if (linkedAdminError) throw linkedAdminError;
 
-      currentRole = adminRows && adminRows.length ? "admin" : "clipper";
+      if (linkedAdminRows && linkedAdminRows.length) {
+        currentRole = "admin";
+      } else {
+        const { data: roleData, error: roleError } = await supabaseClient.rpc("current_clipency_role");
+
+        if (roleError) throw roleError;
+
+        currentRole = roleData || "clipper";
+      }
+    } catch (roleError) {
+      console.warn("Admin role check failed.", roleError);
+      currentRole = "clipper";
     }
 
     if (currentRole !== "admin") {
-      window.location.replace("/campaigns");
+      document.body.innerHTML = `
+        <div style="min-height:100vh;display:grid;place-items:center;background:#050509;color:white;font-family:system-ui;padding:32px;">
+          <div style="max-width:620px;">
+            <div style="color:#a78bfa;font-weight:900;letter-spacing:.18em;font-size:12px;">ACCESS DENIED</div>
+            <h1 style="font-size:56px;line-height:.95;margin:12px 0;">Admin access required.</h1>
+            <p style="color:rgba(255,255,255,.62);font-size:18px;line-height:1.55;">
+              Signed in as <b>${currentUser.email}</b>, but this browser session is still being detected as <b>${currentRole}</b>.
+            </p>
+            <a href="/campaigns" style="display:inline-flex;margin-top:18px;color:white;background:#7c3aed;padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Go to Clipper View</a>
+            <a href="/login" style="display:inline-flex;margin-top:18px;margin-left:10px;color:white;border:1px solid rgba(255,255,255,.18);padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Login again</a>
+          </div>
+        </div>
+      `;
       return false;
     }
 

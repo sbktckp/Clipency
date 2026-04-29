@@ -76,11 +76,22 @@
       const supabase = await waitForSupabase();
       if (!supabase) return;
 
-      const { data: roleData, error } = await supabase.rpc("current_clipency_role");
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+
+      if (!user?.email || !user?.id) return;
+
+      const email = user.email.toLowerCase();
+
+      const { data: adminRows, error } = await supabase
+        .from("admin_users")
+        .select("email,user_id")
+        .or(`user_id.eq.${user.id},email.eq.${email}`)
+        .limit(1);
 
       if (error) return;
 
-      if (roleData === "admin") {
+      if (adminRows && adminRows.length) {
         addButton();
       }
     } catch {}
