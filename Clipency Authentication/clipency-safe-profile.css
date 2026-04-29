@@ -1,0 +1,36 @@
+.cx-safe-profile-link {
+  width: calc(100% - 32px);
+  min-height: 56px;
+  margin: 8px 16px 18px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(167,139,250,0.20);
+  background: rgba(124,58,237,0.14);
+  color: white !important;
+  text-decoration: none !important;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.cx-safe-profile-link:hover {
+  background: rgba(124,58,237,0.22);
+}
+
+.cx-safe-profile-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(167,139,250,0.22);
+}
+
+.cx-profile-route-disabled {
+  pointer-events: none !important;
+}
