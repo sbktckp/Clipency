@@ -35,14 +35,6 @@
   ],
   "rewrites": [
     {
-      "source": "/login",
-      "destination": "/auth.html"
-    },
-    {
-      "source": "/signup",
-      "destination": "/auth.html"
-    },
-    {
       "source": "/campaigns",
       "destination": "/dashboard.html"
     },
