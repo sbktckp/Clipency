@@ -508,3 +508,52 @@ body.cx-admin-os-active {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   ADMIN OS CURSOR FIX
+   Admin pages need precision, not a heavy glowing cursor.
+   ========================================================= */
+
+body.cx-admin-os-active,
+body.cx-admin-os-active * {
+  cursor: auto !important;
+}
+
+body.cx-admin-os-active a,
+body.cx-admin-os-active button,
+body.cx-admin-os-active select,
+body.cx-admin-os-active input,
+body.cx-admin-os-active textarea,
+body.cx-admin-os-active [role="button"],
+body.cx-admin-os-active .cx-admin-logo {
+  cursor: pointer !important;
+}
+
+body.cx-admin-os-active input,
+body.cx-admin-os-active textarea {
+  cursor: text !important;
+}
+
+/* Hide all custom/glow cursor layers inside Admin OS */
+body.cx-admin-os-active .cursor,
+body.cx-admin-os-active .cursor-glow,
+body.cx-admin-os-active .custom-cursor,
+body.cx-admin-os-active .cursor-orb,
+body.cx-admin-os-active .mouse-follower,
+body.cx-admin-os-active .pointer-glow,
+body.cx-admin-os-active [class*="cursor"],
+body.cx-admin-os-active [class*="Cursor"],
+body.cx-admin-os-active [id*="cursor"],
+body.cx-admin-os-active [id*="Cursor"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Keep admin transitions premium without eye strain */
+body.cx-admin-os-active .cx-admin-nav a:hover,
+body.cx-admin-os-active .cx-admin-button:hover,
+body.cx-admin-os-active .cx-admin-actions button:hover {
+  transform: translateY(-1px);
+}
