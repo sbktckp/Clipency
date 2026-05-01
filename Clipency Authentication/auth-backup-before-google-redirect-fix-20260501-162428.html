@@ -217,37 +217,5 @@
   <script src="/clipency-security-audit.js"></script>
   <script src="/clipency-auth-ux-guard.js"></script>
   <script src="/clipency-safe-profile.js"></script>
-
-<script>
-/* === GOOGLE AUTH REDIRECT FIX START === */
-(function () {
-  async function sendLoggedInUserToDashboard() {
-    if (!window.supabase) return;
-
-    let client = window.supabaseClient || window.supabase;
-
-    // Some files create the client as "supabase" directly.
-    if (typeof client.auth === "undefined" && window.supabaseClient) {
-      client = window.supabaseClient;
-    }
-
-    try {
-      const { data } = await client.auth.getSession();
-
-      if (data && data.session && data.session.user) {
-        window.location.replace("dashboard.html");
-      }
-    } catch (err) {
-      console.warn("Auth redirect check failed:", err);
-    }
-  }
-
-  window.addEventListener("load", function () {
-    setTimeout(sendLoggedInUserToDashboard, 700);
-  });
-})();
- /* === GOOGLE AUTH REDIRECT FIX END === */
-</script>
-
 </body>
 </html>
