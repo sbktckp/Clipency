@@ -232,58 +232,37 @@ function drawBigChart(canvasId, data, color) {
 }
 
 /* ── Campaigns ── */
+
 function renderCampaigns() {
+  if (window.cxCampaignEngine && typeof window.cxCampaignEngine.render === "function") {
+    return window.cxCampaignEngine.render();
+  }
+
   const grid = document.getElementById("campaign-grid");
   const detail = document.getElementById("campaign-detail");
-  if (activeCampaign) {
-    grid.classList.add("hidden"); document.querySelector(".filters").classList.add("hidden");
-    detail.classList.remove("hidden");
-    detail.innerHTML = buildDetail(activeCampaign);
-    detail.querySelector(".back-btn").addEventListener("click", () => { activeCampaign=null; renderCampaigns(); });
-    detail.querySelector(".submit-btn").addEventListener("click", () => openModal(activeCampaign));
-    setTimeout(() => drawBigChart("detail-chart", activeCampaign.views, activeCampaign.color), 50);
-    return;
+
+  if (detail) {
+    detail.classList.add("hidden");
+    detail.innerHTML = "";
   }
-  grid.classList.remove("hidden"); document.querySelector(".filters").classList.remove("hidden");
-  detail.classList.add("hidden");
-  const filtered = campaigns.filter(c => selectedGenre==="All" || c.genre===selectedGenre || c.tags.includes(selectedGenre) || c.type===selectedGenre);
-  document.getElementById("campaign-count").textContent = filtered.length + " campaigns";
-  grid.innerHTML = "";
-  grid.innerHTML = filtered.map(c => {
-    const used = (c.budgetUsed/100)*c.budget;
-    return `
-    <div class="campaign-card" data-id="${c.id}">
-      <div class="card-top">
-        <div class="card-icon" style="border:2px solid ${c.color}30">🎵</div>
-        <div style="flex:1;min-width:0">
-          <div class="card-title">${c.title}</div>
-          <div class="tag-row">
-            ${[...new Set(c.tags)].map(t=>`<span class="tag">${t}</span>`).join("")}
-            <span class="tag tag-green">New</span>
-          </div>
-        </div>
+
+  if (grid) {
+    grid.style.display = "";
+    grid.innerHTML = `
+      <div class="card" style="grid-column:1/-1;text-align:center;padding:44px">
+        <h3>Loading live campaigns...</h3>
+        <p style="color:rgba(255,255,255,.55);margin-top:8px">Syncing campaign data from admin dashboard.</p>
       </div>
-      ${sparkline(c.views, c.color)}
-      <div class="card-rpm">
-        <div><div class="rpm-label">Rate per 1M Views</div><div class="rpm-value">${convertCurrency(c.rpm)}</div></div>
-        <div><div class="creators-label">Creators</div><div class="creators-value">${c.creators}</div></div>
-      </div>
-      <div class="card-hover-budget">
-        <div class="hover-budget-header">
-          <span class="hover-budget-label">Budget</span>
-          <span class="hover-budget-val">${convertCurrency(used)} / ${convertCurrency(c.budget)}</span>
-        </div>
-        <div class="progress-bar" style="height:6px;margin-bottom:0"><div class="progress-fill" style="width:${c.budgetUsed}%;background:#B6ABEA"></div></div>
-      </div>
-    </div>
-  `}).join("");
-  grid.querySelectorAll(".campaign-card").forEach(card => {
-    card.addEventListener("click", () => {
-      activeCampaign = campaigns.find(c => String(c.id) === String(card.dataset.id));
-      renderCampaigns();
-    });
-  });
+    `;
+  }
+
+  setTimeout(function () {
+    if (window.cxCampaignEngine && typeof window.cxCampaignEngine.render === "function") {
+      window.cxCampaignEngine.render();
+    }
+  }, 300);
 }
+
 
 function buildDetail(c) {
   const totalViews = c.views[c.views.length-1] * 1000;
