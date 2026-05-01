@@ -22,13 +22,7 @@ let campaigns = [
   { id:8, title:"Unfollow Me [EDITS]", type:"Edits", rpm:1300, budget:1980, budgetUsed:1, creators:28, tags:["Music"], color:"#6C5DD3", platforms:["Instagram","YouTube"], genre:"UGC", views:[40,90,150,230,320,410,510,620,740,870,1010,1160] },
 ];
 
-const topPerformers = [
-  { rank:1, name:"Alex Rivera", handle:"@alexriv", views:"4.2M", earnings:"$420", avatar:"AR" },
-  { rank:2, name:"Mia Chen", handle:"@miachen", views:"3.8M", earnings:"$380", avatar:"MC" },
-  { rank:3, name:"Jake Storm", handle:"@jakestorm", views:"2.9M", earnings:"$290", avatar:"JS" },
-  { rank:4, name:"Priya Singh", handle:"@priyasg", views:"2.4M", earnings:"$240", avatar:"PS" },
-  { rank:5, name:"Leo Martinez", handle:"@leomart", views:"1.9M", earnings:"$190", avatar:"LM" },
-];
+const topPerformers = [];
 
 const transactions = [
   { date:"Apr 20", desc:"Doja Cat x Bebe Rexha payout", amount:"+$284", status:"Paid" },
