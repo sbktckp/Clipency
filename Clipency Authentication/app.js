@@ -66,6 +66,8 @@ function switchTab(panelId, btn) {
   btn.setAttribute('aria-selected', 'true');
   document.getElementById(panelId).classList.add('active');
 }
+// Expose globally so onclick="switchTab(...)" in HTML can find it
+window.switchTab = switchTab;
 
 /* ── Redirect to Dashboard ─────────────────────────── */
 function showSuccessView(user) {
