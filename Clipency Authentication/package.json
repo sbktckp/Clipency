@@ -1,0 +1,13 @@
+{
+  "name": "clipency-authentication",
+  "version": "1.0.0",
+  "description": "Clipency Authentication Platform",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Static HTML project'",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "@vercel/speed-insights": "^1.0.15"
+  }
+}
