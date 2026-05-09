@@ -4,68 +4,71 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Clipency | Admin Logs</title>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=scale-cursor-2">
+  <link rel="stylesheet" href="/admin/admin-os-polish.css?v=unified-admin-1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=logs-1"></script>
-  <style>
-    .logs-shell{min-height:100vh;display:grid;grid-template-columns:280px 1fr;background:transparent;color:var(--cx-text);}
-    .logs-side{border-right:1px solid var(--cx-line);padding:28px 18px;background:rgba(8,6,4,.72);backdrop-filter:blur(18px);}
-    .logs-logo{font-size:26px;font-weight:900;margin-bottom:46px;color:#fff;}
-    .logs-main{padding:44px;position:relative;z-index:1;}
-    .logs-kicker{letter-spacing:.22em;color:var(--cx-gold-2);font-size:13px;font-weight:900;}
-    .logs-title{font-size:56px;line-height:1;margin:12px 0 10px;font-weight:900;}
-    .logs-sub{color:var(--cx-muted);font-size:16px;margin-bottom:30px;}
-    .logs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:22px;}
-    .logs-card{padding:22px;border-radius:22px;border:1px solid var(--cx-line);background:linear-gradient(145deg,rgba(32,23,15,.88),rgba(12,9,6,.92));}
-    .logs-card span{color:var(--cx-muted);font-size:13px;}
-    .logs-card strong{display:block;font-size:30px;margin-top:8px;color:#fff;}
-    .logs-filters{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:12px;margin:24px 0;}
-    .logs-filters input,.logs-filters button{height:48px;border-radius:14px;padding:0 14px;}
-    .logs-filters button{background:linear-gradient(135deg,var(--cx-gold),var(--cx-gold-2));color:#120d08;font-weight:900;border:0;}
-    .logs-table-wrap{border:1px solid var(--cx-line);border-radius:22px;overflow:auto;background:rgba(12,9,6,.72);}
-    table{width:100%;border-collapse:collapse;min-width:980px;}
-    th,td{padding:15px 16px;border-bottom:1px solid rgba(196,149,106,.12);text-align:left;font-size:14px;}
-    th{color:var(--cx-gold-2);font-size:12px;letter-spacing:.12em;text-transform:uppercase;background:rgba(196,149,106,.06);}
-    td{color:rgba(248,243,237,.88);}
-    .pill{padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px;}
-    .active-pill{background:rgba(34,197,94,.16);color:#22c55e;}
-    .out-pill{background:rgba(196,149,106,.16);color:var(--cx-gold-2);}
-    .inactive-pill{background:rgba(255,255,255,.08);color:var(--cx-muted);}
-    @media(max-width:900px){.logs-shell{grid-template-columns:1fr}.logs-side{display:none}.logs-main{padding:24px}.logs-title{font-size:38px}.logs-grid{grid-template-columns:1fr 1fr}.logs-filters{grid-template-columns:1fr}}
-  </style>
+  <script src="/supabaseClient.js?v=unified-admin-1"></script>
 </head>
 <body>
-  <div class="logs-shell">
-    <aside class="logs-side">
-      <div class="logs-logo">✂ CLIPENCY</div>
-      <a class="cx-logs-nav" href="/admin/">⌘ Command Center</a>
-      <a class="cx-logs-nav" href="/admin/campaigns/">▷ Campaigns</a>
-      <a class="cx-logs-nav" href="/admin/reviews/">✓ Reviews</a>
-      <a class="cx-logs-nav" href="/admin/users/">👥 Users</a>
-      <a class="cx-logs-nav active" href="/admin/logs/">🕒 Logs</a>
+  <div class="cx-admin-shell">
+    <aside class="cx-admin-sidebar">
+      <div class="cx-admin-logo">
+        <span class="cx-admin-logo-mark">✂</span>
+        <span>CLIPENCY</span>
+      </div>
+
+      <div class="cx-admin-label">ADMIN OS</div>
+      <nav class="cx-admin-nav">
+        <a class="cx-admin-nav-item" href="/admin/"><span class="ico">⌘</span><span>Command Center</span></a>
+        <a class="cx-admin-nav-item" href="/admin/reviews/"><span class="ico">✓</span><span>Reviews</span></a>
+        <a class="cx-admin-nav-item" href="/admin/campaigns/"><span class="ico">▷</span><span>Campaigns</span></a>
+        <a class="cx-admin-nav-item" href="/admin/leads/"><span class="ico">✉</span><span>Leads</span></a>
+        <a class="cx-admin-nav-item" href="/admin/payouts/"><span class="ico">▭</span><span>Payouts</span></a>
+        <a class="cx-admin-nav-item" href="/admin/users/"><span class="ico">♙</span><span>Users</span></a>
+        <a class="cx-admin-nav-item active" href="/admin/logs/"><span class="ico">◷</span><span>Logs</span></a>
+      </nav>
+
+      <div class="cx-admin-label">SYSTEM</div>
+      <nav class="cx-admin-nav">
+        <a class="cx-admin-nav-item" href="/finance.html"><span class="ico">▥</span><span>Finance OS</span></a>
+        <a class="cx-admin-nav-item" href="/campaigns/"><span class="ico">↗</span><span>Clipper View</span></a>
+      </nav>
     </aside>
 
-    <main class="logs-main">
-      <div class="logs-kicker">CLIPENCY ADMIN OS</div>
-      <h1 class="logs-title">Logs</h1>
-      <p class="logs-sub">Track logged-in users, active sessions, logout time, and total time spent on the website.</p>
+    <main class="cx-admin-main">
+      <div class="cx-admin-kicker">CLIPENCY ADMIN OS</div>
+      <h1 class="cx-admin-title">Logs.</h1>
+      <p class="cx-admin-subtitle">
+        Track logged-in users, active sessions, logout time, total time spent, and count users by person or time period.
+      </p>
 
-      <section class="logs-grid">
-        <div class="logs-card"><span>Unique users in range</span><strong id="kpi-users">—</strong></div>
-        <div class="logs-card"><span>Total sessions</span><strong id="kpi-sessions">—</strong></div>
-        <div class="logs-card"><span>Currently online</span><strong id="kpi-online">—</strong></div>
-        <div class="logs-card"><span>Total time</span><strong id="kpi-time">—</strong></div>
+      <section class="cx-admin-kpis">
+        <div class="cx-admin-kpi">
+          <span>Unique users in range</span>
+          <strong id="kpi-users">—</strong>
+        </div>
+        <div class="cx-admin-kpi">
+          <span>Total sessions</span>
+          <strong id="kpi-sessions">—</strong>
+        </div>
+        <div class="cx-admin-kpi">
+          <span>Currently online</span>
+          <strong id="kpi-online">—</strong>
+        </div>
+        <div class="cx-admin-kpi">
+          <span>Total time</span>
+          <strong id="kpi-time">—</strong>
+        </div>
       </section>
 
-      <section class="logs-filters">
+      <section class="cx-admin-filter-row">
         <input id="filter-user" placeholder="Filter by user name or email">
         <input id="filter-from" type="datetime-local">
         <input id="filter-to" type="datetime-local">
         <button id="refresh">Refresh</button>
       </section>
 
-      <section class="logs-table-wrap">
-        <table>
+      <section class="cx-admin-table-wrap">
+        <table class="cx-admin-table">
           <thead>
             <tr>
               <th>User</th>
@@ -86,33 +89,66 @@
     </main>
   </div>
 
-  <script src="/admin/admin-theme.js?v=scale-cursor-2"></script>
-  <script src="/admin/admin-session-logger.js?v=logs-1"></script>
+  <script defer src="/admin/admin-session-logger.js?v=unified-admin-1"></script>
+  <script defer src="/admin/admin-os-polish.js?v=unified-admin-1"></script>
   <script>
-    function getClient(){return window.clipencySupabase || window.supabaseClient || window.sbClient || null;}
-    function fmtDate(v){return v ? new Date(v).toLocaleString() : "—";}
+    function getClient(){
+      return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+    }
+
+    function fmtDate(v){
+      return v ? new Date(v).toLocaleString() : "—";
+    }
+
     function fmtDuration(sec){
       sec = Number(sec || 0);
-      const h = Math.floor(sec/3600);
-      const m = Math.floor((sec%3600)/60);
-      const s = sec%60;
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
       if(h) return `${h}h ${m}m`;
       if(m) return `${m}m ${s}s`;
       return `${s}s`;
     }
+
+    function escapeHtml(value){
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
     function statusPill(row){
-      const online = !row.logout_at && new Date(row.last_seen_at).getTime() > Date.now() - 5*60*1000;
-      if(online) return `<span class="pill active-pill">Online</span>`;
-      if(row.logout_at) return `<span class="pill out-pill">Logged out</span>`;
-      return `<span class="pill inactive-pill">Inactive</span>`;
+      const online = !row.logout_at && new Date(row.last_seen_at).getTime() > Date.now() - 5 * 60 * 1000;
+      if(online) return `<span class="cx-pill online">Online</span>`;
+      if(row.logout_at) return `<span class="cx-pill out">Logged out</span>`;
+      return `<span class="cx-pill inactive">Inactive</span>`;
+    }
+
+    async function waitClient(){
+      for(let i=0;i<30;i++){
+        const client = getClient();
+        if(client && client.from) return client;
+        await new Promise(r => setTimeout(r, 150));
+      }
+      return null;
     }
 
     async function loadLogs(){
-      const client = getClient();
       const body = document.getElementById("logs-body");
-      if(!client){body.innerHTML='<tr><td colspan="8">Supabase client not found.</td></tr>';return;}
+      const client = await waitClient();
 
-      let query = client.from("user_session_logs").select("*").order("login_at",{ascending:false}).limit(500);
+      if(!client){
+        body.innerHTML = '<tr><td colspan="8">Supabase client not found.</td></tr>';
+        return;
+      }
+
+      let query = client
+        .from("user_session_logs")
+        .select("*")
+        .order("login_at", { ascending:false })
+        .limit(600);
 
       const from = document.getElementById("filter-from").value;
       const to = document.getElementById("filter-to").value;
@@ -121,42 +157,55 @@
       if(from) query = query.gte("login_at", new Date(from).toISOString());
       if(to) query = query.lte("login_at", new Date(to).toISOString());
 
-      const {data,error} = await query;
-      if(error){body.innerHTML=`<tr><td colspan="8">${error.message}</td></tr>`;return;}
+      const { data, error } = await query;
+
+      if(error){
+        body.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
+        return;
+      }
 
       let rows = data || [];
+
       if(user){
         rows = rows.filter(r =>
-          String(r.email||"").toLowerCase().includes(user) ||
-          String(r.display_name||"").toLowerCase().includes(user)
+          String(r.email || "").toLowerCase().includes(user) ||
+          String(r.display_name || "").toLowerCase().includes(user)
         );
       }
 
-      const unique = new Set(rows.map(r=>r.user_id)).size;
-      const online = rows.filter(r => !r.logout_at && new Date(r.last_seen_at).getTime() > Date.now() - 5*60*1000).length;
-      const totalSeconds = rows.reduce((s,r)=>s+Number(r.total_seconds||0),0);
+      const unique = new Set(rows.map(r => r.user_id)).size;
+      const online = rows.filter(r =>
+        !r.logout_at && new Date(r.last_seen_at).getTime() > Date.now() - 5 * 60 * 1000
+      ).length;
+      const totalSeconds = rows.reduce((sum,r) => sum + Number(r.total_seconds || 0), 0);
 
       document.getElementById("kpi-users").textContent = unique;
       document.getElementById("kpi-sessions").textContent = rows.length;
       document.getElementById("kpi-online").textContent = online;
       document.getElementById("kpi-time").textContent = fmtDuration(totalSeconds);
 
-      body.innerHTML = rows.length ? rows.map(r => `
+      if(!rows.length){
+        body.innerHTML = '<tr><td colspan="8">No logs found for this filter.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = rows.map(r => `
         <tr>
-          <td>${r.display_name || "—"}</td>
-          <td>${r.email || "—"}</td>
-          <td>${fmtDate(r.login_at)}</td>
-          <td>${fmtDate(r.logout_at)}</td>
-          <td>${fmtDate(r.last_seen_at)}</td>
-          <td>${fmtDuration(r.total_seconds)}</td>
+          <td>${escapeHtml(r.display_name || "—")}</td>
+          <td>${escapeHtml(r.email || "—")}</td>
+          <td>${escapeHtml(fmtDate(r.login_at))}</td>
+          <td>${escapeHtml(fmtDate(r.logout_at))}</td>
+          <td>${escapeHtml(fmtDate(r.last_seen_at))}</td>
+          <td>${escapeHtml(fmtDuration(r.total_seconds))}</td>
           <td>${statusPill(r)}</td>
-          <td>${r.last_path || r.entry_path || "—"}</td>
+          <td>${escapeHtml(r.last_path || r.entry_path || "—")}</td>
         </tr>
-      `).join("") : '<tr><td colspan="8">No logs found for this filter.</td></tr>';
+      `).join("");
     }
 
     document.getElementById("refresh").addEventListener("click", loadLogs);
     window.addEventListener("load", loadLogs);
+    setInterval(loadLogs, 60000);
   </script>
 </body>
 </html>
