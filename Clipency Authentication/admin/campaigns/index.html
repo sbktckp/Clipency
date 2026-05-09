@@ -179,5 +179,403 @@
 })();
 </script>
 
+
+<script>
+/* ===== CLIPENCY ADMIN CAMPAIGN BANNER UPLOAD ===== */
+(function(){
+  const BUCKET = "campaign-banners";
+
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function wait(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function waitClient(){
+    for(let i = 0; i < 40; i++){
+      const client = getClient();
+      if(client && client.storage && client.auth) return client;
+      await wait(150);
+    }
+    return null;
+  }
+
+  function safeName(name){
+    return String(name || "banner")
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function findAssetInput(){
+    const candidates = Array.from(document.querySelectorAll("input, textarea")).filter(el => {
+      const key = String((el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "")).toLowerCase();
+      return key.includes("asset_url")
+        || key.includes("asset")
+        || key.includes("banner")
+        || key.includes("reference");
+    });
+
+    let input = candidates[0];
+
+    if(!input){
+      input = document.createElement("input");
+      input.type = "url";
+      input.name = "asset_url";
+      input.id = "campaign-asset-url";
+      input.placeholder = "Uploaded banner URL will appear here";
+
+      const form = document.querySelector("form") || document.querySelector(".modal-box, .modal, .campaign-modal, body");
+      const wrap = document.createElement("div");
+      wrap.className = "cx-banner-generated-field";
+      wrap.innerHTML = `<label class="form-label">CAMPAIGN BANNER URL</label>`;
+      wrap.appendChild(input);
+      form.appendChild(wrap);
+    }
+
+    input.name = "asset_url";
+    input.id = input.id || "campaign-asset-url";
+    input.placeholder = "Uploaded banner URL will appear here";
+    input.readOnly = false;
+
+    return input;
+  }
+
+  function getFieldWrapper(input){
+    return input.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div") || input.parentElement;
+  }
+
+  function addUploadBox(){
+    if(document.getElementById("cx-campaign-banner-uploader")) return;
+
+    const input = findAssetInput();
+    const wrapper = getFieldWrapper(input);
+    if(!wrapper || !wrapper.parentElement) return;
+
+    const box = document.createElement("div");
+    box.id = "cx-campaign-banner-uploader";
+    box.innerHTML = `
+      <div class="cx-banner-upload-card">
+        <div class="cx-banner-upload-head">
+          <div>
+            <div class="cx-banner-upload-kicker">CAMPAIGN BANNER</div>
+            <div class="cx-banner-upload-title">Upload campaign banner</div>
+            <div class="cx-banner-upload-sub">PNG, JPG, WEBP, GIF or SVG. Max 5MB.</div>
+          </div>
+          <label class="cx-banner-upload-btn">
+            Choose image
+            <input id="cx-campaign-banner-file" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml">
+          </label>
+        </div>
+        <div id="cx-campaign-banner-preview" class="cx-banner-preview">
+          <span>No banner uploaded yet</span>
+        </div>
+        <div id="cx-campaign-banner-status" class="cx-banner-upload-status"></div>
+      </div>
+    `;
+
+    wrapper.parentElement.insertBefore(box, wrapper.nextSibling);
+
+    const fileInput = box.querySelector("#cx-campaign-banner-file");
+    fileInput.addEventListener("change", async function(){
+      const file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+
+      const status = document.getElementById("cx-campaign-banner-status");
+      const preview = document.getElementById("cx-campaign-banner-preview");
+      const assetInput = findAssetInput();
+
+      if(!file.type.startsWith("image/")){
+        status.textContent = "Please select an image file.";
+        status.className = "cx-banner-upload-status error";
+        return;
+      }
+
+      if(file.size > 5 * 1024 * 1024){
+        status.textContent = "Image is too large. Max allowed size is 5MB.";
+        status.className = "cx-banner-upload-status error";
+        return;
+      }
+
+      status.textContent = "Uploading banner...";
+      status.className = "cx-banner-upload-status";
+
+      const client = await waitClient();
+      if(!client){
+        status.textContent = "Supabase client not found. Refresh and try again.";
+        status.className = "cx-banner-upload-status error";
+        return;
+      }
+
+      try{
+        const { data: sessionData, error: sessionError } = await client.auth.getSession();
+        if(sessionError) throw sessionError;
+
+        const user = sessionData && sessionData.session && sessionData.session.user;
+        if(!user){
+          status.textContent = "Please login again before uploading.";
+          status.className = "cx-banner-upload-status error";
+          return;
+        }
+
+        const ext = safeName(file.name).split(".").pop() || "png";
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+        const { error: uploadError } = await client
+          .storage
+          .from(BUCKET)
+          .upload(path, file, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: file.type
+          });
+
+        if(uploadError) throw uploadError;
+
+        const { data: publicData } = client
+          .storage
+          .from(BUCKET)
+          .getPublicUrl(path);
+
+        const publicUrl = publicData && publicData.publicUrl;
+        if(!publicUrl) throw new Error("Public URL was not returned.");
+
+        assetInput.value = publicUrl;
+        assetInput.dispatchEvent(new Event("input", { bubbles: true }));
+        assetInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+        preview.innerHTML = `<img src="${publicUrl}" alt="Campaign banner preview">`;
+
+        status.textContent = "Banner uploaded. Now click Save campaign.";
+        status.className = "cx-banner-upload-status success";
+      }catch(err){
+        console.error("Banner upload failed:", err);
+        status.textContent = err.message || "Upload failed. Check storage policy.";
+        status.className = "cx-banner-upload-status error";
+      }
+    });
+
+    if(input.value && /^https?:\/\//i.test(input.value)){
+      document.getElementById("cx-campaign-banner-preview").innerHTML =
+        `<img src="${input.value}" alt="Campaign banner preview">`;
+    }
+  }
+
+  function renameAssetLabel(){
+    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, span, p, div"));
+    labels.forEach(label => {
+      const text = String(label.textContent || "").trim().toLowerCase();
+      if(
+        text === "asset / reference url" ||
+        text === "asset url" ||
+        text === "reference url"
+      ){
+        label.textContent = "CAMPAIGN BANNER URL";
+      }
+    });
+  }
+
+  function hideUnwantedFields(){
+    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, span, p, div"));
+
+    labels.forEach(label => {
+      const text = String(label.textContent || "").trim().toLowerCase();
+
+      const shouldHide =
+        text === "description" ||
+        text === "creators count" ||
+        text === "creator count" ||
+        text === "asset / reference url";
+
+      if(shouldHide){
+        const wrap = label.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div");
+        if(wrap && text !== "asset / reference url"){
+          wrap.style.display = "none";
+          const input = wrap.querySelector("input, textarea");
+          if(input){
+            input.value = "";
+            input.disabled = true;
+          }
+        }
+      }
+    });
+  }
+
+  function ensurePlatformField(){
+    if(document.querySelector('[name="platform"], #campaign-platform')) return;
+
+    const typeInput = Array.from(document.querySelectorAll("input, select")).find(el => {
+      const key = String((el.name || "") + " " + (el.id || "")).toLowerCase();
+      return key === "type" || key.includes("type");
+    });
+
+    const typeWrap = typeInput && getFieldWrapper(typeInput);
+    const container = typeWrap && typeWrap.parentElement ? typeWrap.parentElement : document.querySelector("form") || document.body;
+
+    const field = document.createElement("div");
+    field.className = typeWrap ? typeWrap.className : "form-group";
+    field.innerHTML = `
+      <label class="form-label">PLATFORMS</label>
+      <input id="campaign-platform" name="platform" type="text" value="Instagram, TikTok, YouTube Shorts" placeholder="Instagram, TikTok, YouTube Shorts">
+    `;
+
+    if(typeWrap && typeWrap.nextSibling){
+      container.insertBefore(field, typeWrap.nextSibling);
+    }else{
+      container.appendChild(field);
+    }
+  }
+
+  function prepareBeforeSave(){
+    const assetInput = findAssetInput();
+    assetInput.name = "asset_url";
+
+    const platform = document.querySelector('[name="platform"], #campaign-platform');
+    if(platform && !platform.value.trim()){
+      platform.value = "Instagram, TikTok, YouTube Shorts";
+    }
+
+    const desc = document.querySelector('[name="description"], #description, textarea[id*="description"]');
+    if(desc){
+      desc.value = "";
+    }
+
+    const creators = document.querySelector('[name="creators_count"], #creators_count, input[id*="creator"]');
+    if(creators){
+      creators.value = "0";
+    }
+  }
+
+  function boot(){
+    renameAssetLabel();
+    ensurePlatformField();
+    addUploadBox();
+    hideUnwantedFields();
+
+    document.addEventListener("click", function(e){
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      const text = String(btn.textContent || "").toLowerCase();
+      if(text.includes("save campaign") || text.includes("create campaign") || text.includes("update campaign")){
+        prepareBeforeSave();
+      }
+    }, true);
+
+    setTimeout(function(){
+      renameAssetLabel();
+      ensurePlatformField();
+      addUploadBox();
+      hideUnwantedFields();
+    }, 500);
+
+    setTimeout(function(){
+      renameAssetLabel();
+      ensurePlatformField();
+      addUploadBox();
+      hideUnwantedFields();
+    }, 1500);
+  }
+
+  if(!document.getElementById("cx-banner-upload-style")){
+    const style = document.createElement("style");
+    style.id = "cx-banner-upload-style";
+    style.textContent = `
+      .cx-banner-upload-card{
+        margin: 18px 0;
+        padding: 18px;
+        border-radius: 22px;
+        background: rgba(255,255,255,.035);
+        border: 1px solid rgba(255,255,255,.12);
+      }
+      .cx-banner-upload-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:16px;
+        flex-wrap:wrap;
+      }
+      .cx-banner-upload-kicker{
+        font-size:12px;
+        letter-spacing:.14em;
+        color:#a78bfa;
+        font-weight:800;
+      }
+      .cx-banner-upload-title{
+        color:#fff;
+        font-size:18px;
+        font-weight:900;
+        margin-top:4px;
+      }
+      .cx-banner-upload-sub{
+        color:rgba(255,255,255,.55);
+        font-size:13px;
+        margin-top:3px;
+      }
+      .cx-banner-upload-btn{
+        cursor:pointer;
+        padding:12px 18px;
+        border-radius:999px;
+        background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+        color:#fff;
+        font-weight:900;
+        border:1px solid rgba(255,255,255,.18);
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .cx-banner-upload-btn input{
+        display:none;
+      }
+      .cx-banner-preview{
+        margin-top:16px;
+        min-height:150px;
+        border-radius:18px;
+        border:1px dashed rgba(255,255,255,.18);
+        background:rgba(0,0,0,.22);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:rgba(255,255,255,.45);
+        overflow:hidden;
+      }
+      .cx-banner-preview img{
+        width:100%;
+        height:220px;
+        object-fit:cover;
+        display:block;
+      }
+      .cx-banner-upload-status{
+        margin-top:10px;
+        font-size:13px;
+        color:rgba(255,255,255,.65);
+      }
+      .cx-banner-upload-status.success{
+        color:#22c55e;
+      }
+      .cx-banner-upload-status.error{
+        color:#f87171;
+      }
+      @media(max-width:700px){
+        .cx-banner-preview img{
+          height:160px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", boot);
+  }else{
+    boot();
+  }
+
+  window.addEventListener("load", boot);
+})();
+</script>
+
 </body>
 </html>

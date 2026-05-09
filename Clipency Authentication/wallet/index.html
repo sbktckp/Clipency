@@ -4681,5 +4681,108 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* ===== CLIPENCY CAMPAIGN BANNER DISPLAY FIX ===== */
+(function(){
+  function getCampaigns(){
+    try{
+      if(window.__clipencyAccurateCampaigns && window.__clipencyAccurateCampaigns.length) return window.__clipencyAccurateCampaigns;
+      if(window.CAMPAIGNS && window.CAMPAIGNS.length) return window.CAMPAIGNS;
+      if(typeof CAMPAIGNS !== "undefined" && CAMPAIGNS.length) return CAMPAIGNS;
+    }catch(e){}
+    return [];
+  }
+
+  function safeUrl(url){
+    const value = String(url || "").trim();
+    if(!value) return "";
+    if(value.startsWith("/") || /^https?:\/\//i.test(value)) return value;
+    return "";
+  }
+
+  function enhance(){
+    const campaigns = getCampaigns();
+
+    campaigns.forEach(c => {
+      const banner = safeUrl(c.banner || c.asset_url || (c.raw && c.raw.asset_url));
+      if(!banner) return;
+
+      const id = String(c.id);
+      const title = String(c.title || "").trim();
+
+      const candidates = Array.from(document.querySelectorAll(".camp-card, .campaign-card, [onclick]")).filter(card => {
+        const onclick = String(card.getAttribute("onclick") || "");
+        const text = String(card.textContent || "");
+        return onclick.includes(id) || (title && text.includes(title));
+      });
+
+      candidates.forEach(card => {
+        const icon = card.querySelector(".camp-icon, .campaign-icon, .card-icon");
+        if(icon && !icon.querySelector("img")){
+          icon.innerHTML = `<img class="cx-campaign-thumb-img" src="${banner}" alt="">`;
+        }
+
+        const bannerAreas = Array.from(card.querySelectorAll("div, span, p")).filter(el =>
+          /campaign banner/i.test(String(el.textContent || ""))
+        );
+
+        bannerAreas.forEach(area => {
+          const box = area.closest("div") || area;
+          box.innerHTML = `<img class="cx-campaign-banner-img" src="${banner}" alt="Campaign banner">`;
+        });
+      });
+
+      const detailAreas = Array.from(document.querySelectorAll("div, span, p")).filter(el =>
+        /campaign banner/i.test(String(el.textContent || ""))
+      );
+
+      detailAreas.forEach(area => {
+        const nearTitle = document.body.textContent.includes(title);
+        if(!nearTitle) return;
+        const box = area.closest("div") || area;
+        if(!box.querySelector("img")){
+          box.innerHTML = `<img class="cx-campaign-banner-img" src="${banner}" alt="Campaign banner">`;
+        }
+      });
+    });
+  }
+
+  if(!document.getElementById("cx-campaign-banner-display-style")){
+    const style = document.createElement("style");
+    style.id = "cx-campaign-banner-display-style";
+    style.textContent = `
+      .cx-campaign-thumb-img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        border-radius:inherit;
+        display:block;
+      }
+      .cx-campaign-banner-img{
+        width:100%;
+        height:100%;
+        min-height:140px;
+        object-fit:cover;
+        border-radius:18px;
+        display:block;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(enhance, 500);
+    setTimeout(enhance, 1200);
+    setTimeout(enhance, 2500);
+  });
+
+  document.addEventListener("click", function(){
+    setTimeout(enhance, 120);
+    setTimeout(enhance, 450);
+  }, true);
+})();
+</script>
+
 </body>
 </html>
