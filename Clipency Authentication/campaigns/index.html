@@ -2220,7 +2220,7 @@ function renderCampaigns(genre='All'){
            <span>Campaign Banner</span>
          </div>`;
     return `
-    <div class="camp-card" onclick="showCampDetail(${c.id})" style="--prog-w:${pct}%">
+    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${pct}%">
       <div class="cc-header">
         <div class="cc-icon">${c.icon}</div>
         <div class="cc-title-wrap">
@@ -2261,7 +2261,8 @@ function renderCampaigns(genre='All'){
 }
 
 function showCampDetail(id){
-  const c=CAMPAIGNS.find(x=>x.id===id);
+  const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
+  if(!c){ showToast('Campaign not found'); return; }
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
   grid.classList.add('hidden');
@@ -2283,9 +2284,9 @@ function showCampDetail(id){
           <span class="tag">${c.genre}</span>
           ${c.platforms.map(p=>`<span class="tag">${p}</span>`).join('')}
         </div>
-        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
       </div>
-      <button class="submit-btn submit-btn-header" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+      <button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
     </div>
 
     <!-- ROW 1: Campaign info (left) + Views chart (right) -->
@@ -2337,7 +2338,7 @@ function showCampDetail(id){
         </div>
         <div id="detail-x-labels" style="display:flex;justify-content:space-between;padding:6px 48px 0 56px;"></div>
         <div style="margin-top:16px;text-align:right;">
-          <button class="submit-btn" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+          <button class="submit-btn" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
         </div>
       </div>
     </div>
@@ -2391,10 +2392,10 @@ function showCampDetail(id){
     <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${PERFORMERS.map((p,i)=>`
+      ${(c.performers && c.performers.length ? c.performers : PERFORMERS).map((p,i)=>`
         <div class="perf-item">
           <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
-          <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
+          <div class="perf-av">${p.initials || ((p.name||'C').split(' ').map(x=>x[0]).join('').slice(0,2)||'C').toUpperCase()}</div>
           <div style="flex:1"><div class="perf-name">${p.name}</div><div class="perf-handle">${p.handle}</div></div>
           <div style="text-align:right;"><div class="perf-views" style="font-size:.9rem;font-weight:700;">${p.views}</div><div class="perf-earn">${fmt(p.earnUsd)}</div></div>
         </div>
@@ -2582,7 +2583,7 @@ function closeSubmitModal(){
 }
 
 function renderModalStep(){
-  const c = CAMPAIGNS.find(x=>x.id===_submitState.campaignId);
+  const c = CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
   const s = _submitState;
   const steps = `
     <div class="modal-steps">
@@ -4225,6 +4226,229 @@ window.addEventListener('load',()=>{
   }
 
   window.addEventListener("load", boot);
+})();
+</script>
+
+
+<script>
+/* ===== CLIPENCY V4 LIVE CAMPAIGNS FROM SUPABASE ===== */
+(function(){
+  const DEFAULT_PLATFORMS = ["Instagram", "TikTok", "YouTube Shorts"];
+
+  const ICON_BY_TYPE = {
+    music: "🎵",
+    gaming: "🎮",
+    ugc: "📱",
+    sports: "🏆",
+    clipping: "✂️",
+    edits: "✨",
+    edit: "✨",
+    general: "🎬"
+  };
+
+  const COLOR_BY_TYPE = {
+    music: "#C4956A",
+    gaming: "#6EE7B7",
+    ugc: "#A78BFA",
+    sports: "#60A5FA",
+    clipping: "#F472B6",
+    edits: "#FBBF24",
+    general: "#C4956A"
+  };
+
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function cleanText(){
+    for(const value of arguments){
+      if(value !== null && value !== undefined && String(value).trim() !== ""){
+        return String(value).trim();
+      }
+    }
+    return "";
+  }
+
+  function num(){
+    for(const value of arguments){
+      const n = Number(value);
+      if(Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  }
+
+  function parseList(value, fallback){
+    if(Array.isArray(value)){
+      return value.map(x => String(x).trim()).filter(Boolean);
+    }
+
+    if(typeof value === "string" && value.trim()){
+      const parts = value
+        .split(/\n|,|;|\|/g)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      return parts.length ? parts : [value.trim()];
+    }
+
+    return fallback || [];
+  }
+
+  function formatCompactViews(value){
+    const n = Number(value || 0);
+    if(!Number.isFinite(n) || n <= 0) return "0";
+    if(n >= 1000000000) return (n / 1000000000).toFixed(1).replace(".0", "") + "B";
+    if(n >= 1000000) return (n / 1000000).toFixed(1).replace(".0", "") + "M";
+    if(n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "K";
+    return String(Math.round(n));
+  }
+
+  function creatorInitials(name){
+    const raw = String(name || "Creator").trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return raw.slice(0, 2).toUpperCase();
+  }
+
+  function makeSpark(seedA, seedB, index){
+    const base = Math.max(12, Number(seedA || 0) / 1000 + Number(seedB || 0) / 1000 + index * 7);
+    return [
+      Math.round(base * 0.35 + 12),
+      Math.round(base * 0.48 + 18),
+      Math.round(base * 0.62 + 20),
+      Math.round(base * 0.74 + 28),
+      Math.round(base * 0.88 + 34),
+      Math.round(base * 1.03 + 42),
+      Math.round(base * 1.18 + 50)
+    ];
+  }
+
+  function isVisibleCampaign(row){
+    const status = String(row.status || "active").toLowerCase();
+    return !["archived", "deleted", "inactive", "draft"].includes(status);
+  }
+
+  function normalizeCampaign(row, index, leaderboardRows){
+    const id = String(row.id);
+    const primaryType = cleanText(row.type, row.campaign_type, row.category, row.genre, "General");
+    const typeKey = primaryType.toLowerCase();
+
+    const rpm = num(row.rpm, row.rate_per_million_usd);
+    const budget = num(row.budget_usd, row.budget);
+    const spent = num(row.spent_usd, row.budget_used);
+
+    const campaignLeaders = leaderboardRows
+      .filter(x => String(x.campaign_id) === id)
+      .sort((a, b) => Number(b.total_views || 0) - Number(a.total_views || 0));
+
+    const totalViews = campaignLeaders.reduce((sum, x) => sum + Number(x.total_views || 0), 0);
+    const approvedCreators = campaignLeaders.length;
+
+    const performers = campaignLeaders.slice(0, 5).map(x => {
+      const creatorName = cleanText(x.creator_name, x.handle, "Creator");
+      return {
+        name: creatorName,
+        handle: x.handle ? "@" + String(x.handle).replace(/^@/, "") : "@clipper",
+        views: formatCompactViews(x.total_views),
+        earn: "$" + Number(x.total_earnings || 0).toLocaleString(),
+        earnUsd: Number(x.total_earnings || 0),
+        initials: creatorInitials(creatorName)
+      };
+    });
+
+    const platforms = parseList(row.platform, DEFAULT_PLATFORMS);
+    const reqs = parseList(row.requirements, ["Submit your published content link with account handle."]);
+
+    const tags = [];
+    const dbGenre = cleanText(row.genre);
+    if(dbGenre && dbGenre.toLowerCase() !== primaryType.toLowerCase()) tags.push(dbGenre);
+    if(row.is_new) tags.push("New");
+
+    return {
+      id,
+      title: cleanText(row.title, "Untitled Campaign"),
+      description: cleanText(row.description, ""),
+      icon: ICON_BY_TYPE[typeKey] || ICON_BY_TYPE.general,
+      iconType: typeKey,
+      genre: primaryType,
+      payout: "$" + rpm.toLocaleString() + " / 1M views",
+      rpmUsd: rpm,
+      budget,
+      spent,
+      platforms,
+      reqs,
+      sparkData: makeSpark(spent, budget, index),
+      views: totalViews > 0 ? formatCompactViews(totalViews) : "0",
+      creators: approvedCreators || Number(row.creators_count || 0),
+      clippers: approvedCreators || Number(row.creators_count || 0),
+      banner: row.asset_url || null,
+      tags,
+      performers,
+      chartColor: row.chart_color || COLOR_BY_TYPE[typeKey] || COLOR_BY_TYPE.general,
+      raw: row
+    };
+  }
+
+  async function waitForClient(){
+    for(let i = 0; i < 30; i++){
+      const client = getClient();
+      if(client && client.from && client.auth) return client;
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    return null;
+  }
+
+  async function loadLiveCampaigns(){
+    const client = await waitForClient();
+
+    if(!client){
+      console.warn("Clipency live campaigns: Supabase client not found.");
+      return;
+    }
+
+    try{
+      const { data: campaignRows, error: campaignError } = await client
+        .from("campaigns")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if(campaignError) throw campaignError;
+
+      let leaderboardRows = [];
+      const { data: leaderData, error: leaderError } = await client
+        .from("campaign_leaderboard_public")
+        .select("*");
+
+      if(!leaderError && Array.isArray(leaderData)){
+        leaderboardRows = leaderData;
+      }
+
+      const liveCampaigns = (campaignRows || [])
+        .filter(isVisibleCampaign)
+        .map((row, index) => normalizeCampaign(row, index, leaderboardRows));
+
+      CAMPAIGNS.length = 0;
+      CAMPAIGNS.push(...liveCampaigns);
+
+      window.__clipencyLiveCampaignsLoaded = true;
+      window.__clipencyLiveCampaignCount = liveCampaigns.length;
+
+      if(typeof renderCampaigns === "function"){
+        renderCampaigns("All");
+      }
+
+      console.log("Clipency live campaigns loaded:", liveCampaigns.length);
+    }catch(err){
+      console.error("Clipency live campaigns failed:", err);
+      if(typeof showToast === "function"){
+        showToast("Could not load live campaigns. Showing fallback data.");
+      }
+    }
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(loadLiveCampaigns, 450);
+  });
 })();
 </script>
 
