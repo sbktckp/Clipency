@@ -538,3 +538,60 @@ body.cx-bg-hovering .cx-bg-glow {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ===== CLIPENCY LOGS HORIZONTAL SCROLL IMPROVEMENT ===== */
+.cx-logs-top-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  height:18px;
+  margin:4px 0 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(196,149,106,.14);
+}
+
+.cx-logs-top-scroll-inner{
+  height:1px;
+}
+
+.cx-logs-table-wrap,
+.cx-final-logs-table-wrap{
+  cursor:grab;
+  scrollbar-width:auto;
+  scrollbar-color:rgba(224,172,120,.75) rgba(255,255,255,.06);
+}
+
+.cx-logs-table-wrap.cx-dragging,
+.cx-final-logs-table-wrap.cx-dragging{
+  cursor:grabbing!important;
+}
+
+.cx-logs-table-wrap::-webkit-scrollbar,
+.cx-final-logs-table-wrap::-webkit-scrollbar,
+.cx-logs-top-scroll::-webkit-scrollbar{
+  height:14px;
+}
+
+.cx-logs-table-wrap::-webkit-scrollbar-track,
+.cx-final-logs-table-wrap::-webkit-scrollbar-track,
+.cx-logs-top-scroll::-webkit-scrollbar-track{
+  background:rgba(255,255,255,.06);
+  border-radius:999px;
+}
+
+.cx-logs-table-wrap::-webkit-scrollbar-thumb,
+.cx-final-logs-table-wrap::-webkit-scrollbar-thumb,
+.cx-logs-top-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(90deg,#c4956a,#e0ac78);
+  border-radius:999px;
+  border:3px solid rgba(0,0,0,.32);
+}
+
+.cx-logs-table-wrap::-webkit-scrollbar-thumb:hover,
+.cx-final-logs-table-wrap::-webkit-scrollbar-thumb:hover,
+.cx-logs-top-scroll::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(90deg,#e0ac78,#f0c18b);
+}
+/* ===== END CLIPENCY LOGS HORIZONTAL SCROLL IMPROVEMENT ===== */
