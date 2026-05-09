@@ -35,5 +35,149 @@
   <script src="/clipency-security-audit.js"></script>
   <script src="/clipency-auth-ux-guard.js"></script>
   <script src="/clipency-safe-profile.js"></script>
+
+<script>
+/* ===== CLIPENCY ADMIN CAMPAIGN FORM CLEANUP ===== */
+(function(){
+  function labelText(el){
+    return String(el.textContent || "").trim().toLowerCase();
+  }
+
+  function findLabel(patterns){
+    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, h4, span, p, div"));
+    return labels.find(el => {
+      const t = labelText(el);
+      return patterns.some(p => t === p || t.includes(p));
+    });
+  }
+
+  function fieldWrapFromLabel(label){
+    if(!label) return null;
+    return label.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div") || label.parentElement;
+  }
+
+  function hideField(patterns){
+    const label = findLabel(patterns);
+    const wrap = fieldWrapFromLabel(label);
+    if(wrap){
+      wrap.style.display = "none";
+      wrap.setAttribute("data-cx-hidden-field", "true");
+      const input = wrap.querySelector("input, textarea, select");
+      if(input) input.value = "";
+    }
+  }
+
+  function renameField(patterns, text, placeholder){
+    const label = findLabel(patterns);
+    if(label){
+      label.textContent = text;
+      const wrap = fieldWrapFromLabel(label);
+      const input = wrap && wrap.querySelector("input, textarea");
+      if(input && placeholder) input.placeholder = placeholder;
+    }
+  }
+
+  function ensurePlatformsField(){
+    if(document.querySelector('[name="platform"], #campaign-platform, [data-cx-platform-field="true"]')) return;
+
+    const typeLabel = findLabel(["type"]);
+    const typeWrap = fieldWrapFromLabel(typeLabel);
+
+    const field = document.createElement("div");
+    field.className = typeWrap ? typeWrap.className : "form-group";
+    field.setAttribute("data-cx-platform-field", "true");
+    field.innerHTML = `
+      <label class="form-label">PLATFORMS</label>
+      <input id="campaign-platform" name="platform" type="text" value="Instagram, TikTok, YouTube Shorts" placeholder="Instagram, TikTok, YouTube Shorts">
+    `;
+
+    if(typeWrap && typeWrap.parentElement){
+      typeWrap.parentElement.insertBefore(field, typeWrap.nextSibling);
+    }
+  }
+
+  function cleanup(){
+    renameField(["asset / reference url", "reference url", "asset url"], "CAMPAIGN BANNER URL", "https://example.com/banner.jpg");
+    hideField(["description"]);
+    hideField(["creators count", "creator count", "active creators"]);
+
+    ensurePlatformsField();
+
+    document.querySelectorAll("input, textarea").forEach(input => {
+      const name = String(input.name || input.id || "").toLowerCase();
+
+      if(name.includes("description")){
+        input.value = "";
+        input.disabled = true;
+      }
+
+      if(name.includes("creator") && name.includes("count")){
+        input.value = "0";
+        input.disabled = true;
+      }
+
+      if(name.includes("asset") || name.includes("reference")){
+        input.name = "asset_url";
+        input.id = input.id || "campaign-asset-url";
+        input.placeholder = "https://example.com/banner.jpg";
+      }
+    });
+  }
+
+  function patchSavePayload(){
+    if(window.__cxCampaignPayloadPatched) return;
+    window.__cxCampaignPayloadPatched = true;
+
+    document.addEventListener("click", function(e){
+      const btn = e.target.closest("button");
+      if(!btn) return;
+
+      const text = String(btn.textContent || "").toLowerCase();
+      if(!text.includes("save campaign") && !text.includes("create campaign") && !text.includes("update campaign")) return;
+
+      cleanup();
+
+      const platform = document.querySelector('#campaign-platform, [name="platform"]');
+      if(platform && !platform.value.trim()){
+        platform.value = "Instagram, TikTok, YouTube Shorts";
+      }
+
+      const desc = document.querySelector('[name="description"], #description, textarea[id*="description"]');
+      if(desc) desc.value = "";
+
+      const creator = document.querySelector('[name="creators_count"], #creators_count, input[id*="creator"]');
+      if(creator) creator.value = "0";
+    }, true);
+  }
+
+  if(!document.getElementById("cx-admin-campaign-clean-style")){
+    const style = document.createElement("style");
+    style.id = "cx-admin-campaign-clean-style";
+    style.textContent = `
+      [data-cx-hidden-field="true"]{display:none!important;}
+      [data-cx-platform-field="true"] input{
+        width:100%;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function boot(){
+    cleanup();
+    patchSavePayload();
+    setTimeout(cleanup, 300);
+    setTimeout(cleanup, 1000);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", boot);
+  }else{
+    boot();
+  }
+
+  window.addEventListener("load", boot);
+})();
+</script>
+
 </body>
 </html>

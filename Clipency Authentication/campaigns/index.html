@@ -4463,5 +4463,223 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* ===== CLIPENCY CAMPAIGN ACCURACY BRIDGE ===== */
+(function(){
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function n(value){
+    const x = Number(value);
+    return Number.isFinite(x) ? x : 0;
+  }
+
+  function clean(value, fallback){
+    const v = String(value ?? "").trim();
+    return v || fallback || "";
+  }
+
+  function safeImageUrl(value){
+    const url = String(value || "").trim();
+    if(!url) return null;
+    const validStart = /^https?:\/\//i.test(url) || url.startsWith("/");
+    const imageLike = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(url);
+    return validStart && imageLike ? url : null;
+  }
+
+  function compact(value){
+    const x = n(value);
+    if(x >= 1000000000) return (x / 1000000000).toFixed(1).replace(".0","") + "B";
+    if(x >= 1000000) return (x / 1000000).toFixed(1).replace(".0","") + "M";
+    if(x >= 1000) return (x / 1000).toFixed(1).replace(".0","") + "K";
+    return String(Math.round(x));
+  }
+
+  function parseList(value){
+    if(Array.isArray(value)) return value.map(String).map(x => x.trim()).filter(Boolean);
+    const raw = String(value || "").trim();
+    if(!raw) return ["Instagram", "TikTok", "YouTube Shorts"];
+    return raw.split(/\n|,|;|\|/g).map(x => x.trim()).filter(Boolean);
+  }
+
+  function iconFor(row){
+    const key = clean(row.type, row.category || row.genre || "general").toLowerCase();
+    if(key.includes("gaming")) return "🎮";
+    if(key.includes("sport")) return "🏆";
+    if(key.includes("edit")) return "✨";
+    if(key.includes("ugc")) return "📱";
+    if(key.includes("clip")) return "✂️";
+    if(key.includes("music")) return "🎵";
+    return "🎬";
+  }
+
+  function normalize(row, leaderboard){
+    const id = String(row.id);
+    const leaders = leaderboard
+      .filter(x => String(x.campaign_id) === id)
+      .sort((a,b) => n(b.total_views) - n(a.total_views));
+
+    const approvedViews = n(row.approved_views) || leaders.reduce((s,x) => s + n(x.total_views), 0);
+    const approvedClippers = n(row.approved_clippers) || leaders.length;
+
+    const rpm = n(row.rpm);
+    const budget = n(row.budget);
+    const spent = n(row.spent);
+
+    return {
+      id,
+      title: clean(row.title, "Untitled Campaign"),
+      description: "",
+      icon: iconFor(row),
+      iconType: clean(row.type, row.category || "General").toLowerCase(),
+      genre: clean(row.category, row.genre || row.type || "General"),
+      payout: "$" + rpm.toLocaleString() + " / 1M views",
+      rpmUsd: rpm,
+      budget,
+      spent,
+      platforms: parseList(row.platform),
+      reqs: parseList(row.requirements),
+      sparkData: [12, 22, 34, 48, 63, 79, 98],
+      views: compact(approvedViews),
+      totalViews: approvedViews,
+      creators: approvedClippers,
+      clippers: approvedClippers,
+      banner: safeImageUrl(row.asset_url),
+      tags: row.is_new ? ["New"] : [],
+      chartColor: row.chart_color || "#C4956A",
+      performers: leaders.slice(0, 5).map(x => ({
+        name: clean(x.creator_name, "Creator"),
+        handle: x.handle ? "@" + String(x.handle).replace(/^@/,"") : "@clipper",
+        views: compact(x.total_views),
+        earnUsd: n(x.total_earnings),
+        earn: "$" + n(x.total_earnings).toLocaleString(),
+        initials: clean(x.creator_name, "CR").split(/\s+/).map(p => p[0]).join("").slice(0,2).toUpperCase()
+      })),
+      raw: row
+    };
+  }
+
+  async function waitClient(){
+    for(let i=0; i<30; i++){
+      const c = getClient();
+      if(c && c.from) return c;
+      await new Promise(r => setTimeout(r, 150));
+    }
+    return null;
+  }
+
+  function enhanceBanners(){
+    if(!window.CAMPAIGNS && typeof CAMPAIGNS === "undefined") return;
+
+    const list = window.CAMPAIGNS || CAMPAIGNS || [];
+    list.forEach(c => {
+      if(!c.banner) return;
+
+      document.querySelectorAll('[onclick*="' + c.id + '"]').forEach(card => {
+        const icon = card.querySelector(".camp-icon, .campaign-icon, .card-icon");
+        if(icon && !icon.querySelector("img")){
+          icon.innerHTML = '<img class="cx-campaign-icon-img" src="' + c.banner + '" alt="">';
+        }
+
+        const bannerBox = Array.from(card.querySelectorAll("*")).find(el =>
+          /campaign banner/i.test(el.textContent || "")
+        );
+
+        if(bannerBox){
+          const box = bannerBox.closest("div") || bannerBox;
+          if(!box.querySelector("img")){
+            box.innerHTML = '<img class="cx-campaign-banner-img" src="' + c.banner + '" alt="Campaign banner">';
+          }
+        }
+      });
+    });
+  }
+
+  async function loadAccurateCampaigns(){
+    const client = await waitClient();
+    if(!client) return;
+
+    try{
+      const { data: rows, error } = await client
+        .from("campaigns_clipper_public")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if(error) throw error;
+
+      const { data: leaderboard } = await client
+        .from("campaign_leaderboard_public")
+        .select("*");
+
+      const campaigns = (rows || [])
+        .filter(x => !["archived","deleted","inactive","draft"].includes(String(x.status || "active").toLowerCase()))
+        .map(x => normalize(x, leaderboard || []));
+
+      if(typeof CAMPAIGNS !== "undefined"){
+        CAMPAIGNS.length = 0;
+        CAMPAIGNS.push(...campaigns);
+      }
+
+      window.CAMPAIGNS = campaigns;
+      window.__clipencyAccurateCampaigns = campaigns;
+
+      if(typeof renderCampaigns === "function") renderCampaigns("All");
+
+      setTimeout(enhanceBanners, 80);
+      setTimeout(enhanceBanners, 300);
+
+      console.log("Accurate campaigns loaded:", campaigns.length);
+    }catch(err){
+      console.error("Accurate campaign load failed:", err);
+    }
+  }
+
+  function wrapDetail(){
+    if(typeof showCampDetail === "function" && !showCampDetail.__cxWrapped){
+      const original = showCampDetail;
+      window.showCampDetail = function(id){
+        const result = original.apply(this, arguments);
+        setTimeout(enhanceBanners, 80);
+        setTimeout(enhanceBanners, 300);
+        return result;
+      };
+      window.showCampDetail.__cxWrapped = true;
+    }
+  }
+
+  if(!document.getElementById("cx-campaign-accuracy-style")){
+    const style = document.createElement("style");
+    style.id = "cx-campaign-accuracy-style";
+    style.textContent = `
+      .cx-campaign-icon-img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        border-radius:inherit;
+        display:block;
+      }
+      .cx-campaign-banner-img{
+        width:100%;
+        height:100%;
+        min-height:140px;
+        object-fit:cover;
+        border-radius:18px;
+        display:block;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(function(){
+      wrapDetail();
+      loadAccurateCampaigns();
+    }, 500);
+  });
+})();
+</script>
+
 </body>
 </html>
