@@ -4104,5 +4104,129 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* ===== CLIPENCY V4 HARD ROUTE SYNC ===== */
+(function(){
+  const ROUTE_BY_SECTION = {
+    campaigns: "/campaigns",
+    stats: "/stats",
+    payouts: "/payouts",
+    wallet: "/wallet",
+    profile: "/profile"
+  };
+
+  const SECTION_BY_ROUTE = {
+    "/campaigns": "campaigns",
+    "/stats": "stats",
+    "/payouts": "payouts",
+    "/wallet": "wallet",
+    "/profile": "profile",
+    "/dashboard": "campaigns",
+    "/dashboard.html": "campaigns"
+  };
+
+  const TITLE_BY_SECTION = {
+    campaigns: "Clipency — Campaigns",
+    stats: "Clipency — Stats",
+    payouts: "Clipency — Payouts",
+    wallet: "Clipency — Wallet",
+    profile: "Clipency — Profile"
+  };
+
+  function cleanPath(){
+    return window.location.pathname.replace(/\/+$/, "") || "/campaigns";
+  }
+
+  function sectionFromPath(){
+    return SECTION_BY_ROUTE[cleanPath()] || "campaigns";
+  }
+
+  function manualSectionSwitch(section){
+    document.querySelectorAll(".section").forEach(function(el){
+      el.classList.remove("active");
+    });
+
+    document.querySelectorAll(".nav-item").forEach(function(el){
+      el.classList.remove("active");
+    });
+
+    const sectionEl = document.getElementById("section-" + section);
+    if(sectionEl) sectionEl.classList.add("active");
+
+    const navEl = document.getElementById("nav-" + section);
+    if(navEl) navEl.classList.add("active");
+
+    try {
+      window.currentSection = section;
+    } catch(e) {}
+
+    try {
+      if(section === "campaigns"){
+        if(typeof renderCampaigns === "function") renderCampaigns();
+        if(typeof hideCampDetail === "function") hideCampDetail();
+      }
+      if(section === "stats" && typeof renderStats === "function") renderStats();
+      if(section === "payouts" && typeof renderPayouts === "function") renderPayouts();
+      if(section === "wallet" && typeof renderWallet === "function") renderWallet();
+    } catch(e) {
+      console.warn("Route render warning:", e);
+    }
+
+    document.title = TITLE_BY_SECTION[section] || "Clipency";
+  }
+
+  function goToSection(section, pushUrl){
+    if(!ROUTE_BY_SECTION[section]) section = "campaigns";
+
+    manualSectionSwitch(section);
+
+    const wantedPath = ROUTE_BY_SECTION[section];
+    if(pushUrl && cleanPath() !== wantedPath){
+      history.pushState({ section: section }, "", wantedPath);
+    }
+  }
+
+  function bindSidebarRoutes(){
+    document.querySelectorAll(".nav-item[data-section]").forEach(function(btn){
+      if(btn.dataset.routeBound === "true") return;
+      btn.dataset.routeBound = "true";
+
+      btn.addEventListener("click", function(e){
+        const section = btn.getAttribute("data-section");
+        if(!section) return;
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        goToSection(section, true);
+      }, true);
+    });
+  }
+
+  window.addEventListener("popstate", function(){
+    goToSection(sectionFromPath(), false);
+  });
+
+  function boot(){
+    bindSidebarRoutes();
+    goToSection(sectionFromPath(), false);
+
+    setTimeout(function(){
+      bindSidebarRoutes();
+      goToSection(sectionFromPath(), false);
+    }, 150);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+
+  window.addEventListener("load", boot);
+})();
+</script>
+
 </body>
 </html>
