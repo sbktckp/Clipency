@@ -4,71 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Clipency | Admin Logs</title>
-  <link rel="stylesheet" href="/admin/admin-os-polish.css?v=unified-admin-1">
+  <link rel="stylesheet" href="/admin/admin-cohesive.css?v=cohesive-1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=unified-admin-1"></script>
+  <script src="/supabaseClient.js?v=cohesive-1"></script>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    .cx-log-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: clamp(280px, 24vw, 375px) minmax(0, 1fr);
+    }
+
+    #cx-admin-sidebar-host {
+      min-height: 100vh;
+    }
+
+    @media (max-width: 900px) {
+      .cx-log-shell {
+        grid-template-columns: 1fr;
+      }
+
+      #cx-admin-sidebar-host {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="cx-admin-shell">
-    <aside class="cx-admin-sidebar">
-      <div class="cx-admin-logo">
-        <span class="cx-admin-logo-mark">✂</span>
-        <span>CLIPENCY</span>
-      </div>
+  <div class="cx-log-shell">
+    <div id="cx-admin-sidebar-host"></div>
 
-      <div class="cx-admin-label">ADMIN OS</div>
-      <nav class="cx-admin-nav">
-        <a class="cx-admin-nav-item" href="/admin/"><span class="ico">⌘</span><span>Command Center</span></a>
-        <a class="cx-admin-nav-item" href="/admin/reviews/"><span class="ico">✓</span><span>Reviews</span></a>
-        <a class="cx-admin-nav-item" href="/admin/campaigns/"><span class="ico">▷</span><span>Campaigns</span></a>
-        <a class="cx-admin-nav-item" href="/admin/leads/"><span class="ico">✉</span><span>Leads</span></a>
-        <a class="cx-admin-nav-item" href="/admin/payouts/"><span class="ico">▭</span><span>Payouts</span></a>
-        <a class="cx-admin-nav-item" href="/admin/users/"><span class="ico">♙</span><span>Users</span></a>
-        <a class="cx-admin-nav-item active" href="/admin/logs/"><span class="ico">◷</span><span>Logs</span></a>
-      </nav>
-
-      <div class="cx-admin-label">SYSTEM</div>
-      <nav class="cx-admin-nav">
-        <a class="cx-admin-nav-item" href="/finance.html"><span class="ico">▥</span><span>Finance OS</span></a>
-        <a class="cx-admin-nav-item" href="/campaigns/"><span class="ico">↗</span><span>Clipper View</span></a>
-      </nav>
-    </aside>
-
-    <main class="cx-admin-main">
-      <div class="cx-admin-kicker">CLIPENCY ADMIN OS</div>
-      <h1 class="cx-admin-title">Logs.</h1>
-      <p class="cx-admin-subtitle">
+    <main class="cx-logs-main">
+      <div class="cx-logs-kicker">CLIPENCY ADMIN OS</div>
+      <h1 class="cx-logs-title">Logs.</h1>
+      <p class="cx-logs-subtitle">
         Track logged-in users, active sessions, logout time, total time spent, and count users by person or time period.
       </p>
 
-      <section class="cx-admin-kpis">
-        <div class="cx-admin-kpi">
-          <span>Unique users in range</span>
-          <strong id="kpi-users">—</strong>
-        </div>
-        <div class="cx-admin-kpi">
-          <span>Total sessions</span>
-          <strong id="kpi-sessions">—</strong>
-        </div>
-        <div class="cx-admin-kpi">
-          <span>Currently online</span>
-          <strong id="kpi-online">—</strong>
-        </div>
-        <div class="cx-admin-kpi">
-          <span>Total time</span>
-          <strong id="kpi-time">—</strong>
-        </div>
+      <section class="cx-logs-kpis">
+        <div class="cx-logs-kpi"><span>Unique users in range</span><strong id="kpi-users">—</strong></div>
+        <div class="cx-logs-kpi"><span>Total sessions</span><strong id="kpi-sessions">—</strong></div>
+        <div class="cx-logs-kpi"><span>Currently online</span><strong id="kpi-online">—</strong></div>
+        <div class="cx-logs-kpi"><span>Total time</span><strong id="kpi-time">—</strong></div>
       </section>
 
-      <section class="cx-admin-filter-row">
+      <section class="cx-logs-filters">
         <input id="filter-user" placeholder="Filter by user name or email">
         <input id="filter-from" type="datetime-local">
         <input id="filter-to" type="datetime-local">
         <button id="refresh">Refresh</button>
       </section>
 
-      <section class="cx-admin-table-wrap">
-        <table class="cx-admin-table">
+      <section class="cx-logs-table-wrap">
+        <table class="cx-logs-table">
           <thead>
             <tr>
               <th>User</th>
@@ -89,9 +80,78 @@
     </main>
   </div>
 
-  <script defer src="/admin/admin-session-logger.js?v=unified-admin-1"></script>
-  <script defer src="/admin/admin-os-polish.js?v=unified-admin-1"></script>
+  <script defer src="/admin/admin-session-logger.js?v=cohesive-1"></script>
+  <script defer src="/admin/admin-cohesive.js?v=cohesive-1"></script>
+
   <script>
+    async function loadNativeAdminSidebar(){
+      const host = document.getElementById("cx-admin-sidebar-host");
+
+      try {
+        const res = await fetch("/admin/campaigns/?shell-source=" + Date.now(), {
+          credentials: "same-origin"
+        });
+
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        doc.querySelectorAll("link[rel='stylesheet'], style").forEach(node => {
+          const marker = node.outerHTML.slice(0, 120);
+          const already = Array.from(document.head.children).some(x => x.outerHTML.slice(0, 120) === marker);
+          if(!already) document.head.appendChild(node.cloneNode(true));
+        });
+
+        const sidebar =
+          doc.querySelector(".sidebar") ||
+          doc.querySelector(".admin-sidebar") ||
+          doc.querySelector("aside") ||
+          doc.querySelector("nav");
+
+        if(!sidebar){
+          host.innerHTML = "<aside style='padding:30px;color:white'>CLIPENCY ADMIN OS</aside>";
+          return;
+        }
+
+        const clone = sidebar.cloneNode(true);
+
+        clone.querySelectorAll("a[href*='/admin/logs']").forEach((x, i) => {
+          if(i > 0) x.remove();
+        });
+
+        let logsLink = clone.querySelector("a[href*='/admin/logs']");
+        if(!logsLink){
+          const ref = Array.from(clone.querySelectorAll("a,button")).find(el =>
+            String(el.textContent || "").trim().toLowerCase() === "users"
+          ) || Array.from(clone.querySelectorAll("a,button")).find(el =>
+            String(el.textContent || "").trim().toLowerCase() === "payouts"
+          );
+
+          if(ref){
+            logsLink = ref.cloneNode(true);
+
+            if(logsLink.tagName.toLowerCase() !== "a"){
+              const a = document.createElement("a");
+              a.className = logsLink.className;
+              a.innerHTML = logsLink.innerHTML;
+              logsLink = a;
+            }
+
+            logsLink.href = "/admin/logs/";
+            logsLink.textContent = "◷ Logs";
+            ref.parentElement.insertBefore(logsLink, ref.nextSibling);
+          }
+        }
+
+        clone.querySelectorAll(".active").forEach(x => x.classList.remove("active"));
+        clone.querySelectorAll("a[href*='/admin/logs']").forEach(x => x.classList.add("active"));
+
+        host.replaceWith(clone);
+      } catch(err) {
+        console.warn("Could not load native admin sidebar:", err);
+        host.innerHTML = "<aside style='padding:30px;color:white'>CLIPENCY ADMIN OS</aside>";
+      }
+    }
+
     function getClient(){
       return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
     }
@@ -127,7 +187,7 @@
     }
 
     async function waitClient(){
-      for(let i=0;i<30;i++){
+      for(let i = 0; i < 30; i++){
         const client = getClient();
         if(client && client.from) return client;
         await new Promise(r => setTimeout(r, 150));
@@ -177,7 +237,7 @@
       const online = rows.filter(r =>
         !r.logout_at && new Date(r.last_seen_at).getTime() > Date.now() - 5 * 60 * 1000
       ).length;
-      const totalSeconds = rows.reduce((sum,r) => sum + Number(r.total_seconds || 0), 0);
+      const totalSeconds = rows.reduce((sum, r) => sum + Number(r.total_seconds || 0), 0);
 
       document.getElementById("kpi-users").textContent = unique;
       document.getElementById("kpi-sessions").textContent = rows.length;
@@ -204,7 +264,12 @@
     }
 
     document.getElementById("refresh").addEventListener("click", loadLogs);
-    window.addEventListener("load", loadLogs);
+
+    window.addEventListener("load", function(){
+      loadNativeAdminSidebar();
+      loadLogs();
+    });
+
     setInterval(loadLogs, 60000);
   </script>
 </body>
