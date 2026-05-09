@@ -100,151 +100,7 @@
   <script src="/clipency-safe-profile.js"></script>
 
 <script>
-/* ===== CLIPENCY ADMIN CAMPAIGN FORM CLEANUP ===== */
-(function(){
-  function labelText(el){
-    return String(el.textContent || "").trim().toLowerCase();
-  }
-
-  function findLabel(patterns){
-    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, h4, span, p, div"));
-    return labels.find(el => {
-      const t = labelText(el);
-      return patterns.some(p => t === p || t.includes(p));
-    });
-  }
-
-  function fieldWrapFromLabel(label){
-    if(!label) return null;
-    return label.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div") || label.parentElement;
-  }
-
-  function hideField(patterns){
-    const label = findLabel(patterns);
-    const wrap = fieldWrapFromLabel(label);
-    if(wrap){
-      wrap.style.display = "none";
-      wrap.setAttribute("data-cx-hidden-field", "true");
-      const input = wrap.querySelector("input, textarea, select");
-      if(input) input.value = "";
-    }
-  }
-
-  function renameField(patterns, text, placeholder){
-    const label = findLabel(patterns);
-    if(label){
-      label.textContent = text;
-      const wrap = fieldWrapFromLabel(label);
-      const input = wrap && wrap.querySelector("input, textarea");
-      if(input && placeholder) input.placeholder = placeholder;
-    }
-  }
-
-  function ensurePlatformsField(){
-    if(document.querySelector('[name="platform"], #campaign-platform, [data-cx-platform-field="true"]')) return;
-
-    const typeLabel = findLabel(["type"]);
-    const typeWrap = fieldWrapFromLabel(typeLabel);
-
-    const field = document.createElement("div");
-    field.className = typeWrap ? typeWrap.className : "form-group";
-    field.setAttribute("data-cx-platform-field", "true");
-    field.innerHTML = `
-      <label class="form-label">PLATFORMS</label>
-      <input id="campaign-platform" name="platform" type="text" value="Instagram, TikTok, YouTube Shorts" placeholder="Instagram, TikTok, YouTube Shorts">
-    `;
-
-    if(typeWrap && typeWrap.parentElement){
-      typeWrap.parentElement.insertBefore(field, typeWrap.nextSibling);
-    }
-  }
-
-  function cleanup(){
-    renameField(["asset / reference url", "reference url", "asset url"], "CAMPAIGN BANNER URL", "https://example.com/banner.jpg");
-    hideField(["description"]);
-    hideField(["creators count", "creator count", "active creators"]);
-
-    ensurePlatformsField();
-
-    document.querySelectorAll("input, textarea").forEach(input => {
-      const name = String(input.name || input.id || "").toLowerCase();
-
-      if(name.includes("description")){
-        input.value = "";
-        input.disabled = true;
-      }
-
-      if(name.includes("creator") && name.includes("count")){
-        input.value = "0";
-        input.disabled = true;
-      }
-
-      if(name.includes("asset") || name.includes("reference")){
-        input.name = "asset_url";
-        input.id = input.id || "campaign-asset-url";
-        input.placeholder = "https://example.com/banner.jpg";
-      }
-    });
-  }
-
-  function patchSavePayload(){
-    if(window.__cxCampaignPayloadPatched) return;
-    window.__cxCampaignPayloadPatched = true;
-
-    document.addEventListener("click", function(e){
-      const btn = e.target.closest("button");
-      if(!btn) return;
-
-      const text = String(btn.textContent || "").toLowerCase();
-      if(!text.includes("save campaign") && !text.includes("create campaign") && !text.includes("update campaign")) return;
-
-      cleanup();
-
-      const platform = document.querySelector('#campaign-platform, [name="platform"]');
-      if(platform && !platform.value.trim()){
-        platform.value = "Instagram, TikTok, YouTube Shorts";
-      }
-
-      const desc = document.querySelector('[name="description"], #description, textarea[id*="description"]');
-      if(desc) desc.value = "";
-
-      const creator = document.querySelector('[name="creators_count"], #creators_count, input[id*="creator"]');
-      if(creator) creator.value = "0";
-    }, true);
-  }
-
-  if(!document.getElementById("cx-admin-campaign-clean-style")){
-    const style = document.createElement("style");
-    style.id = "cx-admin-campaign-clean-style";
-    style.textContent = `
-      [data-cx-hidden-field="true"]{display:none!important;}
-      [data-cx-platform-field="true"] input{
-        width:100%;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function boot(){
-    cleanup();
-    patchSavePayload();
-    setTimeout(cleanup, 300);
-    setTimeout(cleanup, 1000);
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", boot);
-  }else{
-    boot();
-  }
-
-  window.addEventListener("load", boot);
-})();
-</script>
-
-
-<script>
-/* ===== CLIPENCY ADMIN CAMPAIGN BANNER UPLOAD ===== */
+/* ===== CLIPENCY ADMIN CAMPAIGN STRONG FORM PATCH ===== */
 (function(){
   const BUCKET = "campaign-banners";
 
@@ -252,20 +108,133 @@
     return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
   }
 
-  function wait(ms){
-    return new Promise(resolve => setTimeout(resolve, ms));
+  function textOf(el){
+    return String(el && el.textContent || "").trim().toLowerCase();
+  }
+
+  function fieldWrapper(el){
+    if(!el) return null;
+    return el.closest(".form-group, .field, .input-group, .campaign-field, .form-row, .grid, div") || el.parentElement;
+  }
+
+  function labels(){
+    return Array.from(document.querySelectorAll("label, .form-label, .field-label, span, p, div, h4"));
+  }
+
+  function findLabelByText(matchers){
+    return labels().find(el => {
+      const t = textOf(el);
+      return matchers.some(m => t === m || t.includes(m));
+    });
+  }
+
+  function findInputNearLabel(matchers){
+    const label = findLabelByText(matchers);
+    const wrap = fieldWrapper(label);
+    return wrap ? wrap.querySelector("input, textarea, select") : null;
+  }
+
+  function hideByLabel(matchers){
+    const label = findLabelByText(matchers);
+    const wrap = fieldWrapper(label);
+    if(!wrap) return;
+
+    wrap.style.display = "none";
+    wrap.setAttribute("data-cx-admin-hidden", "true");
+
+    const input = wrap.querySelector("input, textarea, select");
+    if(input){
+      if(matchers.some(m => m.includes("description"))) input.value = "";
+      if(matchers.some(m => m.includes("creator"))) input.value = "0";
+    }
+  }
+
+  function ensureHiddenAssetInput(){
+    let input =
+      document.querySelector('input[name="asset_url"]') ||
+      document.querySelector('#campaign-asset-url') ||
+      findInputNearLabel(["asset / reference url", "asset url", "reference url", "campaign banner url"]);
+
+    if(!input){
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "asset_url";
+      input.id = "campaign-asset-url";
+      document.body.appendChild(input);
+    }
+
+    input.name = "asset_url";
+    input.id = input.id || "campaign-asset-url";
+    input.setAttribute("data-cx-asset-url", "true");
+
+    return input;
+  }
+
+  function hideOldAssetReferenceField(){
+    const label = findLabelByText(["asset / reference url", "reference url", "asset url", "campaign banner url"]);
+    const wrap = fieldWrapper(label);
+    const input = ensureHiddenAssetInput();
+
+    if(wrap){
+      wrap.style.display = "none";
+      wrap.setAttribute("data-cx-admin-hidden", "true");
+
+      const oldInput = wrap.querySelector("input, textarea");
+      if(oldInput && oldInput !== input){
+        input.value = oldInput.value || input.value || "";
+        oldInput.name = "asset_url";
+        oldInput.id = oldInput.id || "campaign-asset-url";
+      }
+    }
+  }
+
+  function ensurePlatformsField(){
+    if(document.getElementById("cx-campaign-platform-wrap")) return;
+
+    const typeInput = findInputNearLabel(["type"]);
+    const typeWrap = fieldWrapper(typeInput);
+    const insertAfter = typeWrap || document.querySelector("form, .modal-box, .modal, body");
+
+    const wrap = document.createElement("div");
+    wrap.id = "cx-campaign-platform-wrap";
+    wrap.className = typeWrap ? typeWrap.className : "form-group";
+    wrap.innerHTML = `
+      <label class="form-label">PLATFORMS</label>
+      <input id="campaign-platform" name="platform" type="text" value="Instagram, TikTok, YouTube Shorts" placeholder="Instagram, TikTok, YouTube Shorts">
+    `;
+
+    if(insertAfter && insertAfter.parentElement){
+      insertAfter.parentElement.insertBefore(wrap, insertAfter.nextSibling);
+    }
+  }
+
+  function currentPlatformValue(){
+    const el = document.querySelector('#campaign-platform, input[name="platform"]');
+    return el && el.value.trim() ? el.value.trim() : "Instagram, TikTok, YouTube Shorts";
+  }
+
+  function currentAssetUrl(){
+    const el = ensureHiddenAssetInput();
+    return el.value.trim();
+  }
+
+  function saveAssetUrl(url){
+    const input = ensureHiddenAssetInput();
+    input.value = url;
+    input.dispatchEvent(new Event("input", { bubbles:true }));
+    input.dispatchEvent(new Event("change", { bubbles:true }));
   }
 
   async function waitClient(){
-    for(let i = 0; i < 40; i++){
+    for(let i=0; i<50; i++){
       const client = getClient();
-      if(client && client.storage && client.auth) return client;
-      await wait(150);
+      if(client && client.storage && client.from && client.auth) return client;
+      await new Promise(r => setTimeout(r, 120));
     }
     return null;
   }
 
-  function safeName(name){
+  function safeFileName(name){
     return String(name || "banner")
       .toLowerCase()
       .replace(/[^a-z0-9._-]+/g, "-")
@@ -273,103 +242,71 @@
       .replace(/^-|-$/g, "");
   }
 
-  function findAssetInput(){
-    const candidates = Array.from(document.querySelectorAll("input, textarea")).filter(el => {
-      const key = String((el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "")).toLowerCase();
-      return key.includes("asset_url")
-        || key.includes("asset")
-        || key.includes("banner")
-        || key.includes("reference");
-    });
+  function ensureUploader(){
+    if(document.getElementById("cx-campaign-banner-upload-card")) return;
 
-    let input = candidates[0];
+    const titleInput = findInputNearLabel(["campaign title"]) || document.querySelector("input");
+    const titleWrap = fieldWrapper(titleInput);
+    const after = titleWrap || document.querySelector("form, .modal-box, .modal, body");
 
-    if(!input){
-      input = document.createElement("input");
-      input.type = "url";
-      input.name = "asset_url";
-      input.id = "campaign-asset-url";
-      input.placeholder = "Uploaded banner URL will appear here";
-
-      const form = document.querySelector("form") || document.querySelector(".modal-box, .modal, .campaign-modal, body");
-      const wrap = document.createElement("div");
-      wrap.className = "cx-banner-generated-field";
-      wrap.innerHTML = `<label class="form-label">CAMPAIGN BANNER URL</label>`;
-      wrap.appendChild(input);
-      form.appendChild(wrap);
-    }
-
-    input.name = "asset_url";
-    input.id = input.id || "campaign-asset-url";
-    input.placeholder = "Uploaded banner URL will appear here";
-    input.readOnly = false;
-
-    return input;
-  }
-
-  function getFieldWrapper(input){
-    return input.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div") || input.parentElement;
-  }
-
-  function addUploadBox(){
-    if(document.getElementById("cx-campaign-banner-uploader")) return;
-
-    const input = findAssetInput();
-    const wrapper = getFieldWrapper(input);
-    if(!wrapper || !wrapper.parentElement) return;
-
-    const box = document.createElement("div");
-    box.id = "cx-campaign-banner-uploader";
-    box.innerHTML = `
-      <div class="cx-banner-upload-card">
-        <div class="cx-banner-upload-head">
+    const card = document.createElement("div");
+    card.id = "cx-campaign-banner-upload-card";
+    card.innerHTML = `
+      <div class="cx-banner-card">
+        <div class="cx-banner-top">
           <div>
-            <div class="cx-banner-upload-kicker">CAMPAIGN BANNER</div>
-            <div class="cx-banner-upload-title">Upload campaign banner</div>
-            <div class="cx-banner-upload-sub">PNG, JPG, WEBP, GIF or SVG. Max 5MB.</div>
+            <div class="cx-banner-kicker">CAMPAIGN BANNER</div>
+            <div class="cx-banner-title">Upload banner image</div>
+            <div class="cx-banner-sub">This image will appear on campaign cards and campaign details.</div>
           </div>
-          <label class="cx-banner-upload-btn">
+          <label class="cx-banner-btn">
             Choose image
             <input id="cx-campaign-banner-file" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml">
           </label>
         </div>
         <div id="cx-campaign-banner-preview" class="cx-banner-preview">
-          <span>No banner uploaded yet</span>
+          <span>No banner uploaded</span>
         </div>
-        <div id="cx-campaign-banner-status" class="cx-banner-upload-status"></div>
+        <div id="cx-campaign-banner-status" class="cx-banner-status"></div>
       </div>
     `;
 
-    wrapper.parentElement.insertBefore(box, wrapper.nextSibling);
+    if(after && after.parentElement){
+      after.parentElement.insertBefore(card, after.nextSibling);
+    }
 
-    const fileInput = box.querySelector("#cx-campaign-banner-file");
-    fileInput.addEventListener("change", async function(){
-      const file = fileInput.files && fileInput.files[0];
+    const input = card.querySelector("#cx-campaign-banner-file");
+    const preview = card.querySelector("#cx-campaign-banner-preview");
+    const status = card.querySelector("#cx-campaign-banner-status");
+
+    const existing = currentAssetUrl();
+    if(existing && /^https?:\/\//i.test(existing)){
+      preview.innerHTML = `<img src="${existing}" alt="Campaign banner preview">`;
+    }
+
+    input.addEventListener("change", async function(){
+      const file = input.files && input.files[0];
       if(!file) return;
-
-      const status = document.getElementById("cx-campaign-banner-status");
-      const preview = document.getElementById("cx-campaign-banner-preview");
-      const assetInput = findAssetInput();
 
       if(!file.type.startsWith("image/")){
         status.textContent = "Please select an image file.";
-        status.className = "cx-banner-upload-status error";
+        status.className = "cx-banner-status error";
         return;
       }
 
       if(file.size > 5 * 1024 * 1024){
-        status.textContent = "Image is too large. Max allowed size is 5MB.";
-        status.className = "cx-banner-upload-status error";
+        status.textContent = "Image too large. Maximum size is 5MB.";
+        status.className = "cx-banner-status error";
         return;
       }
 
       status.textContent = "Uploading banner...";
-      status.className = "cx-banner-upload-status";
+      status.className = "cx-banner-status";
 
       const client = await waitClient();
       if(!client){
-        status.textContent = "Supabase client not found. Refresh and try again.";
-        status.className = "cx-banner-upload-status error";
+        status.textContent = "Supabase client not available. Refresh and try again.";
+        status.className = "cx-banner-status error";
         return;
       }
 
@@ -378,254 +315,214 @@
         if(sessionError) throw sessionError;
 
         const user = sessionData && sessionData.session && sessionData.session.user;
-        if(!user){
-          status.textContent = "Please login again before uploading.";
-          status.className = "cx-banner-upload-status error";
-          return;
-        }
+        if(!user) throw new Error("Login session expired. Please login again.");
 
-        const ext = safeName(file.name).split(".").pop() || "png";
+        const clean = safeFileName(file.name);
+        const ext = clean.includes(".") ? clean.split(".").pop() : "png";
         const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-        const { error: uploadError } = await client
-          .storage
+        const { error: uploadError } = await client.storage
           .from(BUCKET)
           .upload(path, file, {
-            cacheControl: "3600",
             upsert: true,
+            cacheControl: "3600",
             contentType: file.type
           });
 
         if(uploadError) throw uploadError;
 
-        const { data: publicData } = client
-          .storage
-          .from(BUCKET)
-          .getPublicUrl(path);
+        const { data } = client.storage.from(BUCKET).getPublicUrl(path);
+        const url = data && data.publicUrl;
+        if(!url) throw new Error("Could not generate public banner URL.");
 
-        const publicUrl = publicData && publicData.publicUrl;
-        if(!publicUrl) throw new Error("Public URL was not returned.");
+        saveAssetUrl(url);
+        preview.innerHTML = `<img src="${url}" alt="Campaign banner preview">`;
 
-        assetInput.value = publicUrl;
-        assetInput.dispatchEvent(new Event("input", { bubbles: true }));
-        assetInput.dispatchEvent(new Event("change", { bubbles: true }));
-
-        preview.innerHTML = `<img src="${publicUrl}" alt="Campaign banner preview">`;
-
-        status.textContent = "Banner uploaded. Now click Save campaign.";
-        status.className = "cx-banner-upload-status success";
+        status.textContent = "Banner uploaded. Click Save campaign.";
+        status.className = "cx-banner-status success";
       }catch(err){
-        console.error("Banner upload failed:", err);
-        status.textContent = err.message || "Upload failed. Check storage policy.";
-        status.className = "cx-banner-upload-status error";
-      }
-    });
-
-    if(input.value && /^https?:\/\//i.test(input.value)){
-      document.getElementById("cx-campaign-banner-preview").innerHTML =
-        `<img src="${input.value}" alt="Campaign banner preview">`;
-    }
-  }
-
-  function renameAssetLabel(){
-    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, span, p, div"));
-    labels.forEach(label => {
-      const text = String(label.textContent || "").trim().toLowerCase();
-      if(
-        text === "asset / reference url" ||
-        text === "asset url" ||
-        text === "reference url"
-      ){
-        label.textContent = "CAMPAIGN BANNER URL";
+        console.error("Campaign banner upload failed:", err);
+        status.textContent = err.message || "Upload failed.";
+        status.className = "cx-banner-status error";
       }
     });
   }
 
-  function hideUnwantedFields(){
-    const labels = Array.from(document.querySelectorAll("label, .form-label, .field-label, span, p, div"));
+  function patchSupabaseCampaignWrites(){
+    const client = getClient();
+    if(!client || client.__cxCampaignWritePatched) return;
 
-    labels.forEach(label => {
-      const text = String(label.textContent || "").trim().toLowerCase();
+    const originalFrom = client.from.bind(client);
 
-      const shouldHide =
-        text === "description" ||
-        text === "creators count" ||
-        text === "creator count" ||
-        text === "asset / reference url";
+    client.from = function(table){
+      const query = originalFrom(table);
 
-      if(shouldHide){
-        const wrap = label.closest(".form-group, .field, .input-group, .campaign-field, .form-row, div");
-        if(wrap && text !== "asset / reference url"){
-          wrap.style.display = "none";
-          const input = wrap.querySelector("input, textarea");
-          if(input){
-            input.value = "";
-            input.disabled = true;
+      if(String(table) !== "campaigns" || query.__cxCampaignQueryPatched){
+        return query;
+      }
+
+      ["insert", "update", "upsert"].forEach(method => {
+        if(typeof query[method] !== "function") return;
+
+        const original = query[method].bind(query);
+
+        query[method] = function(payload){
+          function patchOne(row){
+            if(!row || typeof row !== "object") return row;
+
+            row.platform = currentPlatformValue();
+            row.asset_url = currentAssetUrl() || row.asset_url || null;
+
+            row.description = "";
+            row.creators_count = 0;
+
+            if(row.rpm && !row.rate_per_million_usd) row.rate_per_million_usd = row.rpm;
+            if(row.rate_per_million_usd && !row.rpm) row.rpm = row.rate_per_million_usd;
+
+            if(row.budget && !row.budget_usd) row.budget_usd = row.budget;
+            if(row.budget_usd && !row.budget) row.budget = row.budget_usd;
+
+            if(row.spent_usd && !row.budget_used) row.budget_used = row.spent_usd;
+            if(row.budget_used && !row.spent_usd) row.spent_usd = row.budget_used;
+
+            return row;
           }
-        }
-      }
-    });
+
+          if(Array.isArray(payload)){
+            payload = payload.map(patchOne);
+          }else{
+            payload = patchOne(payload);
+          }
+
+          return original(payload);
+        };
+      });
+
+      query.__cxCampaignQueryPatched = true;
+      return query;
+    };
+
+    client.__cxCampaignWritePatched = true;
   }
 
-  function ensurePlatformField(){
-    if(document.querySelector('[name="platform"], #campaign-platform')) return;
-
-    const typeInput = Array.from(document.querySelectorAll("input, select")).find(el => {
-      const key = String((el.name || "") + " " + (el.id || "")).toLowerCase();
-      return key === "type" || key.includes("type");
-    });
-
-    const typeWrap = typeInput && getFieldWrapper(typeInput);
-    const container = typeWrap && typeWrap.parentElement ? typeWrap.parentElement : document.querySelector("form") || document.body;
-
-    const field = document.createElement("div");
-    field.className = typeWrap ? typeWrap.className : "form-group";
-    field.innerHTML = `
-      <label class="form-label">PLATFORMS</label>
-      <input id="campaign-platform" name="platform" type="text" value="Instagram, TikTok, YouTube Shorts" placeholder="Instagram, TikTok, YouTube Shorts">
-    `;
-
-    if(typeWrap && typeWrap.nextSibling){
-      container.insertBefore(field, typeWrap.nextSibling);
-    }else{
-      container.appendChild(field);
-    }
-  }
-
-  function prepareBeforeSave(){
-    const assetInput = findAssetInput();
-    assetInput.name = "asset_url";
-
-    const platform = document.querySelector('[name="platform"], #campaign-platform');
-    if(platform && !platform.value.trim()){
-      platform.value = "Instagram, TikTok, YouTube Shorts";
-    }
-
-    const desc = document.querySelector('[name="description"], #description, textarea[id*="description"]');
-    if(desc){
-      desc.value = "";
-    }
-
-    const creators = document.querySelector('[name="creators_count"], #creators_count, input[id*="creator"]');
-    if(creators){
-      creators.value = "0";
-    }
+  function cleanForm(){
+    ensureHiddenAssetInput();
+    hideOldAssetReferenceField();
+    hideByLabel(["description"]);
+    hideByLabel(["creators count", "creator count", "active creators"]);
+    ensurePlatformsField();
+    ensureUploader();
+    patchSupabaseCampaignWrites();
   }
 
   function boot(){
-    renameAssetLabel();
-    ensurePlatformField();
-    addUploadBox();
-    hideUnwantedFields();
+    cleanForm();
+
+    const observer = new MutationObserver(function(){
+      cleanForm();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
 
     document.addEventListener("click", function(e){
       const btn = e.target.closest("button");
       if(!btn) return;
-      const text = String(btn.textContent || "").toLowerCase();
-      if(text.includes("save campaign") || text.includes("create campaign") || text.includes("update campaign")){
-        prepareBeforeSave();
+
+      const t = textOf(btn);
+      if(t.includes("edit") || t.includes("create") || t.includes("campaign") || t.includes("save")){
+        setTimeout(cleanForm, 50);
+        setTimeout(cleanForm, 250);
+        setTimeout(cleanForm, 800);
+      }
+
+      if(t.includes("save campaign") || t.includes("create campaign") || t.includes("update campaign")){
+        const platform = document.querySelector("#campaign-platform");
+        if(platform && !platform.value.trim()){
+          platform.value = "Instagram, TikTok, YouTube Shorts";
+        }
       }
     }, true);
 
-    setTimeout(function(){
-      renameAssetLabel();
-      ensurePlatformField();
-      addUploadBox();
-      hideUnwantedFields();
-    }, 500);
-
-    setTimeout(function(){
-      renameAssetLabel();
-      ensurePlatformField();
-      addUploadBox();
-      hideUnwantedFields();
-    }, 1500);
+    setInterval(cleanForm, 1500);
   }
 
-  if(!document.getElementById("cx-banner-upload-style")){
+  if(!document.getElementById("cx-admin-campaign-strong-style")){
     const style = document.createElement("style");
-    style.id = "cx-banner-upload-style";
+    style.id = "cx-admin-campaign-strong-style";
     style.textContent = `
-      .cx-banner-upload-card{
-        margin: 18px 0;
-        padding: 18px;
-        border-radius: 22px;
-        background: rgba(255,255,255,.035);
-        border: 1px solid rgba(255,255,255,.12);
+      [data-cx-admin-hidden="true"]{display:none!important;}
+      #cx-campaign-platform-wrap input{
+        width:100%;
       }
-      .cx-banner-upload-head{
+      .cx-banner-card{
+        margin:18px 0;
+        padding:18px;
+        border-radius:22px;
+        background:rgba(255,255,255,.035);
+        border:1px solid rgba(255,255,255,.12);
+      }
+      .cx-banner-top{
         display:flex;
-        align-items:center;
         justify-content:space-between;
         gap:16px;
+        align-items:center;
         flex-wrap:wrap;
       }
-      .cx-banner-upload-kicker{
-        font-size:12px;
-        letter-spacing:.14em;
+      .cx-banner-kicker{
         color:#a78bfa;
-        font-weight:800;
+        font-size:12px;
+        letter-spacing:.16em;
+        font-weight:900;
       }
-      .cx-banner-upload-title{
+      .cx-banner-title{
         color:#fff;
         font-size:18px;
         font-weight:900;
         margin-top:4px;
       }
-      .cx-banner-upload-sub{
-        color:rgba(255,255,255,.55);
+      .cx-banner-sub{
+        color:rgba(255,255,255,.56);
         font-size:13px;
-        margin-top:3px;
+        margin-top:4px;
       }
-      .cx-banner-upload-btn{
+      .cx-banner-btn{
         cursor:pointer;
-        padding:12px 18px;
+        border:1px solid rgba(255,255,255,.18);
         border-radius:999px;
-        background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+        padding:12px 18px;
         color:#fff;
         font-weight:900;
-        border:1px solid rgba(255,255,255,.18);
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
+        background:linear-gradient(135deg,#8b5cf6,#a78bfa);
       }
-      .cx-banner-upload-btn input{
-        display:none;
-      }
+      .cx-banner-btn input{display:none;}
       .cx-banner-preview{
         margin-top:16px;
-        min-height:150px;
+        min-height:170px;
         border-radius:18px;
         border:1px dashed rgba(255,255,255,.18);
-        background:rgba(0,0,0,.22);
+        background:rgba(0,0,0,.24);
         display:flex;
         align-items:center;
         justify-content:center;
-        color:rgba(255,255,255,.45);
+        color:rgba(255,255,255,.44);
         overflow:hidden;
       }
       .cx-banner-preview img{
         width:100%;
-        height:220px;
+        height:240px;
         object-fit:cover;
         display:block;
       }
-      .cx-banner-upload-status{
+      .cx-banner-status{
         margin-top:10px;
         font-size:13px;
         color:rgba(255,255,255,.65);
       }
-      .cx-banner-upload-status.success{
-        color:#22c55e;
-      }
-      .cx-banner-upload-status.error{
-        color:#f87171;
-      }
-      @media(max-width:700px){
-        .cx-banner-preview img{
-          height:160px;
-        }
-      }
+      .cx-banner-status.success{color:#22c55e;}
+      .cx-banner-status.error{color:#f87171;}
     `;
     document.head.appendChild(style);
   }
