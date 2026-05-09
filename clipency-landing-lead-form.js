@@ -407,9 +407,9 @@
 
         setTimeout(() => showSuccess(card), 500);
       }catch(error){
-        console.error("[Clipency Lead Form] Failed:", error);
+        console.error("[Clipency Lead Form] Failed:", error); alert("Lead submit failed: " + (error.message || error));
         status.className = "cx-real-lead-status err";
-        status.textContent = "Could not submit lead. Check console.";
+        status.textContent = "Could not submit lead: " + (error.message || error);
         button.disabled = false;
         button.textContent = "Submit inquiry →";
       }
