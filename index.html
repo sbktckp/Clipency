@@ -575,9 +575,7 @@ footer{
 .btn-primary::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.12);opacity:0;transition:opacity 0.3s;}
 .btn-primary:hover::after{opacity:1;}
 
-/* ── TYPEWRITER CURSOR ── */
-.cursor-blink{display:inline-block;width:2px;height:1em;background:var(--amber);margin-left:2px;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+50%{opacity:0;}}
 
 /* ── ANIMATED GRID BG ── */
 .grid-bg{
@@ -1597,7 +1595,7 @@ footer{
       <div class="eyebrow-dot"></div>
       <span class="mono" style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--amber);">Now Live · The Viral Content Network</span>
     </div>
-    <h1 class="fade-in">The Network Built<br/>for <em id="typewriter">Viral Scale.</em><span class="cursor-blink"></span></h1>
+    <h1 class="fade-in">The Network Built<br/>for <em>Viral Scale.</em></h1>
     <p class="hero-sub fade-in">Clippers earn real money. Brands/creators get real reach. No guesswork,<br/>pure performance-driven distribution at scale.</p>
     <div class="hero-btns fade-in">
       <button class="btn-primary" onclick="window.location.href='/signup'">Start Clipping →</button>
@@ -2551,27 +2549,7 @@ document.addEventListener('mousemove', (e) => {
   glow.style.transform = `translateX(calc(-50% + ${x}px)) translateY(${y}px)`;
 });
 
-// ── TYPEWRITER HERO ──
-(function() {
-  const words = ['Pay Per View.', 'Viral Scale.', 'Clipping.', 'Content Distribution.'];
-  let wi = 0, ci = 0, deleting = false;
-  const el = document.getElementById('typewriter');
-  if(!el) return;
-  function type() {
-    const word = words[wi];
-    if(!deleting) {
-      el.textContent = word.slice(0, ci + 1);
-      ci++;
-      if(ci === word.length) { deleting = true; setTimeout(type, 1800); return; }
-    } else {
-      el.textContent = word.slice(0, ci - 1);
-      ci--;
-      if(ci === 0) { deleting = false; wi = (wi + 1) % words.length; }
-    }
-    setTimeout(type, deleting ? 60 : 100);
-  }
-  type();
-})();
+
 
 // ── ANIMATED STAT BAR ──
 (function() {
