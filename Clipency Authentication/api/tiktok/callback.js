@@ -1,4 +1,4 @@
-const { APP_URL, getStateRow, deleteState, upsertAccount } = require("../social/_helpers");
+const { APP_URL, getStateRow, deleteState, upsertAccount } = require("../../oauth-helpers");
 
 async function exchangeCode(code) {
   const body = new URLSearchParams({

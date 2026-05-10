@@ -16,8 +16,11 @@ async function supabaseRest(path, options = {}) {
 
   if (!r.ok) throw new Error(text);
 
-  try { return JSON.parse(text); }
-  catch { return text; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }
 
 async function getStateRow(state, provider) {
