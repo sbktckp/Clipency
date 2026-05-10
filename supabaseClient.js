@@ -12,3 +12,38 @@ window.clipencySupabase = supabase.createClient(
 
 window.supabaseClient = window.clipencySupabase;
 window.sbClient = window.clipencySupabase;
+
+
+/* ===== CLIPENCY_SUPABASE_GLOBAL_EXPOSURE ===== */
+(function(){
+  if (window.CLIPENCY_SUPABASE_GLOBAL_EXPOSURE) return;
+  window.CLIPENCY_SUPABASE_GLOBAL_EXPOSURE = true;
+
+  try {
+    var existing =
+      window.clipencySupabase ||
+      window.supabaseClient ||
+      window.sbClient ||
+      null;
+
+    if (!existing || !existing.auth || !existing.rpc) {
+      if (
+        window.supabase &&
+        typeof window.supabase.createClient === "function" &&
+        typeof SUPABASE_URL !== "undefined" &&
+        typeof SUPABASE_ANON_KEY !== "undefined"
+      ) {
+        existing = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    }
+
+    if (existing && existing.auth) {
+      window.clipencySupabase = existing;
+      window.supabaseClient = existing;
+      window.sbClient = existing;
+    }
+  } catch (e) {
+    console.warn("[Clipency] Supabase global exposure failed", e);
+  }
+})();
+
