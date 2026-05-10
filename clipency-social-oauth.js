@@ -1,5 +1,5 @@
 (function(){
-  window.CLIPENCY_SOCIAL_OAUTH = "social-oauth-v1";
+  window.CLIPENCY_SOCIAL_OAUTH = "social-oauth-youtube-only-v1";
 
   let busy = false;
 
@@ -17,43 +17,20 @@
 
   function platformFromButton(btn){
     const platforms = ["youtube", "instagram", "tiktok"];
-
     let node = btn;
 
     for(let i = 0; i < 8 && node; i++){
       const txt = clean(node.textContent).toLowerCase();
-      const rect = node.getBoundingClientRect();
-
-      if(rect.height < 160 && txt.length < 220){
-        for(const p of platforms){
-          if(txt.includes(p)) return p;
-        }
+      for(const p of platforms){
+        if(txt.includes(p)) return p;
       }
-
       node = node.parentElement;
     }
 
-    const btnRect = btn.getBoundingClientRect();
-    let best = null;
-
-    document.querySelectorAll("body *").forEach(el => {
-      if(el.children.length) return;
-
-      const txt = clean(el.textContent).toLowerCase();
-      if(!platforms.includes(txt)) return;
-
-      const r = el.getBoundingClientRect();
-      const dist = Math.abs((r.top + r.bottom) / 2 - (btnRect.top + btnRect.bottom) / 2);
-
-      if(!best || dist < best.dist){
-        best = { platform: txt, dist };
-      }
-    });
-
-    return best && best.dist < 80 ? best.platform : null;
+    return null;
   }
 
-  async function startOAuth(platform){
+  async function startYouTubeOAuth(){
     if(busy) return;
     busy = true;
 
@@ -70,7 +47,7 @@
       const token = sessionResult?.data?.session?.access_token;
 
       if(!token){
-        alert("Please login again before connecting your account.");
+        alert("Please login again before connecting YouTube.");
         busy = false;
         return;
       }
@@ -81,27 +58,24 @@
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ platform })
+        body: JSON.stringify({ platform: "youtube" })
       });
 
       const text = await res.text();
       let data = {};
 
-      try{
-        data = JSON.parse(text);
-      }catch(e){
-        data = { error: text };
-      }
+      try { data = JSON.parse(text); }
+      catch { data = { error: text }; }
 
       if(!res.ok || !data.url){
-        alert("Could not start " + platform + " connection: " + (data.error || "Unknown error"));
+        alert("Could not start YouTube connection: " + (data.error || "Unknown error"));
         busy = false;
         return;
       }
 
       window.location.href = data.url;
     }catch(error){
-      alert("Connection failed: " + (error.message || error));
+      alert("YouTube connection failed: " + (error.message || error));
       busy = false;
     }
   }
@@ -132,7 +106,12 @@
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    startOAuth(platform);
+    if(platform !== "youtube"){
+      alert(platform.charAt(0).toUpperCase() + platform.slice(1) + " OAuth is coming soon. YouTube is live first.");
+      return;
+    }
+
+    startYouTubeOAuth();
   }
 
   window.addEventListener("pointerdown", intercept, true);
