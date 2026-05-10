@@ -1,0 +1,108 @@
++ set -euo pipefail
++ cd /workspaces/Clipency
++ echo '[Clipency] Applying launch-stable end-to-end patch...'
+[Clipency] Applying launch-stable end-to-end patch...
++ rm -rf api/social api/youtube api/tiktok api/instagram oauth-helpers.js
++ rm -rf 'Clipency Authentication/api/social' 'Clipency Authentication/api/youtube' 'Clipency Authentication/api/tiktok' 'Clipency Authentication/api/instagram' 'Clipency Authentication/oauth-helpers.js'
++ rm -f clipency-social-oauth.js clipency-youtube-oauth.js clipency-youtube-oauth-override.js
++ rm -f 'Clipency Authentication/clipency-social-oauth.js' 'Clipency Authentication/clipency-youtube-oauth.js' 'Clipency Authentication/clipency-youtube-oauth-override.js'
++ cat
++ cp clipency-launch-flow.js 'Clipency Authentication/clipency-launch-flow.js'
++ cat
++ cp clipency-admin-launch.js 'Clipency Authentication/clipency-admin-launch.js'
++ for root in "." "Clipency Authentication"
++ mkdir -p ./accounts ./admin/connected-accounts ./admin/review ./admin/reviews ./admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for root in "." "Clipency Authentication"
++ mkdir -p 'Clipency Authentication/accounts' 'Clipency Authentication/admin/connected-accounts' 'Clipency Authentication/admin/review' 'Clipency Authentication/admin/reviews' 'Clipency Authentication/admin/payouts'
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ for page in admin/connected-accounts admin/review admin/reviews admin/payouts
++ cat
++ python3
+Patched Supabase bridge: supabaseClient.js
+Patched Supabase bridge: Clipency Authentication/supabaseClient.js
+Patched HTML: Clipency Authentication/stats/index.html
+Patched HTML: Clipency Authentication/profile/index.html
+Patched HTML: Clipency Authentication/wallet/index.html
+Patched HTML: Clipency Authentication/campaigns/index.html
+Patched HTML: Clipency Authentication/payouts/index.html
+Patched HTML: Clipency Authentication/admin/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/stats/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/profile/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/wallet/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/campaigns/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/payouts/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/campaigns/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/payouts/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/users/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/reviews/index.html
+Patched HTML: Clipency Authentication/theme-backup-20260501-092034/admin/leads/index.html
+Patched HTML: Clipency Authentication/admin/campaigns/index.html
+Patched HTML: Clipency Authentication/admin/users/index.html
+Patched HTML: Clipency Authentication/admin/logs/index.html
+Patched HTML: Clipency Authentication/admin/leads/index.html
+Patch version: 20260510142222
++ git add -A
++ git status --short
+M  "Clipency Authentication/accounts/index.html"
+M  "Clipency Authentication/admin/campaigns/index.html"
+M  "Clipency Authentication/admin/connected-accounts/index.html"
+M  "Clipency Authentication/admin/index.html"
+M  "Clipency Authentication/admin/leads/index.html"
+M  "Clipency Authentication/admin/logs/index.html"
+M  "Clipency Authentication/admin/payouts/index.html"
+M  "Clipency Authentication/admin/review/index.html"
+M  "Clipency Authentication/admin/reviews/index.html"
+M  "Clipency Authentication/admin/users/index.html"
+M  "Clipency Authentication/campaigns/index.html"
+A  "Clipency Authentication/clipency-admin-launch.js"
+A  "Clipency Authentication/clipency-launch-flow.js"
+M  "Clipency Authentication/payouts/index.html"
+M  "Clipency Authentication/profile/index.html"
+M  "Clipency Authentication/stats/index.html"
+M  "Clipency Authentication/supabaseClient.js"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/campaigns/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/leads/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/payouts/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/reviews/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/admin/users/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/campaigns/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/payouts/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/profile/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/stats/index.html"
+M  "Clipency Authentication/theme-backup-20260501-092034/wallet/index.html"
+M  "Clipency Authentication/wallet/index.html"
+M  accounts/index.html
+M  admin/connected-accounts/index.html
+A  admin/payouts/index.html
+A  admin/review/index.html
+A  admin/reviews/index.html
+A  clipency-admin-launch.js
+A  clipency-launch-flow.js
+M  clipency_launch_patch.sh
+AM patch-error.log
+M  supabaseClient.js
++ echo '[Clipency] Patch applied. Now run:'
+[Clipency] Patch applied. Now run:
++ echo '  git commit -m '\''Launch stable end to end creator flow'\'''
+  git commit -m 'Launch stable end to end creator flow'
++ echo '  git pull --rebase origin main'
+  git pull --rebase origin main
++ echo '  git push'
+  git push

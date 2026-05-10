@@ -46,4 +46,13 @@ window.sbClient = window.clipencySupabase;
     console.warn("[Clipency] Supabase global exposure failed", e);
   }
 })();
-
+/* ===== CLIPENCY_LAUNCH_SUPABASE_BRIDGE ===== */
+(function(){
+  try{
+    var c = window.clipencySupabase || window.supabaseClient || window.sbClient;
+    if(!c && window.supabase && window.CLIPENCY_SUPABASE_URL && window.CLIPENCY_SUPABASE_ANON_KEY){
+      c = window.supabase.createClient(window.CLIPENCY_SUPABASE_URL, window.CLIPENCY_SUPABASE_ANON_KEY);
+    }
+    if(c){ window.clipencySupabase = c; window.supabaseClient = c; window.sbClient = c; }
+  }catch(e){ console.warn('[Clipency] Supabase bridge failed', e); }
+})();
