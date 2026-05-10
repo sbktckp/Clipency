@@ -1,4 +1,3 @@
-/* Clipency landing lead form — final live Supabase submitter */
 (function () {
   "use strict";
 
