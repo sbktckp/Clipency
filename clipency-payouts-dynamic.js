@@ -1,5 +1,5 @@
 (function(){
-  window.CLIPENCY_PAYOUTS_DYNAMIC = "payouts-dynamic-v1";
+  window.CLIPENCY_PAYOUTS_DYNAMIC = "payouts-dynamic-v2";
 
   function money(n){
     const value = Number(n || 0);
@@ -18,57 +18,81 @@
   }
 
   async function waitForSupabase(){
-    for(let i = 0; i < 40; i++){
+    for(let i = 0; i < 50; i++){
       const sb = client();
       if(sb && sb.rpc && sb.auth) return sb;
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 120));
     }
     throw new Error("Supabase client missing");
   }
 
-  function findCard(label){
-    const nodes = Array.from(document.querySelectorAll("div,section,article"));
-    return nodes
-      .filter(el => clean(el.textContent).toLowerCase().includes(label.toLowerCase()))
-      .sort((a,b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height)[0];
+  function getMetricCurrencyNodes(){
+    const nodes = Array.from(document.querySelectorAll("body *"))
+      .filter(el => {
+        const txt = clean(el.textContent);
+        const r = el.getBoundingClientRect();
+        return /^\$[\d,]+(\.\d+)?$/.test(txt)
+          && r.width > 20
+          && r.height > 20
+          && r.top < 750;
+      })
+      .sort((a,b) => {
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        if(Math.abs(ar.top - br.top) > 30) return ar.top - br.top;
+        return ar.left - br.left;
+      });
+
+    return nodes;
   }
 
-  function updateCard(label, value){
-    const card = findCard(label);
-    if(!card) return;
+  function forceMetricValues(row){
+    const values = getMetricCurrencyNodes();
 
-    const leaves = Array.from(card.querySelectorAll("*")).filter(el => !el.children.length);
-    const target = leaves.find(el => /^\$[\d,]+/.test(clean(el.textContent)));
-
-    if(target){
-      target.textContent = money(value);
-    }
+    // First 3 top metric money nodes = Available, Pending, Paid
+    if(values[0]) values[0].textContent = money(row.available_balance || 0);
+    if(values[1]) values[1].textContent = money(row.pending_payout || 0);
+    if(values[2]) values[2].textContent = money(row.paid_total || 0);
   }
 
-  function historyContainer(){
+  function findHistoryBox(){
     const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,div,section"))
-      .filter(el => /^Payout History$/i.test(clean(el.textContent)));
+      .filter(el => clean(el.textContent).toLowerCase() === "payout history");
 
     const heading = headings[0];
     if(!heading) return null;
 
-    return heading.closest("section,article,div") || heading.parentElement;
+    const box = heading.closest("section,article,div");
+    return { box, heading };
   }
 
   function renderHistory(items){
-    const box = historyContainer();
-    if(!box) return;
+    const found = findHistoryBox();
+    if(!found || !found.box) return;
 
-    const existingRows = Array.from(box.children).filter(el => !/Payout History/i.test(clean(el.textContent)));
-    existingRows.forEach(el => el.remove());
+    const box = found.box;
+    const heading = found.heading;
+
+    box.querySelectorAll(".cx-payout-history-dynamic").forEach(el => el.remove());
+
+    // Hide old fake/static rows without breaking the heading
+    Array.from(box.children).forEach(child => {
+      if(child.contains(heading)) return;
+      child.style.display = "none";
+    });
 
     const wrap = document.createElement("div");
+    wrap.className = "cx-payout-history-dynamic";
     wrap.style.display = "grid";
     wrap.style.gap = "14px";
     wrap.style.marginTop = "24px";
 
     if(!items.length){
-      wrap.innerHTML = `<div style="color:rgba(216,199,180,.72);font-weight:800;">No payout history yet.</div>`;
+      wrap.innerHTML = `
+        <div style="color:rgba(216,199,180,.72);font-weight:850;">
+          No payout history yet.
+        </div>
+      `;
       box.appendChild(wrap);
       return;
     }
@@ -78,11 +102,12 @@
       const status = clean(item.status || "pending");
       const title = clean(item.title || "Transaction");
       const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : "";
-      const color = status === "paid" || status === "available" || status === "approved"
-        ? "#72f0aa"
-        : status === "pending"
-          ? "#ffd35a"
-          : "#ff9b9b";
+      const color =
+        status === "paid" || status === "available" || status === "approved"
+          ? "#72f0aa"
+          : status === "pending"
+            ? "#ffd35a"
+            : "#ff9b9b";
 
       return `
         <div style="
@@ -99,7 +124,9 @@
           </div>
           <div style="text-align:right;">
             <div style="font-weight:950;color:${color};">${money(Math.abs(amount))}</div>
-            <div style="color:rgba(216,199,180,.62);font-size:13px;text-transform:capitalize;margin-top:5px;">${status.replaceAll("_"," ")}</div>
+            <div style="color:rgba(216,199,180,.62);font-size:13px;text-transform:capitalize;margin-top:5px;">
+              ${status.replaceAll("_"," ")}
+            </div>
           </div>
         </div>
       `;
@@ -112,15 +139,24 @@
     const sb = await waitForSupabase();
 
     const { data, error } = await sb.rpc("clipency_my_payout_dashboard");
-
     if(error) throw error;
 
-    const row = Array.isArray(data) ? data[0] : data;
-    const history = Array.isArray(row?.history) ? row.history : [];
+    const row = Array.isArray(data) ? data[0] : data || {};
+    let history = row.history || [];
 
-    updateCard("Available Balance", row?.available_balance || 0);
-    updateCard("Pending Payout", row?.pending_payout || 0);
-    updateCard("Paid", row?.paid_total || 0);
+    if(typeof history === "string"){
+      try { history = JSON.parse(history); }
+      catch { history = []; }
+    }
+
+    if(!Array.isArray(history)) history = [];
+
+    forceMetricValues({
+      available_balance: row.available_balance || 0,
+      pending_payout: row.pending_payout || 0,
+      paid_total: row.paid_total || 0
+    });
+
     renderHistory(history);
   }
 
@@ -165,10 +201,14 @@
     bindWithdraw();
     load().catch(error => {
       console.error("[Clipency Payouts Dynamic]", error);
+
+      forceMetricValues({
+        available_balance: 0,
+        pending_payout: 0,
+        paid_total: 0
+      });
+
       renderHistory([]);
-      updateCard("Available Balance", 0);
-      updateCard("Pending Payout", 0);
-      updateCard("Paid", 0);
     });
   }
 
@@ -179,6 +219,6 @@
   }
 
   window.addEventListener("load", function(){
-    setTimeout(boot, 700);
+    setTimeout(boot, 500);
   });
 })();
