@@ -36,14 +36,11 @@
     const success = document.getElementById("form-success-msg");
     const card = success ? success.closest(".lform-card") : null;
 
-    if (panel) {
-      panel.style.display = "none";
-    }
+    if (panel) panel.style.display = "none";
 
     if (card) {
       const title = card.querySelector(".lform-card-title");
       const sub = card.querySelector(".lform-card-sub");
-
       if (title) title.style.display = "none";
       if (sub) sub.style.display = "none";
     }
