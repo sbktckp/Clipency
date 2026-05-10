@@ -1,5 +1,7 @@
 (function(){
-  window.CLIPENCY_PAYOUTS_DYNAMIC = "payouts-dynamic-v2";
+  window.CLIPENCY_PAYOUTS_DYNAMIC = "payouts-dynamic-v3-disable-zero-withdraw";
+
+  let latestAvailable = 0;
 
   function money(n){
     const value = Number(n || 0);
@@ -27,7 +29,7 @@
   }
 
   function getMetricCurrencyNodes(){
-    const nodes = Array.from(document.querySelectorAll("body *"))
+    return Array.from(document.querySelectorAll("body *"))
       .filter(el => {
         const txt = clean(el.textContent);
         const r = el.getBoundingClientRect();
@@ -42,17 +44,18 @@
         if(Math.abs(ar.top - br.top) > 30) return ar.top - br.top;
         return ar.left - br.left;
       });
-
-    return nodes;
   }
 
   function forceMetricValues(row){
     const values = getMetricCurrencyNodes();
 
-    // First 3 top metric money nodes = Available, Pending, Paid
+    latestAvailable = Number(row.available_balance || 0);
+
     if(values[0]) values[0].textContent = money(row.available_balance || 0);
     if(values[1]) values[1].textContent = money(row.pending_payout || 0);
     if(values[2]) values[2].textContent = money(row.paid_total || 0);
+
+    updateWithdrawButton();
   }
 
   function findHistoryBox(){
@@ -62,8 +65,10 @@
     const heading = headings[0];
     if(!heading) return null;
 
-    const box = heading.closest("section,article,div");
-    return { box, heading };
+    return {
+      box: heading.closest("section,article,div"),
+      heading
+    };
   }
 
   function renderHistory(items){
@@ -75,7 +80,6 @@
 
     box.querySelectorAll(".cx-payout-history-dynamic").forEach(el => el.remove());
 
-    // Hide old fake/static rows without breaking the heading
     Array.from(box.children).forEach(child => {
       if(child.contains(heading)) return;
       child.style.display = "none";
@@ -102,6 +106,7 @@
       const status = clean(item.status || "pending");
       const title = clean(item.title || "Transaction");
       const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : "";
+
       const color =
         status === "paid" || status === "available" || status === "approved"
           ? "#72f0aa"
@@ -135,6 +140,38 @@
     box.appendChild(wrap);
   }
 
+  function updateWithdrawButton(){
+    Array.from(document.querySelectorAll("button,a,[role='button']")).forEach(btn => {
+      if(!/withdraw/i.test(clean(btn.textContent)) && !btn.dataset.cxWithdrawButton) return;
+
+      btn.dataset.cxWithdrawButton = "true";
+
+      if(latestAvailable <= 0){
+        btn.textContent = "No balance";
+        btn.setAttribute("aria-disabled", "true");
+
+        if(btn.tagName === "BUTTON"){
+          btn.disabled = true;
+        }
+
+        btn.style.opacity = "0.55";
+        btn.style.cursor = "not-allowed";
+        btn.style.pointerEvents = "none";
+      }else{
+        btn.textContent = "Withdraw →";
+        btn.removeAttribute("aria-disabled");
+
+        if(btn.tagName === "BUTTON"){
+          btn.disabled = false;
+        }
+
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+        btn.style.pointerEvents = "auto";
+      }
+    });
+  }
+
   async function load(){
     const sb = await waitForSupabase();
 
@@ -162,16 +199,28 @@
 
   async function requestPayout(){
     try{
+      if(latestAvailable <= 0){
+        alert("No available balance to withdraw yet.");
+        return;
+      }
+
       const amountText = prompt("Enter payout amount:");
       if(amountText === null) return;
 
       const amount = Number(String(amountText).replace(/[^0-9.]/g, ""));
+
       if(!amount || amount <= 0){
         alert("Enter a valid amount.");
         return;
       }
 
+      if(amount > latestAvailable){
+        alert("Requested amount cannot exceed available balance of " + money(latestAvailable) + ".");
+        return;
+      }
+
       const sb = await waitForSupabase();
+
       const { error } = await sb.rpc("clipency_request_payout", {
         p_amount: amount
       });
@@ -187,18 +236,30 @@
 
   function bindWithdraw(){
     Array.from(document.querySelectorAll("button,a,[role='button']")).forEach(btn => {
-      if(/withdraw/i.test(clean(btn.textContent))){
+      if(/withdraw/i.test(clean(btn.textContent)) || btn.dataset.cxWithdrawButton){
+        btn.dataset.cxWithdrawButton = "true";
+
         btn.onclick = function(e){
           e.preventDefault();
           e.stopPropagation();
+
+          if(latestAvailable <= 0){
+            alert("No available balance to withdraw yet.");
+            return false;
+          }
+
           requestPayout();
+          return false;
         };
       }
     });
+
+    updateWithdrawButton();
   }
 
   function boot(){
     bindWithdraw();
+
     load().catch(error => {
       console.error("[Clipency Payouts Dynamic]", error);
 
@@ -220,5 +281,6 @@
 
   window.addEventListener("load", function(){
     setTimeout(boot, 500);
+    setTimeout(updateWithdrawButton, 900);
   });
 })();
