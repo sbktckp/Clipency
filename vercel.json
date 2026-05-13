@@ -16,11 +16,11 @@
     },
     {
       "source": "/",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, s-maxage=0, must-revalidate" }]
     },
     {
       "source": "/(.*).html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, s-maxage=0, must-revalidate" }]
     },
     {
       "source": "/admin/(.*)",
@@ -44,7 +44,7 @@
     },
     {
       "source": "/(.*).(js|css)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, s-maxage=0, must-revalidate" }]
     }
   ]
 }
