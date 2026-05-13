@@ -344,117 +344,24 @@ nav{
 .big-metric-num{font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--amber);}
 .big-metric-label{font-size:0.75rem;color:var(--text-muted);margin-top:4px;}
 /* ── COMPARISON ── */
-.comparison-section{
-  background:var(--bg);
-  position:relative;
-  overflow:hidden;
-}
-.comparison-section::before{
-  content:'';
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 50% 60% at 75% 50%,rgba(196,149,106,0.06) 0%,transparent 55%),
-    radial-gradient(ellipse 30% 40% at 25% 50%,rgba(196,149,106,0.03) 0%,transparent 60%);
-  pointer-events:none;
-}
-.comp-wrapper{
-  border:1px solid var(--border-soft);
-  border-radius:20px;
-  overflow:hidden;
-  position:relative;
-  box-shadow:0 0 0 1px rgba(196,149,106,0.04),0 32px 80px rgba(0,0,0,0.5);
-}
-/* Glowing right-column accent */
-.comp-wrapper::after{
-  content:'';
-  position:absolute;top:0;bottom:0;right:0;
-  width:calc(100% / 3 + 1px);
-  background:linear-gradient(180deg,rgba(196,149,106,0.04) 0%,rgba(196,149,106,0.02) 100%);
-  border-left:1px solid rgba(196,149,106,0.12);
-  pointer-events:none;
-  z-index:0;
+.comparison-section{background:var(--surface-1);}
+.comparison-table{
+  border:1px solid var(--border-soft);border-radius:16px;overflow:hidden;
 }
 .comp-row{
   display:grid;grid-template-columns:200px 1fr 1fr;
-  border-bottom:1px solid rgba(196,149,106,0.12);
-  position:relative;z-index:1;
-  opacity:0;transform:translateX(-20px);
-  transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1),background 0.25s;
+  border-bottom:1px solid var(--border-soft);
+  transition:background 0.2s;
 }
-.comp-row.visible{opacity:1;transform:translateX(0);}
 .comp-row:last-child{border-bottom:none;}
-.comp-row:not(.header):hover{background:rgba(255,255,255,0.025);}
-.comp-row.header{
-  background:rgba(255,255,255,0.03);
-  border-bottom:1px solid rgba(196,149,106,0.18);
-  opacity:1;transform:none;
-}
-.comp-cell{
-  padding:20px 24px;font-size:0.9rem;
-  display:flex;align-items:center;gap:10px;
-  position:relative;
-}
-/* Vertical dividers between columns */
-.comp-cell.label-col{
-  font-weight:600;color:var(--text-secondary);
-  font-size:0.75rem;letter-spacing:0.08em;
-  text-transform:uppercase;
-  border-right:1px solid rgba(196,149,106,0.1);
-}
-.comp-cell.bad{
-  color:var(--text-muted);
-  font-size:0.88rem;
-  border-right:1px solid rgba(196,149,106,0.1);
-}
-.comp-cell.bad .bad-text{
-  text-decoration:line-through;
-  opacity:0.55;
-}
-.comp-cell.bad::before{
-  content:'✕';
-  font-size:0.65rem;color:#e05555;opacity:0.7;
-  font-weight:700;flex-shrink:0;
-}
-.comp-cell.good{
-  color:var(--amber);font-weight:700;
-  font-size:0.9rem;letter-spacing:0.01em;
-  border-left:1px solid rgba(196,149,106,0.12);
-  background:rgba(196,149,106,0.025);
-}
-.comp-cell.good::before{
-  content:'✔';
-  font-size:0.7rem;color:var(--amber);
-  font-weight:700;flex-shrink:0;
-}
-.comp-cell.header-cell{
-  font-family:'Space Mono',monospace;font-size:0.6rem;
-  letter-spacing:0.16em;text-transform:uppercase;
-  color:var(--text-muted);font-weight:700;
-  padding:22px 24px;
-}
-/* Others column header */
-.comp-cell.others-header{
-  color:var(--text-secondary);
-  border-right:1px solid rgba(196,149,106,0.12);
-}
-/* Clipency logo header cell */
-.comp-cell.clipency-header{
-  padding:16px 24px;
-  background:rgba(196,149,106,0.04);
-  border-left:1px solid rgba(196,149,106,0.12);
-}
-.comp-cell.clipency-header img{
-  height:22px;
-  width:auto;
-  object-fit:contain;
-  filter:brightness(1.1);
-  display:block;
-}
-.comp-cell.clipency-header::after{content:none;}
-/* Row shimmer on hover */
-.comp-row:not(.header):hover .comp-cell.good{
-  text-shadow:0 0 18px rgba(196,149,106,0.5);
-}
+.comp-row:hover{background:var(--surface-2);}
+.comp-row.header{background:var(--surface-2);}
+.comp-cell{padding:20px 28px;font-size:0.9rem;display:flex;align-items:center;gap:8px;}
+.comp-cell.label-col{font-weight:600;color:var(--text-secondary);font-size:0.8rem;letter-spacing:0.05em;}
+.comp-cell.bad{color:var(--text-muted);text-decoration:line-through;}
+.comp-cell.good{color:var(--amber);font-weight:600;}
+.comp-cell.header-cell{font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);}
+.comp-cell.clipency-header{color:var(--amber);}
 /* ── TESTIMONIALS ── */
 .testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
 .testi-card{
@@ -481,7 +388,6 @@ nav{
 }
 .testi-name{font-weight:600;font-size:0.875rem;color:var(--white);}
 .testi-role{font-size:0.75rem;color:var(--text-muted);}
-.testi-stars{color:#F5C518;font-size:1.1rem;letter-spacing:2px;}
 /* ── FAQ ── */
 .faq-section{background:var(--surface-1);}
 .faq-list{max-width:720px;margin:0 auto;}
@@ -530,7 +436,7 @@ footer{
 }
 .footer-inner{
   display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
-  gap:48px;margin-bottom:60px;
+  gap:60px;margin-bottom:60px;
 }
 .footer-brand .logo{font-size:1.6rem;}
 .footer-brand p{font-size:0.875rem;color:var(--text-muted);line-height:1.7;margin-top:16px;max-width:240px;}
@@ -575,7 +481,9 @@ footer{
 .btn-primary::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.12);opacity:0;transition:opacity 0.3s;}
 .btn-primary:hover::after{opacity:1;}
 
-50%{opacity:0;}}
+/* ── TYPEWRITER CURSOR ── */
+.cursor-blink{display:inline-block;width:2px;height:1em;background:var(--amber);margin-left:2px;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 
 /* ── ANIMATED GRID BG ── */
 .grid-bg{
@@ -944,27 +852,19 @@ footer{
 .btn-form-back:hover{border-color:var(--border);color:var(--text-primary);}
 /* SUCCESS STATE */
 .form-success{
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:60px 20px;
-  min-height:260px;
+  display:none;text-align:center;padding:40px 20px;
   animation:stepIn 0.4s cubic-bezier(0.4,0,0.2,1);
 }
 .success-icon{
-  width:72px;height:72px;border-radius:50%;
-  background:rgba(196,149,106,0.12);
-  border:1px solid rgba(196,149,106,0.3);
+  width:64px;height:64px;border-radius:50%;
+  background:var(--amber-dim);border:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;
-  font-size:2rem;color:var(--amber);
-  margin:0 auto 24px;
+  font-size:1.8rem;margin:0 auto 20px;
   animation:successPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes successPop{from{transform:scale(0);}to{transform:scale(1);}}
-.form-success h3{font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--white);margin-bottom:12px;}
-.form-success p{font-size:0.9rem;color:var(--text-secondary);max-width:400px;line-height:1.7;}
+.form-success h3{font-family:'Instrument Serif',serif;font-size:1.6rem;color:var(--white);margin-bottom:10px;}
+.form-success p{font-size:0.875rem;color:var(--text-secondary);}
 /* PROGRESS BAR */
 .form-progress{height:2px;background:var(--surface-3);border-radius:2px;margin-bottom:28px;overflow:hidden;}
 .form-progress-bar{height:100%;background:var(--amber);border-radius:2px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
@@ -996,573 +896,30 @@ footer{
 }
 .orbit-dot:nth-child(2){animation-delay:-2.6s;width:3px;height:3px;opacity:0.3;}
 .orbit-dot:nth-child(3){animation-delay:-5.3s;opacity:0.2;}
-
-/* ── TAB SECTION ── */
-.tab-section{
-  background:var(--surface-1);
-  padding:80px 0;
-  position:relative;
-  overflow:hidden;
-}
-.tab-section::before{
-  content:'';
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(196,149,106,0.05) 0%,transparent 60%);
-  pointer-events:none;
-}
-
-/* TAB TOGGLE */
-.audience-toggle{
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  margin-bottom:60px;
-  flex-wrap:wrap;
-}
-.aud-tab{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  padding:14px 32px;
-  border-radius:100px;
-  border:1px solid var(--border-soft);
-  background:var(--surface-3);
-  color:var(--text-muted);
-  font-family:'DM Sans',sans-serif;
-  font-weight:600;
-  font-size:0.95rem;
-  cursor:pointer;
-  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
-  position:relative;
-  overflow:hidden;
-  letter-spacing:0.01em;
-  outline:none;
-}
-.aud-tab::before{
-  content:'';
-  position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(196,149,106,0.15),transparent);
-  opacity:0;
-  transition:opacity 0.35s;
-}
-.aud-tab:hover{
-  border-color:var(--border);
-  color:var(--white);
-  transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(0,0,0,0.3);
-}
-.aud-tab:hover::before{opacity:1;}
-.aud-tab.active{
-  background:var(--amber);
-  border-color:var(--amber);
-  color:#0E0C0B;
-  box-shadow:0 0 32px rgba(196,149,106,0.35),0 8px 24px rgba(0,0,0,0.3);
-  transform:translateY(-2px);
-}
-.aud-tab.active::before{opacity:0;}
-.aud-tab-icon{font-size:1rem;transition:transform 0.3s;}
-.aud-tab:hover .aud-tab-icon{transform:scale(1.2) rotate(-8deg);}
-.aud-tab.active .aud-tab-icon{transform:scale(1.15);}
-.aud-tab-arrow{
-  font-size:0.8rem;
-  opacity:0;
-  transform:translateX(-6px);
-  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-.aud-tab.active .aud-tab-arrow,
-.aud-tab:hover .aud-tab-arrow{
-  opacity:1;
-  transform:translateX(0);
-}
-
-/* PANEL */
-.aud-panel{
-  display:none;
-  opacity:0;
-  transform:translateY(24px);
-}
-.aud-panel.active{
-  display:block;
-  animation:panelIn 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-.aud-panel.exit{
-  animation:panelOut 0.25s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-@keyframes panelIn{
-  from{opacity:0;transform:translateY(24px);}
-  to{opacity:1;transform:translateY(0);}
-}
-@keyframes panelOut{
-  from{opacity:1;transform:translateY(0);}
-  to{opacity:0;transform:translateY(-16px);}
-}
-.aud-panel-inner{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:64px;
-  align-items:start;
-  background:var(--surface-2);
-  border:1px solid var(--border-soft);
-  border-radius:24px;
-  padding:56px;
-  position:relative;
-  overflow:hidden;
-  transition:box-shadow 0.4s;
-}
-.aud-panel-inner::before{
-  content:'';
-  position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--amber),transparent);
-  opacity:0.7;
-}
-.aud-panel-inner:hover{
-  box-shadow:0 0 60px rgba(196,149,106,0.06),0 24px 64px rgba(0,0,0,0.4);
-}
-
-/* CONTENT COL */
-.aud-content-col{
-  display:flex;
-  flex-direction:column;
-  gap:0;
-}
-.aud-heading{
-  font-size:clamp(2.2rem,4vw,3.4rem);
-  color:var(--white);
-  margin-bottom:20px;
-  letter-spacing:-0.02em;
-  line-height:1.05;
-}
-.aud-desc{
-  color:var(--text-secondary);
-  line-height:1.75;
-  margin-bottom:32px;
-  font-size:0.95rem;
-}
-
-/* STATS COL */
-.aud-stats-col{
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-}
-
-/* HIGHLIGHT CARD */
-.aud-highlight-card{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  background:var(--surface-3);
-  border:1px solid var(--border-soft);
-  border-radius:12px;
-  padding:16px 20px;
-  transition:all 0.3s;
-  margin-top:4px;
-}
-.aud-highlight-card:hover{
-  border-color:var(--border);
-  background:var(--surface-4);
-  transform:translateX(4px);
-}
-.aud-highlight-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--amber);
-  box-shadow:0 0 8px var(--amber);
-  flex-shrink:0;
-  animation:pulse 2s infinite;
-}
-
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .dual-section{grid-template-columns:1fr;}
   .steps-grid{grid-template-columns:1fr;}
   .metrics-inner{grid-template-columns:1fr;}
   .testimonials-grid{grid-template-columns:1fr;}
-  .footer-inner{grid-template-columns:1fr 1fr;gap:40px;}
+  .footer-inner{grid-template-columns:1fr 1fr;}
   .comp-row{grid-template-columns:120px 1fr 1fr;}
   .dash-stats-grid{grid-template-columns:repeat(2,1fr)!important;}
-  .lead-inner{grid-template-columns:1fr;}
-  .form-grid{grid-template-columns:1fr;}
-  .form-group.full{grid-column:1;}
-  .aud-panel-inner{grid-template-columns:1fr;gap:40px;padding:40px 36px;}
 }
 @media(max-width:600px){
   .container{padding:0 20px;}
-  section{padding:72px 0;}
+  section{padding:80px 0;}
   .nav-inner{padding:0 20px;}
   .nav-links{display:none;}
-  .nav-right .btn-ghost{display:none;}
-  .hero{padding-top:120px;padding-bottom:80px;}
-  .hero h1{font-size:clamp(2.6rem,10vw,4rem);}
-  .hero-sub{font-size:1rem;}
-  .hero-btns{flex-direction:column;align-items:center;gap:12px;}
-  .hero-btns .btn-primary,.hero-btns .btn-outline{width:100%;max-width:320px;justify-content:center;}
-  .stats-grid{grid-template-columns:1fr 1fr;}
-  .footer-inner{grid-template-columns:1fr;gap:32px;}
-  .dual-card{padding:40px 24px;}
-  .dual-card h2{font-size:2rem;}
-  .dash-stats-grid{grid-template-columns:1fr 1fr!important;}
-  .comparison-table{font-size:0.8rem;}
-  .comp-row{grid-template-columns:90px 1fr 1fr;}
-  .comp-cell{padding:14px 12px;font-size:0.78rem;}
-  .section-header h2{font-size:clamp(1.8rem,6vw,2.8rem);}
-  .testimonials-grid{gap:16px;}
-  .testi-card{padding:24px 20px;}
-  .cta-section h2{font-size:clamp(2rem,8vw,3.5rem);}
-  .cta-btns{flex-direction:column;align-items:center;gap:12px;}
-  .cta-btns .btn-primary,.cta-btns .btn-outline{width:100%;max-width:320px;}
-  .form-card{padding:24px 20px;}
-  .lead-right{padding:24px 20px;}
-  .form-steps{display:none;}
-  .field-row{grid-template-columns:1fr;}
-  .footer-bottom{flex-direction:column;text-align:center;gap:12px;}
-  .footer-socials{justify-content:center;}
-  /* Tab section mobile */
-  .tab-section{padding:60px 0;}
-  .audience-toggle{gap:8px;margin-bottom:40px;}
-  .aud-tab{padding:12px 22px;font-size:0.85rem;gap:7px;}
-  .aud-panel-inner{grid-template-columns:1fr;gap:32px;padding:28px 20px;border-radius:16px;}
-  .aud-heading{font-size:2rem;}
-}
-@media(max-width:400px){
-  .hero h1{font-size:2.4rem;}
   .stats-grid{grid-template-columns:1fr;}
+  .footer-inner{grid-template-columns:1fr;}
+  .dual-card{padding:48px 28px;}
   .dash-stats-grid{grid-template-columns:1fr!important;}
-  .comp-row{grid-template-columns:70px 1fr 1fr;}
-  .comp-cell{padding:12px 8px;font-size:0.72rem;}
-}
-
-/* ── CFORM (new lead form card) ── */
-.cform-card{
-  background:var(--surface-2);
-  border:1px solid var(--border-soft);
-  border-radius:20px;
-  padding:36px 32px 28px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.4);
-}
-.cform-card-header{margin-bottom:28px;}
-.cform-title{
-  font-family:'Instrument Serif',serif;
-  font-size:1.6rem;
-  color:var(--white);
-  font-weight:400;
-  margin-bottom:8px;
-}
-.cform-sub{
-  font-size:0.85rem;
-  color:var(--text-muted);
-  line-height:1.6;
-}
-.cform-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  margin-bottom:20px;
-}
-.cform-group{display:flex;flex-direction:column;gap:6px;}
-.cform-full{grid-column:1/-1;}
-.cform-label{
-  font-family:'Space Mono',monospace;
-  font-size:0.6rem;
-  letter-spacing:0.14em;
-  text-transform:uppercase;
-  color:var(--text-muted);
-  font-weight:700;
-}
-.cform-input{
-  background:var(--surface-3);
-  border:1px solid var(--border-soft);
-  border-radius:8px;
-  padding:11px 14px;
-  color:var(--white);
-  font-family:'DM Sans',sans-serif;
-  font-size:0.88rem;
-  outline:none;
-  transition:border-color 0.2s,box-shadow 0.2s;
-  width:100%;
-  box-sizing:border-box;
-}
-.cform-input::placeholder{color:var(--text-muted);}
-.cform-input:focus{
-  border-color:rgba(196,149,106,0.5);
-  box-shadow:0 0 0 3px rgba(196,149,106,0.08);
-}
-.cform-select{
-  background:var(--surface-3);
-  border:1px solid var(--border-soft);
-  border-radius:8px;
-  padding:11px 14px;
-  color:var(--white);
-  font-family:'DM Sans',sans-serif;
-  font-size:0.88rem;
-  outline:none;
-  cursor:pointer;
-  transition:border-color 0.2s;
-  appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23C4956A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 12px center;
-  padding-right:32px;
-}
-.cform-select:focus{border-color:rgba(196,149,106,0.5);}
-.cform-select-full{width:100%;box-sizing:border-box;}
-.cform-flag{width:110px;flex-shrink:0;}
-.cform-phone-row{display:flex;gap:8px;align-items:flex-start;}
-.cform-phone-row .cform-input{min-width:0;}
-.cform-textarea{
-  min-height:100px;
-  resize:vertical;
-  font-family:'DM Sans',sans-serif;
-  line-height:1.6;
-}
-.cform-submit{
-  width:100%;
-  padding:14px;
-  background:var(--amber);
-  color:#0E0C0B;
-  border:none;
-  border-radius:10px;
-  font-family:'DM Sans',sans-serif;
-  font-weight:700;
-  font-size:0.95rem;
-  cursor:pointer;
-  transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
-  letter-spacing:0.01em;
-  margin-bottom:10px;
-}
-.cform-submit:hover{
-  background:#d4a56f;
-  transform:translateY(-1px);
-  box-shadow:0 8px 24px rgba(196,149,106,0.35);
-}
-.cform-note{
-  text-align:center;
-  font-size:0.78rem;
-  color:var(--text-muted);
-}
-
-/* ── LFORM (stacked full-width lead form) ── */
-.lform-header{
-  margin-bottom:52px;
-}
-.lform-features-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px 32px;
-}
-.lform-feat{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:0.875rem;
-  color:var(--text-secondary);
-  font-weight:500;
-}
-.lform-card{
-  background:var(--surface-2);
-  border:1px solid var(--border-soft);
-  border-radius:20px;
-  padding:40px 40px 32px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.4);
-  position:relative;
-  overflow:hidden;
-}
-.lform-card::before{
-  content:'';
-  position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--amber),transparent);
-  opacity:0.6;
-}
-.lform-card-title{
-  font-family:'Instrument Serif',serif;
-  font-size:2rem;
-  color:var(--white);
-  font-weight:400;
-  margin-bottom:8px;
-}
-.lform-card-sub{
-  font-size:0.88rem;
-  color:var(--text-muted);
-  line-height:1.6;
-  margin-bottom:28px;
-}
-.lform-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-  margin-bottom:24px;
-}
-.lform-group{display:flex;flex-direction:column;gap:6px;}
-.lform-full{grid-column:1/-1;}
-.lform-input{
-  background:var(--surface-3);
-  border:1px solid var(--border-soft);
-  border-radius:8px;
-  padding:12px 16px;
-  color:var(--white);
-  font-family:'DM Sans',sans-serif;
-  font-size:0.9rem;
-  outline:none;
-  transition:border-color 0.2s,box-shadow 0.2s;
-  width:100%;
-  box-sizing:border-box;
-}
-.lform-input::placeholder{color:var(--text-muted);}
-.lform-input:focus{
-  border-color:rgba(196,149,106,0.5);
-  box-shadow:0 0 0 3px rgba(196,149,106,0.07);
-}
-.lform-textarea{min-height:110px;resize:vertical;line-height:1.6;}
-.lform-select{
-  background:var(--surface-3);
-  border:1px solid var(--border-soft);
-  border-radius:8px;
-  padding:12px 16px;
-  color:var(--white);
-  font-family:'DM Sans',sans-serif;
-  font-size:0.9rem;
-  outline:none;
-  cursor:pointer;
-  transition:border-color 0.2s;
-  appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23C4956A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 14px center;
-  padding-right:36px;
-}
-.lform-select:focus{border-color:rgba(196,149,106,0.5);}
-.lform-select-full{width:100%;box-sizing:border-box;}
-.lform-flag{width:100px;flex-shrink:0;}
-.lform-phone-row{display:flex;gap:8px;}
-.lform-phone-row .lform-input{min-width:0;}
-.lform-footer{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  flex-wrap:wrap;
-}
-.lform-submit{
-  padding:13px 28px;
-  background:var(--amber);
-  color:#0E0C0B;
-  border:none;
-  border-radius:10px;
-  font-family:'DM Sans',sans-serif;
-  font-weight:700;
-  font-size:0.92rem;
-  cursor:pointer;
-  transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
-  letter-spacing:0.01em;
-  white-space:nowrap;
-}
-.lform-submit:hover{
-  background:#d4a56f;
-  transform:translateY(-1px);
-  box-shadow:0 8px 24px rgba(196,149,106,0.35);
-}
-.lform-note{
-  font-size:0.82rem;
-  color:var(--text-muted);
-}
-@media(max-width:900px){
-  .lform-grid{grid-template-columns:1fr 1fr;}
-  .lform-card{padding:32px 28px 28px;}
-}
-@media(max-width:600px){
-  .lform-grid{grid-template-columns:1fr;}
-  .lform-full{grid-column:1;}
-  .lform-card{padding:24px 18px 20px;}
-  .lform-card-title{font-size:1.5rem;}
-  .lform-features-row{flex-direction:column;gap:8px;}
-  .lform-footer{flex-direction:column;align-items:flex-start;}
-  .lform-submit{width:100%;text-align:center;}
-}
-
-/* ── SCISSOR PROGRESS BAR ── */
-#scissor-bar{
-  position:fixed;
-  top:68px;left:0;right:0;
-  height:3px;
-  z-index:99999;
-  pointer-events:none;
-}
-#scissor-track{
-  position:relative;
-  width:100%;
-  height:100%;
-  background:rgba(255,255,255,0.06);
-}
-#scissor-progress{
-  position:absolute;
-  top:0;left:0;
-  height:100%;
-  width:0%;
-  background:linear-gradient(90deg,rgba(196,149,106,0.5) 0%,#C4956A 60%,#E8B07A 100%);
-  box-shadow:0 0 10px rgba(196,149,106,0.7),0 0 22px rgba(196,149,106,0.3);
-  transition:width 0.05s linear;
-  border-radius:0 2px 2px 0;
-}
-#scissor-head{
-  position:absolute;
-  top:50%;
-  transform:translate(-50%,-50%);
-  left:0%;
-  width:36px;
-  height:36px;
-  pointer-events:none;
-  transition:left 0.05s linear;
-}
-#scissor-svg{
-  width:36px;height:36px;
-  filter:drop-shadow(0 0 6px rgba(255,255,255,0.9));
-  animation:scissorSnip 0.4s ease-in-out infinite;
-  transform-origin:47% 42%;
-}
-@keyframes scissorSnip{
-  0%,100%{transform:rotate(0deg);}
-  25%{transform:rotate(-8deg);}
-  75%{transform:rotate(8deg);}
-}
-#scissor-sparks{
-  position:absolute;
-  top:50%;left:100%;
-  transform:translate(-4px,-50%);
-  width:0;height:0;
-  pointer-events:none;
-}
-.spark{
-  position:absolute;
-  border-radius:50%;
-  pointer-events:none;
-  animation:sparkFly var(--dur,0.5s) ease-out forwards;
-}
-@keyframes sparkFly{
-  0%{opacity:1;transform:translate(0,0) scale(1);}
-  100%{opacity:0;transform:translate(var(--tx,10px),var(--ty,-20px)) scale(0);}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
-<!-- SCISSOR SCROLL PROGRESS BAR -->
-<div id="scissor-bar">
-  <div id="scissor-track">
-    <div id="scissor-progress"></div>
-    <div id="scissor-head">
-      <!-- Scissor SVG -->
-      <svg id="scissor-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="10" cy="8" rx="6" ry="5" stroke="#ffffff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/>
-        <ellipse cx="10" cy="22" rx="6" ry="5" stroke="#ffffff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/>
-        <circle cx="16.5" cy="15" r="1.8" fill="#ffffff"/>
-        <path d="M16.5 15 L34 9" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-        <path d="M16.5 15 L34 21" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-        <path d="M10 4 L16.5 15" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>
-        <path d="M10 26 L16.5 15" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>
-      </svg>
-      <!-- Spark particles container -->
-      <div id="scissor-sparks"></div>
-    </div>
-  </div>
-</div>
 
 <!-- NAV -->
 <nav>
@@ -1570,14 +927,14 @@ footer{
     <div class="logo"><img src="Clipencylogo.png" alt="Clipency" style="height:32px;width:auto;"/></div>
     <ul class="nav-links">
       <li><a href="#clippers">Clippers</a></li>
-      <li><a href="#clippers" onclick="setTimeout(()=>switchTab('brands'),300)">Brands</a></li>
+      <li><a href="#brands">Brands</a></li>
       <li><a href="#how">How It Works</a></li>
       <li><a href="#contact">Start</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <div class="nav-right">
-      <button class="btn-ghost" onclick="window.location.href='/login'">Log In</button>
-      <button class="btn-primary" onclick="window.location.href='/signup'">Get Started</button>
+      <button class="btn-ghost">Log In</button>
+      <button class="btn-primary">Get Started</button>
     </div>
   </div>
 </nav>
@@ -1593,13 +950,13 @@ footer{
   <div class="container" style="position:relative;z-index:2;">
     <div class="hero-eyebrow">
       <div class="eyebrow-dot"></div>
-      <span class="mono" style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--amber);">Now Live · The Viral Content Network</span>
+      <span class="mono" style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--amber);">Now Live — The Viral Content Network</span>
     </div>
-    <h1 class="fade-in">The Network Built<br/>for <em>Viral Scale.</em></h1>
-    <p class="hero-sub fade-in">Clippers earn real money. Brands/creators get real reach. No guesswork,<br/>pure performance-driven distribution at scale.</p>
+    <h1 class="fade-in">The Network Built<br/>for <em id="typewriter">Viral Scale.</em><span class="cursor-blink"></span></h1>
+    <p class="hero-sub fade-in">Clippers earn real money. Brands/creators get real reach. No guesswork —<br/>pure performance-driven distribution at scale.</p>
     <div class="hero-btns fade-in">
-      <button class="btn-primary" onclick="window.location.href='/signup'">Start Clipping →</button>
-      <button class="btn-outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Scale Your Brand</button>
+      <button class="btn-primary">Start Clipping →</button>
+      <button class="btn-outline">Scale Your Brand</button>
     </div>
 
     <!-- HERO VISUAL CARD -->
@@ -1633,7 +990,7 @@ footer{
           <div class="bar" style="height:95%;"></div>
           <div class="bar" style="height:88%;"></div>
         </div>
-        <div style="font-size:0.7rem;color:var(--text-muted);">Jan to Dec 2024</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">Jan — Dec 2024</div>
         <!-- BADGES -->
         <div style="position:absolute;top:-16px;right:40px;background:var(--surface-3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;">
           <div style="width:6px;height:6px;border-radius:50%;background:#4CAF50;box-shadow:0 0 6px #4CAF50;"></div>
@@ -1651,155 +1008,116 @@ footer{
     <div class="ticker-item"><strong>700+</strong> Clippers in Network <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>100M+</strong> Brand Views Generated <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>3 Months</strong> Average Brand Ramp <span class="ticker-sep">·</span></div>
-    <div class="ticker-item"><strong>Pay Per View</strong> · No Fixed Contracts <span class="ticker-sep">·</span></div>
+    <div class="ticker-item"><strong>Pay Per View</strong> — No Fixed Contracts <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>24/7</strong> Live Support <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>$10,000+</strong> USD Paid to Clippers <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>700+</strong> Clippers in Network <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>100M+</strong> Brand Views Generated <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>3 Months</strong> Average Brand Ramp <span class="ticker-sep">·</span></div>
-    <div class="ticker-item"><strong>Pay Per View</strong> · No Fixed Contracts <span class="ticker-sep">·</span></div>
+    <div class="ticker-item"><strong>Pay Per View</strong> — No Fixed Contracts <span class="ticker-sep">·</span></div>
     <div class="ticker-item"><strong>24/7</strong> Live Support <span class="ticker-sep">·</span></div>
   </div>
 </div>
 
-<!-- TABBED SECTION: CLIPPERS + BRANDS -->
-<section class="tab-section" id="clippers">
-  <div class="container">
+<!-- DUAL SECTION: CLIPPERS + BRANDS -->
+<div class="dual-section" id="clippers">
 
-    <!-- TAB TOGGLE -->
-    <div class="audience-toggle fade-in">
-      <button class="aud-tab active" id="tab-clippers-btn" onclick="switchTab('clippers')" aria-selected="true">
-        <span class="aud-tab-icon">✂️</span>
-        <span>For Clippers</span>
-        <span class="aud-tab-arrow">→</span>
-      </button>
-      <button class="aud-tab" id="tab-brands-btn" onclick="switchTab('brands')" aria-selected="false">
-        <span class="aud-tab-icon">🏢</span>
-        <span>For Brands</span>
-        <span class="aud-tab-arrow">→</span>
-      </button>
-    </div>
+  <!-- CLIPPERS CARD -->
+  <div class="dual-card fade-in">
+    <div class="dual-tag"><span>For Clippers</span></div>
+    <h2>Turn Clips<br/>Into Cash.</h2>
+    <p>Pick your niche, choose from brand campaigns that fit your style, and upload short-form clips from trending content. You earn every time someone watches.</p>
 
-    <!-- CLIPPERS PANEL -->
-    <div class="aud-panel active" id="panel-clippers">
-      <div class="aud-panel-inner">
-        <div class="aud-content-col">
-          <div class="dual-tag"><span>For Clippers</span></div>
-          <h2 class="aud-heading">Turn Clips<br/>Into Cash.</h2>
-          <p class="aud-desc">Pick your niche, choose from brand campaigns that fit your style, and upload short-form clips from trending content. You earn every time someone watches.</p>
-          <ul class="feat-list">
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Earn per 1,000 views, no cap on earnings
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Multi-platform: TikTok, Reels, YouTube Shorts
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Real-time earnings dashboard &amp; analytics
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Fast payouts, 30-day rolling cycle
-            </li>
-          </ul>
-          <div style="margin-top:36px;">
-            <button class="btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Join as a Clipper →</button>
-          </div>
-        </div>
-        <div class="aud-stats-col">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-num" data-target="10241" data-prefix="$" data-suffix="+">$0</div>
-              <div class="stat-label">Total USD Paid Out</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" data-target="713" data-suffix="+">0</div>
-              <div class="stat-label">Active Clippers</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" data-target="28" data-suffix=" days">0</div>
-              <div class="stat-label">Avg. First Payout</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num">24/7</div>
-              <div class="stat-label">Live Support</div>
-            </div>
-          </div>
-          <div class="aud-highlight-card">
-            <div class="aud-highlight-dot"></div>
-            <div>
-              <div style="font-weight:600;font-size:0.9rem;color:var(--white);margin-bottom:4px;">$10,241 paid out this month</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);">713 active clippers earning daily</div>
-            </div>
-          </div>
-        </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" data-target="10241" data-prefix="$" data-suffix="+">$0</div>
+        <div class="stat-label">Total USD Paid Out</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" data-target="713" data-suffix="+">0</div>
+        <div class="stat-label">Active Clippers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" data-target="28" data-suffix=" days">0</div>
+        <div class="stat-label">Avg. First Payout</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Live Support</div>
       </div>
     </div>
 
-    <!-- BRANDS PANEL -->
-    <div class="aud-panel" id="panel-brands">
-      <div class="aud-panel-inner">
-        <div class="aud-content-col">
-          <div class="dual-tag"><span>For Brands</span></div>
-          <h2 class="aud-heading">Reach Millions.<br/>Pay For Results.</h2>
-          <p class="aud-desc">Stop paying for impressions that don't convert. Our network of 700+ clippers distributes your content virally. You only pay for views delivered.</p>
-          <ul class="feat-list">
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Distributed across TikTok, Reels &amp; YouTube Shorts
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              No long-term contracts. Pause or cancel your campaign anytime
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Real-time brand dashboard &amp; audience insights
-            </li>
-            <li>
-              <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              Dedicated growth strategist on every campaign
-            </li>
-          </ul>
-          <div style="margin-top:36px;">
-            <button class="btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Launch Brand Campaign →</button>
-          </div>
-        </div>
-        <div class="aud-stats-col">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-num" data-target="100" data-suffix="M+ Views">0</div>
-              <div class="stat-label">Generated in 3 Months</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" data-target="4.8" data-suffix="x ROAS">0</div>
-              <div class="stat-label">Avg. Return on Ad Spend</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" data-target="72" data-suffix="hrs">0</div>
-              <div class="stat-label">Average Go-Live Time</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num">0-Risk</div>
-              <div class="stat-label">Pay After Performance</div>
-            </div>
-          </div>
-          <div class="aud-highlight-card">
-            <div class="aud-highlight-dot" style="background:#4CAF50;box-shadow:0 0 8px #4CAF50;"></div>
-            <div>
-              <div style="font-weight:600;font-size:0.9rem;color:var(--white);margin-bottom:4px;">100M+ views generated</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);">Avg. 72hr campaign go-live time</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <ul class="feat-list">
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Earn per 1,000 views — no cap on earnings
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Multi-platform: TikTok, Reels, YouTube Shorts
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Real-time earnings dashboard &amp; analytics
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Fast payouts — 30-day rolling cycle
+      </li>
+    </ul>
+    <div style="margin-top:36px;">
+      <button class="btn-primary">Join as a Clipper →</button>
     </div>
-
   </div>
-</section>
+
+  <!-- BRANDS CARD -->
+  <div class="dual-card fade-in" id="brands" style="background:var(--surface-2);">
+    <div class="dual-tag"><span>For Brands</span></div>
+    <h2>Reach Millions.<br/>Pay For Results.</h2>
+    <p>Stop paying for impressions that don't convert. Our network of 700+ clippers distributes your content virally — you only pay for views delivered.</p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" data-target="100" data-suffix="M+ Views">0</div>
+        <div class="stat-label">Generated in 3 Months</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" data-target="4.8" data-suffix="x ROAS">0</div>
+        <div class="stat-label">Avg. Return on Ad Spend</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" data-target="72" data-suffix="hrs">0</div>
+        <div class="stat-label">Average Go-Live Time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">0-Risk</div>
+        <div class="stat-label">Pay After Performance</div>
+      </div>
+    </div>
+
+    <ul class="feat-list">
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Distributed across TikTok, Reels &amp; YouTube Shorts
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        No long-term contracts — pause or cancel your campaign anytime
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Real-time brand dashboard &amp; audience insights
+      </li>
+      <li>
+        <div class="feat-check"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#C4956A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        Dedicated growth strategist on every campaign
+      </li>
+    </ul>
+    <div style="margin-top:36px;">
+      <button class="btn-primary">Launch Brand Campaign →</button>
+    </div>
+  </div>
+</div>
 
 <!-- HOW IT WORKS — Quadrant + layout -->
 <section id="how" style="background:var(--bg);padding:120px 0 140px;position:relative;overflow:hidden;">
@@ -1809,7 +1127,7 @@ footer{
     <div class="section-header fade-in" style="margin-bottom:72px;">
       <div class="label" style="margin-bottom:16px;">Process</div>
       <h2>How It Works</h2>
-      <p>Four steps from raw content to viral scale, powered by Clipency's network.</p>
+      <p>Four steps from raw content to viral scale — powered by Clipency's network.</p>
     </div>
 
     <!-- QUADRANT DIAGRAM: 4 corner cards + center mascot + SVG + lines -->
@@ -1899,7 +1217,7 @@ footer{
           <div style="width:54px;height:54px;border-radius:14px;background:var(--amber-dim);border:1px solid rgba(196,149,106,0.35);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">📥</div>
           <div class="label" style="margin-bottom:6px;">Step 01</div>
           <h3 style="font-family:\'Instrument Serif\',serif;font-size:1.15rem;color:var(--white);margin-bottom:8px;line-height:1.3;">Content Input</h3>
-          <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.75;">You share long-form content: podcasts, shows, raw clips. We ingest everything instantly.</p>
+          <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.75;">You share long-form content — podcasts, shows, raw clips. We ingest everything instantly.</p>
         </div>
       </div>
 
@@ -1946,7 +1264,7 @@ footer{
     <div class="section-header fade-in" style="margin-bottom:60px;">
       <div class="label" style="margin-bottom:16px;">Performance Hub</div>
       <h2>Your Creator Analytics Dashboard</h2>
-      <p>Track every campaign in real time. Views, submissions, growth and ROI at a glance.</p>
+      <p>Track every campaign in real time — views, submissions, growth and ROI at a glance.</p>
     </div>
 
     <!-- DASHBOARD CARD -->
@@ -2075,17 +1393,11 @@ footer{
     </div>
 
     <!-- View Creator Demo Dashboard Button -->
-    <div class="fade-in" style="text-align:center;margin-top:48px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      <a href="/login" style="text-decoration:none;">
+    <div class="fade-in" style="text-align:center;margin-top:48px;">
+      <a href="/Clipency Authentication/index.html" target="_blank" style="text-decoration:none;">
         <button class="btn-outline" style="padding:14px 36px;font-size:1rem;border-radius:10px;display:inline-flex;align-items:center;gap:10px;border-color:rgba(196,149,106,0.5);color:var(--amber);">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
           View Creator Demo Dashboard
-        </button>
-      </a>
-      <a href="#comparison" style="text-decoration:none;">
-        <button class="btn-primary" style="padding:14px 36px;font-size:1rem;border-radius:10px;display:inline-flex;align-items:center;gap:10px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="7 16 12 11 16 13 21 8"/></svg>
-          See Our Results →
         </button>
       </a>
     </div>
@@ -2094,52 +1406,46 @@ footer{
 </section>
 
 <!-- COMPARISON -->
-<section class="comparison-section" id="comparison">
+<section class="comparison-section">
   <div class="container">
     <div class="section-header fade-in">
       <div class="label" style="margin-bottom:16px;">The Clipency Advantage</div>
-      <h2>Old Model vs. <em style="color:var(--amber);font-style:italic;">New Reality</em></h2>
-      <p style="margin-top:16px;">See exactly why brands and clippers are switching.</p>
+      <h2>Old Model vs. New Reality</h2>
     </div>
-
-    <div class="comp-wrapper fade-in" id="compTable">
-      <!-- HEADER -->
+    <div class="comparison-table fade-in">
       <div class="comp-row header">
         <div class="comp-cell header-cell">Feature</div>
-        <div class="comp-cell header-cell others-header">Others</div>
-        <div class="comp-cell header-cell clipency-header">
-          <img src="Clipencylogo.png" alt="Clipency"/>
-        </div>
+        <div class="comp-cell header-cell">Traditional Ads</div>
+        <div class="comp-cell header-cell clipency-header">Clipency</div>
       </div>
-      <!-- ROWS -->
       <div class="comp-row">
         <div class="comp-cell label-col">Payment Model</div>
-        <div class="comp-cell bad"><span class="bad-text">Fixed CPM Contract</span></div>
+        <div class="comp-cell bad">Fixed CPM Contract</div>
         <div class="comp-cell good">Pay-Per-View (Live)</div>
       </div>
       <div class="comp-row">
         <div class="comp-cell label-col">Distribution</div>
-        <div class="comp-cell bad"><span class="bad-text">Manual Agency Outreach</span></div>
+        <div class="comp-cell bad">Manual Agency Outreach</div>
         <div class="comp-cell good">700+ Clipper Network</div>
       </div>
       <div class="comp-row">
         <div class="comp-cell label-col">Creator Earning</div>
-        <div class="comp-cell bad"><span class="bad-text">Flat Fee, Capped</span></div>
+        <div class="comp-cell bad">Flat Fee, Capped</div>
         <div class="comp-cell good">Unlimited Per View</div>
       </div>
       <div class="comp-row">
         <div class="comp-cell label-col">Time to Scale</div>
-        <div class="comp-cell bad"><span class="bad-text">Weeks to Months</span></div>
+        <div class="comp-cell bad">Weeks to Months</div>
         <div class="comp-cell good">Live in 72 Hours</div>
       </div>
       <div class="comp-row">
         <div class="comp-cell label-col">Risk</div>
-        <div class="comp-cell bad"><span class="bad-text">High, Upfront Budget</span></div>
-        <div class="comp-cell good">Zero. Pay on Results</div>
+        <div class="comp-cell bad">High — Upfront Budget</div>
+        <div class="comp-cell good">Zero — Pay on Results</div>
       </div>
       <div class="comp-row">
         <div class="comp-cell label-col">Analytics</div>
-        <div class="comp-cell bad"><span class="bad-text">Delayed Reports</span></div>
+        <div class="comp-cell bad">Delayed Reports</div>
         <div class="comp-cell good">Real-Time Dashboard</div>
       </div>
     </div>
@@ -2155,35 +1461,32 @@ footer{
     </div>
     <div class="testimonials-grid fade-in">
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <div class="testi-quote">"The campaign with Clipency delivered exactly what artists need, visibility at scale. From high performing clips to consistent distribution, everything was handled smoothly. Looking forward to collaborating again for our next release"</div>
+        <div class="testi-quote">"I made my first $500 in three weeks without buying any equipment. I just clipped content I already loved watching."</div>
         <div class="testi-author">
           <div class="testi-avatar">A</div>
           <div>
-            <div class="testi-name">Artist Manager, JSTJR Campaign</div>
-            <div class="testi-role">Music Industry</div>
+            <div class="testi-name">Arjun M.</div>
+            <div class="testi-role">Clipper — Mumbai</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <div class="testi-quote">"For an early-stage platform, Clipency delivered exactly where it matters: distribution. They helped our 'I Love LA' show reach the right audiences at scale through their network"</div>
+        <div class="testi-quote">"We hit 12 million views in our first campaign month. The brand dashboard made it effortless to track ROI in real time."</div>
         <div class="testi-author">
-          <div class="testi-avatar">C</div>
+          <div class="testi-avatar">S</div>
           <div>
-            <div class="testi-name">Content Lead, I Love LA Campaign</div>
-            <div class="testi-role">Media &amp; Entertainment</div>
+            <div class="testi-name">Sneha T.</div>
+            <div class="testi-role">Head of Growth — D2C Brand</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
         <div class="testi-quote">"The pay-per-view model completely changed how we think about distribution budget. It's the only model that truly scales."</div>
         <div class="testi-author">
           <div class="testi-avatar">R</div>
           <div>
             <div class="testi-name">Rohan K.</div>
-            <div class="testi-role">Founder, SaaS Startup</div>
+            <div class="testi-role">Founder — SaaS Startup</div>
           </div>
         </div>
       </div>
@@ -2195,135 +1498,184 @@ footer{
 <section class="lead-section" id="contact">
   <div class="grid-bg"></div>
   <div class="container" style="position:relative;">
+    <div class="lead-inner">
 
-    <!-- TOP: COPY BLOCK -->
-    <div class="lform-header fade-in">
-      <div class="label" style="margin-bottom:12px;">Start with Clipency</div>
-      <h2 style="font-size:clamp(2.2rem,4vw,3.2rem);margin-bottom:16px;">Tell us what you<br/>want to <em>move next.</em></h2>
-      <p style="color:var(--text-secondary);max-width:560px;line-height:1.75;margin-bottom:32px;">Share your campaign goal, budget and direction. A Clipency strategist reviews every inquiry personally. No bots, no templates.</p>
+      <!-- LEFT: COPY -->
+      <div class="lead-left fade-in">
+        <div class="label" style="margin-bottom:16px;">Start with Clipency</div>
+        <h2>Tell us what you<br/>want to <em>move next.</em></h2>
+        <p>Share your campaign goal, budget and direction. A Clipency strategist reviews every inquiry personally — no bots, no templates.</p>
 
-      <div class="lform-features-row">
-        <div class="lform-feat"><span class="lf-icon">◈</span> Campaign Planning &amp; Strategy</div>
-        <div class="lform-feat"><span class="lf-icon">◈</span> Creator Distribution Setup</div>
-        <div class="lform-feat"><span class="lf-icon">◈</span> Proof Review &amp; Reporting</div>
-        <div class="lform-feat"><span class="lf-icon">◈</span> Performance Insight Dashboard</div>
-      </div>
+        <ul class="lead-features">
+          <li><span class="lf-icon">◈</span> Campaign Planning &amp; Strategy</li>
+          <li><span class="lf-icon">◈</span> Creator Distribution Setup</li>
+          <li><span class="lf-icon">◈</span> Proof Review &amp; Reporting</li>
+          <li><span class="lf-icon">◈</span> Performance Insight Dashboard</li>
+        </ul>
 
-      <div class="lead-social-proof" style="margin-top:28px;">
-        <div class="lsp-avatars">
-          <div class="lsp-avatar">A</div>
-          <div class="lsp-avatar">S</div>
-          <div class="lsp-avatar">R</div>
-          <div class="lsp-avatar">K</div>
+        <div class="lead-social-proof">
+          <div class="lsp-avatars">
+            <div class="lsp-avatar">A</div>
+            <div class="lsp-avatar">S</div>
+            <div class="lsp-avatar">R</div>
+            <div class="lsp-avatar">K</div>
+          </div>
+          <div class="lsp-text"><strong>140+ brands &amp; clippers</strong> onboarded this quarter.</div>
         </div>
-        <div class="lsp-text"><strong>140+ brands &amp; clippers</strong> onboarded this quarter.</div>
       </div>
-    </div>
 
-    <!-- BOTTOM: FULL-WIDTH FORM -->
-    <div class="lform-card fade-in">
-      <div class="lform-card-title">Start your campaign.</div>
-      <div class="lform-card-sub">Share your campaign goal, budget and direction. A Clipency strategist will review it personally.</div>
+      <!-- RIGHT: FORM -->
+      <div class="lead-right fade-in">
 
-      <div id="panel-brand">
-        <div class="lform-grid">
-
-          <!-- Row 1: Name | Email -->
-          <div class="lform-group">
-            <label class="cform-label">NAME</label>
-            <input class="lform-input" type="text" placeholder="Your name" id="cf-name"/>
-          </div>
-          <div class="lform-group">
-            <label class="cform-label">EMAIL</label>
-            <input class="lform-input" type="email" placeholder="you@example.com" id="cf-email"/>
+        <!-- BRAND FORM -->
+        <div id="panel-brand">
+          <div class="form-steps">
+            <div class="form-step active"><div class="step-circle">1</div> Details</div>
+            <div class="step-line"></div>
+            <div class="form-step"><div class="step-circle">2</div> Campaign</div>
+            <div class="step-line"></div>
+            <div class="form-step"><div class="step-circle">3</div> Send</div>
           </div>
 
-          <!-- Row 2: Phone | Brand -->
-          <div class="lform-group">
-            <label class="cform-label">PHONE</label>
-            <div class="lform-phone-row">
-              <select class="lform-select lform-flag" id="cf-country">
-                <option value="+1">🇺🇸 +1</option>
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+91" selected>🇮🇳 +91</option>
-                <option value="+61">🇦🇺 +61</option>
-                <option value="+86">🇨🇳 +86</option>
-                <option value="+81">🇯🇵 +81</option>
-                <option value="+82">🇰🇷 +82</option>
-                <option value="+49">🇩🇪 +49</option>
-                <option value="+33">🇫🇷 +33</option>
-                <option value="+39">🇮🇹 +39</option>
-                <option value="+34">🇪🇸 +34</option>
-                <option value="+55">🇧🇷 +55</option>
-                <option value="+52">🇲🇽 +52</option>
-                <option value="+971">🇦🇪 +971</option>
-                <option value="+966">🇸🇦 +966</option>
-                <option value="+65">🇸🇬 +65</option>
-                <option value="+60">🇲🇾 +60</option>
-                <option value="+27">🇿🇦 +27</option>
-                <option value="+234">🇳🇬 +234</option>
-                <option value="+92">🇵🇰 +92</option>
-                <option value="+7">🇷🇺 +7</option>
-                <option value="+90">🇹🇷 +90</option>
-                <option value="+380">🇺🇦 +380</option>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" type="text" placeholder="Your name"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Work Email</label>
+              <input class="form-input" type="email" placeholder="you@company.com"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Company / Brand</label>
+              <input class="form-input" type="text" placeholder="Company name"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div style="display:flex;gap:8px;">
+                <select class="form-select" style="width:120px;flex-shrink:0;padding-right:28px;background-position:right 8px center;">
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+91" selected>🇮🇳 +91</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+86">🇨🇳 +86</option>
+                  <option value="+81">🇯🇵 +81</option>
+                  <option value="+82">🇰🇷 +82</option>
+                  <option value="+49">🇩🇪 +49</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+39">🇮🇹 +39</option>
+                  <option value="+34">🇪🇸 +34</option>
+                  <option value="+55">🇧🇷 +55</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+7">🇷🇺 +7</option>
+                  <option value="+27">🇿🇦 +27</option>
+                  <option value="+971">🇦🇪 +971</option>
+                  <option value="+966">🇸🇦 +966</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+60">🇲🇾 +60</option>
+                  <option value="+62">🇮🇩 +62</option>
+                  <option value="+63">🇵🇭 +63</option>
+                  <option value="+66">🇹🇭 +66</option>
+                  <option value="+84">🇻🇳 +84</option>
+                  <option value="+234">🇳🇬 +234</option>
+                  <option value="+254">🇰🇪 +254</option>
+                  <option value="+20">🇪🇬 +20</option>
+                  <option value="+90">🇹🇷 +90</option>
+                  <option value="+48">🇵🇱 +48</option>
+                  <option value="+31">🇳🇱 +31</option>
+                  <option value="+46">🇸🇪 +46</option>
+                  <option value="+47">🇳🇴 +47</option>
+                  <option value="+45">🇩🇰 +45</option>
+                  <option value="+358">🇫🇮 +358</option>
+                  <option value="+41">🇨🇭 +41</option>
+                  <option value="+43">🇦🇹 +43</option>
+                  <option value="+32">🇧🇪 +32</option>
+                  <option value="+351">🇵🇹 +351</option>
+                  <option value="+30">🇬🇷 +30</option>
+                  <option value="+353">🇮🇪 +353</option>
+                  <option value="+64">🇳🇿 +64</option>
+                  <option value="+56">🇨🇱 +56</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+51">🇵🇪 +51</option>
+                  <option value="+54">🇦🇷 +54</option>
+                  <option value="+92">🇵🇰 +92</option>
+                  <option value="+880">🇧🇩 +880</option>
+                  <option value="+94">🇱🇰 +94</option>
+                  <option value="+977">🇳🇵 +977</option>
+                  <option value="+1">🇨🇦 +1</option>
+                  <option value="+972">🇮🇱 +972</option>
+                  <option value="+380">🇺🇦 +380</option>
+                  <option value="+40">🇷🇴 +40</option>
+                  <option value="+36">🇭🇺 +36</option>
+                  <option value="+420">🇨🇿 +420</option>
+                </select>
+                <input class="form-input" type="tel" placeholder="Your phone number" style="flex:1;"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Role</label>
+              <select class="form-select">
+                <option value="">Select role</option>
+                <option>Founder / CEO</option>
+                <option>Marketing Manager</option>
+                <option>Growth Lead</option>
+                <option>Agency / Freelancer</option>
+                <option>Other</option>
               </select>
-              <input class="lform-input" type="tel" placeholder="98765 43210" id="cf-phone" style="flex:1;min-width:0;"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monthly Budget</label>
+              <select class="form-select">
+                <option value="">Select range</option>
+                <option>$500 – $2,000</option>
+                <option>$2,000 – $10,000</option>
+                <option>$10,000+</option>
+                <option>Not sure yet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Primary Platform</label>
+              <select class="form-select">
+                <option value="">Select platform</option>
+                <option>TikTok</option>
+                <option>Instagram Reels</option>
+                <option>YouTube Shorts</option>
+                <option>All Platforms</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Campaign Goal</label>
+              <div class="goal-chips">
+                <div class="goal-chip selected">Brand Awareness</div>
+                <div class="goal-chip">Product Launch</div>
+                <div class="goal-chip">Music Promotion</div>
+                <div class="goal-chip">Creator Distribution</div>
+                <div class="goal-chip">App Install</div>
+                <div class="goal-chip">Other</div>
+              </div>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Tell Us More</label>
+              <textarea class="form-textarea" placeholder="Describe your campaign — audience, tone, platforms, timeline, any references..."></textarea>
             </div>
           </div>
-          <div class="lform-group">
-            <label class="cform-label">BRAND / COMPANY</label>
-            <input class="lform-input" type="text" placeholder="Brand name" id="cf-brand"/>
+          <button class="form-submit" onclick="submitForm('brand')">Submit Campaign Inquiry &#8594;</button>
+          <div class="trust-badges">
+            <div class="trust-badge"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4.2l-3.4 2.5 1.3 4L7 9l-3.6 2.5 1.3-4L1.3 5H5.5L7 1z" fill="rgba(196,149,106,0.5)"/></svg> No spam, ever</div>
+            <div class="trust-badge"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="10" height="7" rx="1.5" stroke="rgba(196,149,106,0.5)" stroke-width="1.2"/><path d="M4.5 6V4a2.5 2.5 0 015 0v2" stroke="rgba(196,149,106,0.5)" stroke-width="1.2"/></svg> 100% private</div>
+            <div class="trust-badge"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="rgba(196,149,106,0.5)" stroke-width="1.2"/><path d="M7 4v3.5L9 9" stroke="rgba(196,149,106,0.5)" stroke-width="1.2" stroke-linecap="round"/></svg> Reply in 24hrs</div>
           </div>
-
-          <!-- Row 3: Campaign Type | Budget -->
-          <div class="lform-group">
-            <label class="cform-label">CAMPAIGN TYPE</label>
-            <select class="lform-select lform-select-full" id="cf-type">
-              <option value="">Brand Campaign</option>
-              <option>Music Promotion</option>
-              <option>Product Launch</option>
-              <option>App Install</option>
-              <option>Creator Distribution</option>
-              <option>Event Promotion</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="lform-group">
-            <label class="cform-label">BUDGET</label>
-            <select class="lform-select lform-select-full" id="cf-budget">
-              <option value="">Select your budget</option>
-              <option>Under $500</option>
-              <option>$500 – $2,000</option>
-              <option>$2,000 – $5,000</option>
-              <option>$5,000 – $10,000</option>
-              <option>$10,000 – $25,000</option>
-              <option>$25,000+</option>
-              <option>Flexible / Let's discuss</option>
-            </select>
-          </div>
-
-          <!-- Row 4: Campaign Goal (full width) -->
-          <div class="lform-group lform-full">
-            <label class="cform-label">CAMPAIGN GOAL</label>
-            <textarea class="lform-input lform-textarea" placeholder="Tell us what you want to move next..." id="cf-goal"></textarea>
-          </div>
-
         </div>
 
-        <div class="lform-footer">
-          <button class="lform-submit" onclick="submitForm('brand')">Submit inquiry →</button>
-          <span class="lform-note">Response within 24 hours.</span>
+        <!-- SUCCESS STATE -->
+        <div class="form-success" id="form-success-msg">
+          <div class="success-icon">&#10022;</div>
+          <h3 style="font-family:'Instrument Serif',serif;font-size:1.5rem;color:var(--white);margin-bottom:12px;">You're in the pipeline.</h3>
+          <p style="color:var(--text-secondary);font-size:0.9rem;">We review every inquiry personally. Expect a response within 24 hours from a real Clipency strategist.</p>
         </div>
-      </div>
 
-      <!-- SUCCESS STATE -->
-      <div class="form-success" id="form-success-msg" style="display:none;">
-        <div class="success-icon">✦</div>
-        <h3>You're in the pipeline.</h3>
-        <p>We review every inquiry personally. Expect a response within 24 hours from a real Clipency strategist.</p>
       </div>
     </div>
-
   </div>
 </section>
 
@@ -2337,11 +1689,11 @@ footer{
     <div class="faq-list fade-in">
       <div class="faq-item">
         <div class="faq-q">How do clippers get paid? <div class="faq-icon">+</div></div>
-        <div class="faq-a">Clippers earn a per-view rate for every verified view their clips generate across all platforms. Payments are processed within 30 days after completion of campaign directly to your wallet. No minimum payout threshold for your first withdrawal.</div>
+        <div class="faq-a">Clippers earn a per-view rate for every verified view their clips generate across all platforms. Payments are processed on a 30-day rolling cycle directly to your bank or UPI. No minimum payout threshold for your first withdrawal.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">What content can I clip? <div class="faq-icon">+</div></div>
-        <div class="faq-a">We provide a licensed content library from our brand partners. You never need to source content yourself. Just pick from our curated pool, create your clip, and publish. All content is pre-cleared for distribution rights.</div>
+        <div class="faq-a">We provide a licensed content library from our brand partners. You never need to source content yourself — just pick from our curated pool, create your clip, and publish. All content is pre-cleared for distribution rights.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">How quickly can a brand go live? <div class="faq-icon">+</div></div>
@@ -2349,15 +1701,15 @@ footer{
       </div>
       <div class="faq-item">
         <div class="faq-q">Is there a minimum spend for brands? <div class="faq-icon">+</div></div>
-        <div class="faq-a">We have a minimum campaign threshold to ensure quality distribution across our network. Reach out to our team for custom pricing. We work with early-stage startups to enterprise brands alike.</div>
+        <div class="faq-a">We have a minimum campaign threshold to ensure quality distribution across our network. Reach out to our team for custom pricing — we work with early-stage startups to enterprise brands alike.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Which platforms does Clipency distribute to? <div class="faq-icon">+</div></div>
-        <div class="faq-a">We distribute across TikTok, Instagram Reels, and YouTube Shorts. Our network of clippers publishes natively on each platform, so your content reaches audiences where they already spend time. More platforms are being added as we grow.</div>
+        <div class="faq-a">Currently: TikTok, Instagram Reels, and YouTube Shorts. We're expanding to Snapchat Spotlight and LinkedIn video in Q2 2025. Clippers can publish to any or all platforms from a single dashboard.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Do I need an existing audience to be a clipper? <div class="faq-icon">+</div></div>
-        <div class="faq-a">No. Many of our highest earners started with zero followers. The algorithm rewards well-edited, engaging clips, not follower count. We provide editing tips and performance feedback to help you grow.</div>
+        <div class="faq-a">No. Many of our highest earners started with zero followers. The algorithm rewards well-edited, engaging clips — not follower count. We provide editing tips and performance feedback to help you grow.</div>
       </div>
     </div>
   </div>
@@ -2388,8 +1740,10 @@ footer{
       <div class="footer-col">
         <h4>Platform</h4>
         <ul>
-          <li><a href="#clippers">For Clippers</a></li>
-          <li><a href="#brands">For Brands</a></li>
+          <li><a href="#">For Clippers</a></li>
+          <li><a href="#">For Brands</a></li>
+          <li><a href="#">Dashboard Login</a></li>
+          <li><a href="#">Pricing</a></li>
           <li><a href="#">Case Studies</a></li>
         </ul>
       </div>
@@ -2398,7 +1752,9 @@ footer{
         <ul>
           <li><a href="#">About Us</a></li>
           <li><a href="#">Blog</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press Kit</a></li>
+          <li><a href="#">Contact</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -2413,7 +1769,7 @@ footer{
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2026 Clipency. Built for the Viral Economy.</p>
+      <p>© 2025 Clipency. Built for the Viral Economy.</p>
       <div class="footer-socials">
         <a href="#">Twitter</a>
         <a href="#">Instagram</a>
@@ -2518,26 +1874,12 @@ document.querySelectorAll('.goal-chips').forEach(container => {
 
 // ── FORM SUBMIT ──
 function submitForm(type) {
-  const panel   = document.getElementById('panel-' + type);
+  const panel = document.getElementById('panel-' + type);
   const success = document.getElementById('form-success-msg');
-  const card    = success ? success.closest('.lform-card') : null;
-
-  if (panel)   { panel.style.display = 'none'; }
-  if (success) {
-    success.style.display = 'flex';
-    success.style.opacity = '0';
-    requestAnimationFrame(() => {
-      success.style.transition = 'opacity 0.5s ease';
-      success.style.opacity = '1';
-    });
-  }
-  // Also hide the title/sub if present
-  if (card) {
-    const title = card.querySelector('.lform-card-title');
-    const sub   = card.querySelector('.lform-card-sub');
-    if (title) title.style.display = 'none';
-    if (sub)   sub.style.display   = 'none';
-  }
+  if(panel) { panel.style.display = 'none'; }
+  if(success) { success.classList.add('show'); }
+  document.getElementById('leadTabs').style.opacity = '0.3';
+  document.getElementById('leadTabs').style.pointerEvents = 'none';
 }
 
 // ── PARALLAX HERO GLOW on mouse ──
@@ -2549,7 +1891,27 @@ document.addEventListener('mousemove', (e) => {
   glow.style.transform = `translateX(calc(-50% + ${x}px)) translateY(${y}px)`;
 });
 
-
+// ── TYPEWRITER HERO ──
+(function() {
+  const words = ['Pay Per View.', 'Viral Scale.', 'Clipping.', 'Content Distribution.'];
+  let wi = 0, ci = 0, deleting = false;
+  const el = document.getElementById('typewriter');
+  if(!el) return;
+  function type() {
+    const word = words[wi];
+    if(!deleting) {
+      el.textContent = word.slice(0, ci + 1);
+      ci++;
+      if(ci === word.length) { deleting = true; setTimeout(type, 1800); return; }
+    } else {
+      el.textContent = word.slice(0, ci - 1);
+      ci--;
+      if(ci === 0) { deleting = false; wi = (wi + 1) % words.length; }
+    }
+    setTimeout(type, deleting ? 60 : 100);
+  }
+  type();
+})();
 
 // ── ANIMATED STAT BAR ──
 (function() {
@@ -2582,131 +1944,7 @@ window.addEventListener('scroll', () => {
   });
 }, {passive: true});
 </script>
-
-
-
-<script>
-/* ── TAB SWITCHER ── */
-function switchTab(tab) {
-  const allPanels = document.querySelectorAll('.aud-panel');
-  const allBtns   = document.querySelectorAll('.aud-tab');
-  const target    = document.getElementById('panel-' + tab);
-  const targetBtn = document.getElementById('tab-' + tab + '-btn');
-
-  if (target.classList.contains('active')) return;
-
-  const current = document.querySelector('.aud-panel.active');
-  if (current) {
-    current.classList.add('exit');
-    setTimeout(() => { current.classList.remove('active', 'exit'); }, 240);
-  }
-
-  allBtns.forEach(b => {
-    b.classList.remove('active');
-    b.setAttribute('aria-selected', 'false');
-  });
-
-  setTimeout(() => {
-    target.classList.add('active');
-    target.querySelectorAll('.stat-num[data-target]').forEach(el => { animateCount(el); });
-  }, 200);
-
-  targetBtn.classList.add('active');
-  targetBtn.setAttribute('aria-selected', 'true');
-}
-
-function animateCount(el) {
-  const target   = parseFloat(el.dataset.target);
-  const prefix   = el.dataset.prefix  || '';
-  const suffix   = el.dataset.suffix  || '';
-  const isFloat  = target % 1 !== 0;
-  const duration = 1200;
-  const start    = performance.now();
-  function step(now) {
-    const progress = Math.min((now - start) / duration, 1);
-    const ease     = 1 - Math.pow(1 - progress, 3);
-    const value    = isFloat
-      ? (ease * target).toFixed(1)
-      : Math.round(ease * target).toLocaleString();
-    el.textContent = prefix + value + suffix;
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-/* ── COMPARISON TABLE ROW STAGGER ── */
-(function(){
-  const rows = document.querySelectorAll('#compTable .comp-row:not(.header)');
-  if(!rows.length) return;
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting){
-        const row = entry.target;
-        const idx = Array.from(rows).indexOf(row);
-        setTimeout(() => row.classList.add('visible'), idx * 110);
-        obs.unobserve(row);
-      }
-    });
-  }, {threshold:0.15});
-  rows.forEach(r => obs.observe(r));
-})();
-
-/* ── SCISSOR SCROLL PROGRESS BAR ── */
-(function(){
-  const bar      = document.getElementById('scissor-progress');
-  const head     = document.getElementById('scissor-head');
-  const sparksEl = document.getElementById('scissor-sparks');
-  let lastPct    = 0;
-  let sparkTimer = null;
-
-  function spawnSparks(x, pct) {
-    const colors = ['#C4956A','#F5C36A','#fff8e8','#ffaa44'];
-    for(let i = 0; i < 5; i++) {
-      const s = document.createElement('div');
-      s.className = 'spark';
-      const size  = 2 + Math.random() * 3;
-      const angle = (Math.random() * 220 - 110) * (Math.PI / 180);
-      const dist  = 14 + Math.random() * 22;
-      const tx    = Math.cos(angle) * dist;
-      const ty    = Math.sin(angle) * dist - 10;
-      const dur   = 0.35 + Math.random() * 0.3;
-      s.style.cssText = [
-        `width:${size}px`, `height:${size}px`,
-        `background:${colors[Math.floor(Math.random()*colors.length)]}`,
-        `box-shadow:0 0 4px ${colors[0]}`,
-        `--tx:${tx}px`, `--ty:${ty}px`, `--dur:${dur}s`,
-        `top:-${size/2}px`, `left:-${size/2}px`
-      ].join(';');
-      sparksEl.appendChild(s);
-      setTimeout(() => s.remove(), dur * 1000);
-    }
-  }
-
-  function onScroll() {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docH      = document.documentElement.scrollHeight - window.innerHeight;
-    const pct       = docH > 0 ? Math.min(scrollTop / docH, 1) : 0;
-    const pctStr    = (pct * 100).toFixed(2) + '%';
-
-    bar.style.width   = pctStr;
-    head.style.left   = pctStr;
-
-    // Spawn sparks only when actually scrolling
-    if(Math.abs(pct - lastPct) > 0.002) {
-      spawnSparks(pct);
-    }
-    lastPct = pct;
-  }
-
-  window.addEventListener('scroll', onScroll, {passive:true});
-  onScroll();
-})();
-</script>
-
-<!-- Clipency live Supabase lead capture -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabaseClient.js"></script>
-<script src="/clipency-landing-leads-final.js"></script>
-
+<script src="/supabaseClient.js?v=supabase-root-20260509114313"></script>
+<script defer src="/clipency-landing-lead-form.js?v=lead-config-20260509114313"></script>
 </body>
 </html>
