@@ -19,3 +19,4 @@
 *.backup
 *.backup-*
 *.before-*
+**/.DS_Store
