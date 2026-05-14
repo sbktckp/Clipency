@@ -20,3 +20,4 @@
 *.backup-*
 *.before-*
 **/.DS_Store
+.vercel

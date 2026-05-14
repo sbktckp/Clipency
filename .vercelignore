@@ -1,0 +1,12 @@
+Clipency Authentication
+accounts
+admin
+incoming
+landing-mobile
+*.py
+*.sh
+*.log
+*.txt
+index.backup.html
+clipency_v2.html
+index.final.html
