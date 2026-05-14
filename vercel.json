@@ -2,14 +2,14 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/login",     "destination": "/Clipency Authentication/login/index.html" },
-    { "source": "/signup",    "destination": "/Clipency Authentication/signup/index.html" },
-    { "source": "/workspace", "destination": "/Clipency Authentication/workspace/index.html" },
-    { "source": "/campaigns", "destination": "/Clipency Authentication/campaigns/index.html" },
-    { "source": "/profile",   "destination": "/Clipency Authentication/profile/index.html" },
-    { "source": "/accounts",  "destination": "/Clipency Authentication/accounts/index.html" },
-    { "source": "/payouts",   "destination": "/Clipency Authentication/payouts/index.html" },
-    { "source": "/admin",     "destination": "/Clipency Authentication/admin/index.html" }
+    { "source": "/login",     "destination": "/Clipency%20Authentication/login/index.html" },
+    { "source": "/signup",    "destination": "/Clipency%20Authentication/signup/index.html" },
+    { "source": "/workspace", "destination": "/Clipency%20Authentication/workspace/index.html" },
+    { "source": "/campaigns", "destination": "/Clipency%20Authentication/campaigns/index.html" },
+    { "source": "/profile",   "destination": "/Clipency%20Authentication/profile/index.html" },
+    { "source": "/accounts",  "destination": "/Clipency%20Authentication/accounts/index.html" },
+    { "source": "/payouts",   "destination": "/Clipency%20Authentication/payouts/index.html" },
+    { "source": "/admin",     "destination": "/Clipency%20Authentication/admin/index.html" }
   ],
   "headers": [
     {
