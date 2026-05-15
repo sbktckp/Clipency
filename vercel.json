@@ -2,14 +2,21 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/login",     "destination": "/auth/login" },
-    { "source": "/signup",    "destination": "/auth/signup" },
-    { "source": "/workspace", "destination": "/auth/workspace" },
-    { "source": "/campaigns", "destination": "/auth/campaigns" },
-    { "source": "/profile",   "destination": "/auth/profile" },
-    { "source": "/accounts",  "destination": "/auth/accounts" },
-    { "source": "/payouts",   "destination": "/auth/payouts" },
-    { "source": "/admin",     "destination": "/auth/admin" }
+    { "source": "/login",                      "destination": "/auth/login" },
+    { "source": "/signup",                     "destination": "/auth/signup" },
+    { "source": "/workspace",                  "destination": "/auth/workspace" },
+    { "source": "/campaigns",                  "destination": "/auth/campaigns" },
+    { "source": "/profile",                    "destination": "/auth/profile" },
+    { "source": "/accounts",                   "destination": "/auth/accounts" },
+    { "source": "/payouts",                    "destination": "/auth/payouts" },
+    { "source": "/admin",                      "destination": "/auth/admin" },
+    { "source": "/clipency-:rest*",            "destination": "/auth/clipency-:rest*" },
+    { "source": "/access-control.js",          "destination": "/auth/access-control.js" },
+    { "source": "/role-router.js",             "destination": "/auth/role-router.js" },
+    { "source": "/experience.js",              "destination": "/auth/experience.js" },
+    { "source": "/app.js",                     "destination": "/auth/app.js" },
+    { "source": "/styles.css",                 "destination": "/auth/login/styles.css" },
+    { "source": "/assets/:file*",              "destination": "/auth/assets/:file*" }
   ],
   "headers": [
     {
