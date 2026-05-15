@@ -2,14 +2,14 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/login",     "destination": "/auth/login/index.html" },
-    { "source": "/signup",    "destination": "/auth/signup/index.html" },
-    { "source": "/workspace", "destination": "/auth/workspace/index.html" },
-    { "source": "/campaigns", "destination": "/auth/campaigns/index.html" },
-    { "source": "/profile",   "destination": "/auth/profile/index.html" },
-    { "source": "/accounts",  "destination": "/auth/accounts/index.html" },
-    { "source": "/payouts",   "destination": "/auth/payouts/index.html" },
-    { "source": "/admin",     "destination": "/auth/admin/index.html" }
+    { "source": "/login",     "destination": "/auth/login" },
+    { "source": "/signup",    "destination": "/auth/signup" },
+    { "source": "/workspace", "destination": "/auth/workspace" },
+    { "source": "/campaigns", "destination": "/auth/campaigns" },
+    { "source": "/profile",   "destination": "/auth/profile" },
+    { "source": "/accounts",  "destination": "/auth/accounts" },
+    { "source": "/payouts",   "destination": "/auth/payouts" },
+    { "source": "/admin",     "destination": "/auth/admin" }
   ],
   "headers": [
     {
