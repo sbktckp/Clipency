@@ -1,588 +1,473 @@
 (function () {
+  'use strict';
   if (window.__clipencyAdminOSLoaded) return;
   window.__clipencyAdminOSLoaded = true;
 
-  const ADMIN_PATHS = [
-    "/admin",
-    "/admin/reviews",
-    "/admin/campaigns",
-    "/admin/leads",
-    "/admin/payouts",
-    "/admin/users",
-    "/workspace"
+  const PATH = window.location.pathname;
+  const ADMIN_PATHS = ['/admin', '/admin/reviews', '/admin/campaigns', '/admin/leads', '/admin/payouts', '/admin/users', '/workspace'];
+  if (!ADMIN_PATHS.includes(PATH)) return;
+
+  /* ── STYLES ── */
+  const css = `
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body.cx-on{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;background:#000;color:#f5f5f7;height:100vh;overflow:hidden}
+    body.cx-on>*:not(#cx-os){display:none!important}
+    #cx-os{display:flex;height:100vh;overflow:hidden}
+
+    /* sidebar */
+    .cx-side{width:232px;flex-shrink:0;background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow-y:auto}
+    .cx-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.07)}
+    .cx-brand img{height:24px;width:auto}
+    .cx-brand-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.28)}
+    .cx-nav-group{padding:16px 10px 0}
+    .cx-nav-group-label{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 8px 6px}
+    .cx-nav a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:rgba(255,255,255,.55);text-decoration:none;font-size:13.5px;font-weight:500;transition:all .15s;margin-bottom:1px}
+    .cx-nav a:hover{background:rgba(255,255,255,.07);color:#f5f5f7}
+    .cx-nav a.active{background:rgba(99,102,241,.18);color:#a5b4fc}
+    .cx-nav a svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+    .cx-nav a.active svg{opacity:1}
+    .cx-spacer{flex:1}
+    .cx-user{padding:12px;border-top:1px solid rgba(255,255,255,.07)}
+    .cx-user-card{display:flex;align-items:center;gap:9px;padding:10px;border-radius:10px;background:rgba(255,255,255,.04)}
+    .cx-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+    .cx-ui{flex:1;min-width:0}
+    .cx-un{font-size:12.5px;font-weight:600;color:#f5f5f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cx-ur{font-size:10.5px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em}
+    .cx-out{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;font-size:15px;padding:3px 5px;border-radius:4px;transition:color .15s;flex-shrink:0}
+    .cx-out:hover{color:#f5f5f7}
+
+    /* main */
+    .cx-main{flex:1;overflow-y:auto;background:#000}
+    .cx-wrap{max-width:960px;padding:44px 48px 80px}
+    .cx-kicker{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6366f1;margin-bottom:10px}
+    .cx-h1{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05;color:#f5f5f7;margin-bottom:10px}
+    .cx-sub{font-size:16px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:38px;max-width:520px}
+
+    /* stats */
+    .cx-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:38px}
+    .cx-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;transition:all .2s}
+    .cx-stat:hover{background:rgba(255,255,255,.065);transform:translateY(-1px)}
+    .cx-stat-l{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:10px}
+    .cx-stat-v{font-size:34px;font-weight:700;letter-spacing:-.02em;color:#f5f5f7;line-height:1}
+    .cx-stat-s{font-size:11.5px;color:rgba(255,255,255,.3);margin-top:5px}
+
+    /* section */
+    .cx-sec{margin-bottom:36px}
+    .cx-sec-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+    .cx-sec-title{font-size:17px;font-weight:600;color:#f5f5f7;margin-bottom:3px}
+    .cx-sec-desc{font-size:12.5px;color:rgba(255,255,255,.38)}
+
+    /* table */
+    .cx-tbl-wrap{border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
+    .cx-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+    .cx-tbl th{background:rgba(255,255,255,.035);padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06)}
+    .cx-tbl td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.045);color:rgba(255,255,255,.75);vertical-align:middle}
+    .cx-tbl tr:last-child td{border-bottom:none}
+    .cx-tbl tr:hover td{background:rgba(255,255,255,.025)}
+
+    /* badge */
+    .cx-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.04em}
+    .cx-badge.pending{background:rgba(245,158,11,.13);color:#fbbf24}
+    .cx-badge.approved{background:rgba(34,197,94,.13);color:#4ade80}
+    .cx-badge.rejected{background:rgba(239,68,68,.13);color:#f87171}
+    .cx-badge.admin{background:rgba(99,102,241,.18);color:#a5b4fc}
+    .cx-badge.reviewer{background:rgba(20,184,166,.13);color:#2dd4bf}
+    .cx-badge.active{background:rgba(34,197,94,.13);color:#4ade80}
+    .cx-badge.inactive{background:rgba(255,255,255,.08);color:rgba(255,255,255,.4)}
+
+    /* btns */
+    .cx-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .15s;font-family:inherit}
+    .cx-btn:disabled{opacity:.4;cursor:not-allowed}
+    .cx-btn.primary{background:#6366f1;color:#fff}
+    .cx-btn.primary:hover{background:#4f46e5}
+    .cx-btn.ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.1)}
+    .cx-btn.ghost:hover{background:rgba(255,255,255,.11)}
+    .cx-btn.danger{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.18)}
+    .cx-btn.danger:hover{background:rgba(239,68,68,.2)}
+    .cx-btn.green{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.18)}
+    .cx-btn.green:hover{background:rgba(34,197,94,.2)}
+    .cx-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* form */
+    .cx-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+    .cx-input,.cx-select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#f5f5f7;font-size:13.5px;padding:9px 14px;outline:none;transition:border-color .15s;font-family:inherit}
+    .cx-input{min-width:230px}
+    .cx-select{min-width:130px}
+    .cx-input:focus,.cx-select:focus{border-color:#6366f1}
+    .cx-input::placeholder{color:rgba(255,255,255,.22)}
+    .cx-select option{background:#1c1c1e}
+
+    /* empty */
+    .cx-empty{padding:48px 24px;text-align:center;color:rgba(255,255,255,.28);font-size:14px}
+
+    /* loader */
+    .cx-loader{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:99999}
+    .cx-spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,.1);border-top-color:#6366f1;border-radius:50%;animation:cx-spin .7s linear infinite}
+    @keyframes cx-spin{to{transform:rotate(360deg)}}
+
+    /* quick actions */
+    .cx-quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:14px}
+    .cx-qc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;text-decoration:none;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;transition:all .15s;display:block}
+    .cx-qc:hover{background:rgba(255,255,255,.07);color:#f5f5f7;border-color:rgba(255,255,255,.13)}
+    .cx-qc-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:6px}
+    .cx-qc-val{font-size:20px;font-weight:700;color:#f5f5f7;letter-spacing:-.01em}
+  `;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  /* ── ICONS ── */
+  const SVG = {
+    grid: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" stroke="currentColor" stroke-width="1.7" fill="none"/>',
+    check: '<path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    play: '<path d="M7 5v14l12-7-12-7Z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/>',
+    mail: '<path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="m4 8 8 6 8-6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>',
+    wallet: '<path d="M4 7h16v11H4z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M16 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+    users: '<path d="M16 21a5 5 0 0 0-10 0" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/><circle cx="11" cy="8" r="4" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M20 21a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>',
+    external: '<path d="M14 4h6v6M20 4l-9 9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+    finance: '<path d="M5 19V5M5 19h14M9 16v-5M13 16V8M17 16v-7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+  const icon = n => `<svg viewBox="0 0 24 24" fill="none">${SVG[n]||SVG.grid}</svg>`;
+
+  const NAV_ITEMS = [
+    ['Command Center', '/admin', 'grid'],
+    ['Reviews', '/admin/reviews', 'check'],
+    ['Campaigns', '/admin/campaigns', 'play'],
+    ['Leads', '/admin/leads', 'mail'],
+    ['Payouts', '/admin/payouts', 'wallet'],
+    ['Users', '/admin/users', 'users'],
+    ['Finance OS', 'https://v0-clipency-finance-dashboard.vercel.app/login', 'finance', true],
+    ['Clipper View', '/campaigns', 'external', true],
   ];
 
-  if (!ADMIN_PATHS.includes(window.location.pathname)) return;
+  const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-  const FINANCE_URL = "https://v0-clipency-finance-dashboard.vercel.app/login";
+  /* ── SUPABASE ── */
+  let sb = null, currentUser = null;
 
-  const NAV = [
-    ["Command Center", "/admin", "grid"],
-    ["Reviews", "/admin/reviews", "check"],
-    ["Campaigns", "/admin/campaigns", "play"],
-    ["Leads", "/admin/leads", "mail"],
-    ["Payouts", "/admin/payouts", "wallet"],
-    ["Users", "/admin/users", "users"],
-    ["Finance OS", FINANCE_URL, "finance", true],
-    ["Clipper View", "/campaigns", "external"],
-  ];
+  async function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  let supabaseClient = null;
-  let currentUser = null;
-
-  function icon(name) {
-    const icons = {
-      grid: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" stroke="currentColor" stroke-width="1.7" fill="none" rx="2"/>',
-      check: '<path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-      play: '<path d="M7 5v14l12-7-12-7Z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/>',
-      mail: '<path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.7" fill="none" rx="2"/><path d="m4 8 8 6 8-6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-      wallet: '<path d="M4 7h16v11H4z" stroke="currentColor" stroke-width="1.7" fill="none" rx="2"/><path d="M16 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
-      users: '<path d="M16 21a5 5 0 0 0-10 0" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/><circle cx="11" cy="8" r="4" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M20 21a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>',
-      finance: '<path d="M5 19V5M5 19h14M9 16v-5M13 16V8M17 16v-7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-      external: '<path d="M14 4h6v6M20 4l-9 9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
-    };
-
-    return `<svg viewBox="0 0 24 24" fill="none">${icons[name] || icons.grid}</svg>`;
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function cleanEmail(email) {
-    return String(email || "").trim().toLowerCase();
-  }
-
-  function wait(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async function waitForSupabase() {
-    if (window.supabaseClient) return window.supabaseClient;
-
-    if (!document.querySelector('script[src="/clipency-admin-supabase-hardboot.js"]')) {
-      const script = document.createElement("script");
-      script.src = "/clipency-admin-supabase-hardboot.js";
-      script.async = false;
-      document.head.appendChild(script);
+  async function getClient() {
+    for (let i = 0; i < 80; i++) {
+      const c = window.clipencySupabase || window.supabaseClient || window.sbClient;
+      if (c?.auth) return c;
+      await wait(100);
     }
-
-    for (let i = 0; i < 160; i++) {
-      if (window.supabaseClient) return window.supabaseClient;
-
-      if (window.__clipencySupabaseBootError) {
-        throw window.__clipencySupabaseBootError;
-      }
-
-      await wait(80);
-    }
-
-    throw new Error("Supabase client not loaded. Please hard refresh once.");
-  }
-
-  async function initAuth() {
-    supabaseClient = await waitForSupabase();
-
-    const { data, error } = await supabaseClient.auth.getUser();
-
-    if (error || !data?.user) {
-      window.location.replace("/login");
-      return false;
-    }
-
-    currentUser = data.user;
-
-    let currentRole = "clipper";
-
-    try {
-      const { data: accessData, error: accessError } = await supabaseClient.rpc("admin_access_check");
-
-      if (accessError) throw accessError;
-
-      currentRole = accessData?.role || "clipper";
-    } catch (accessError) {
-      console.warn("admin_access_check failed. Trying direct admin_users lookup.", accessError);
-
-      const email = cleanEmail(currentUser.email);
-      const uid = currentUser.id;
-
-      const { data: directRows, error: directError } = await supabaseClient
-        .from("admin_users")
-        .select("email,user_id")
-        .or(`user_id.eq.${uid},email.eq.${email}`)
-        .limit(1);
-
-      if (directError) throw directError;
-
-      currentRole = directRows && directRows.length ? "admin" : "clipper";
-    }
-
-    if (currentRole !== "admin") {
-      document.body.innerHTML = `
-        <div style="min-height:100vh;display:grid;place-items:center;background:#050509;color:white;font-family:system-ui;padding:32px;">
-          <div style="max-width:620px;">
-            <div style="color:#a78bfa;font-weight:900;letter-spacing:.18em;font-size:12px;">ACCESS DENIED</div>
-            <h1 style="font-size:56px;line-height:.95;margin:12px 0;">Admin access required.</h1>
-            <p style="color:rgba(255,255,255,.62);font-size:18px;line-height:1.55;">
-              Signed in as <b>${currentUser.email}</b>, but this session is detected as <b>${currentRole}</b>.
-            </p>
-            <a href="/campaigns" style="display:inline-flex;margin-top:18px;color:white;background:#7c3aed;padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Go to Clipper View</a>
-            <a href="/login" style="display:inline-flex;margin-top:18px;margin-left:10px;color:white;border:1px solid rgba(255,255,255,.18);padding:14px 18px;border-radius:999px;text-decoration:none;font-weight:900;">Login again</a>
-          </div>
-        </div>
-      `;
-      return false;
-    }
-
-    return true;
-  }
-
-  function shell(content) {
-    const email = currentUser?.email || "admin@clipency.in";
-    const name = currentUser?.user_metadata?.full_name || email.split("@")[0] || "Admin";
-    const initial = name.slice(0, 1).toUpperCase();
-
-    return `
-      <div id="clipency-admin-os">
-        <aside class="cx-admin-sidebar">
-          <div class="cx-admin-logo" onclick="window.location.href='/admin'">
-            <img src="/clipency-logo.png" alt="Clipency" onerror="this.src='/assets/clipency-logo.png'" />
-          </div>
-
-          <div class="cx-admin-nav-wrap">
-            <div class="cx-admin-label">Admin OS</div>
-            <nav class="cx-admin-nav">
-              ${NAV.map(([label, href, iconName, external]) => {
-                const active = !external && (
-                  window.location.pathname === href ||
-                  (href !== "/admin" && window.location.pathname.startsWith(href))
-                );
-
-                return `
-                  <a href="${href}" class="${active ? "active" : ""} ${external ? "cx-admin-finance-link" : ""}" ${external ? 'target="_blank" rel="noopener noreferrer"' : ""}>
-                    ${icon(iconName)}
-                    <span>${label}</span>
-                  </a>
-                `;
-              }).join("")}
-            </nav>
-          </div>
-
-          <div class="cx-admin-sidebar-bottom">
-            <div class="cx-admin-userbox">
-              <div class="cx-admin-avatar">${escapeHtml(initial)}</div>
-              <div>
-                <strong>${escapeHtml(name)}</strong>
-                <span>${escapeHtml(email)}</span>
-              </div>
-              <button class="cx-admin-logout" id="cx-admin-logout" title="Logout">↗</button>
-            </div>
-          </div>
-        </aside>
-
-        <main class="cx-admin-main">
-          <div class="cx-admin-content">
-            ${content}
-          </div>
-        </main>
-      </div>
-    `;
-  }
-
-  function renderBasePage({ kicker, title, subtitle, body }) {
-    return shell(`
-      <div class="cx-admin-kicker">${escapeHtml(kicker)}</div>
-      <h1 class="cx-admin-title">${escapeHtml(title)}</h1>
-      <p class="cx-admin-subtitle">${escapeHtml(subtitle)}</p>
-      ${body || ""}
-    `);
+    throw new Error('Supabase client unavailable.');
   }
 
   async function safeCount(table) {
     try {
-      const { count } = await supabaseClient
-        .from(table)
-        .select("*", { count: "exact", head: true });
-
+      const { count } = await sb.from(table).select('*', { count:'exact', head:true });
       return count ?? 0;
-    } catch {
-      return 0;
-    }
+    } catch { return 0; }
   }
 
+  async function safeRows(table, cols='*', limit=30) {
+    try {
+      const { data, error } = await sb.from(table).select(cols).limit(limit).order('created_at', { ascending: false }).catch(()=>({data:null,error:true}));
+      if (error) return [];
+      return data || [];
+    } catch { return []; }
+  }
+
+  /* ── AUTH ── */
+  async function initAuth() {
+    sb = await getClient();
+    const { data, error } = await sb.auth.getUser();
+    if (error || !data?.user) { window.location.replace('/login'); return false; }
+    currentUser = data.user;
+
+    let role = 'clipper';
+    try {
+      const { data: ac } = await sb.rpc('admin_access_check');
+      role = ac?.role || 'clipper';
+    } catch {
+      const { data: rows } = await sb.from('admin_users').select('email').eq('email', currentUser.email).limit(1);
+      role = rows?.length ? 'admin' : 'clipper';
+    }
+
+    if (role !== 'admin') {
+      document.body.innerHTML = `<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif;padding:32px"><div style="max-width:500px;text-align:center"><div style="color:#6366f1;font-weight:700;letter-spacing:.1em;font-size:11px;text-transform:uppercase;margin-bottom:16px">Access Denied</div><h1 style="font-size:40px;font-weight:700;letter-spacing:-.02em;margin-bottom:12px">Admin only.</h1><p style="color:rgba(255,255,255,.5);font-size:16px;margin-bottom:28px">Signed in as <b>${esc(currentUser.email)}</b> — not an admin account.</p><a href="/login" style="background:#6366f1;color:#fff;padding:11px 22px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">Sign in with admin account</a></div></div>`;
+      return false;
+    }
+    return true;
+  }
+
+  /* ── SHELL ── */
+  function shell(content) {
+    const email = currentUser?.email || '';
+    const name = currentUser?.user_metadata?.full_name || email.split('@')[0] || 'Admin';
+    const initial = name[0]?.toUpperCase() || 'A';
+
+    const navHtml = NAV_ITEMS.map(([label, href, ic, ext]) => {
+      const active = !ext && (PATH === href || (href !== '/admin' && PATH.startsWith(href)));
+      return `<a href="${href}" class="${active?'active':''}" ${ext?'target="_blank" rel="noopener noreferrer"':''}>${icon(ic)}<span>${label}</span></a>`;
+    }).join('');
+
+    return `<div id="cx-os">
+      <aside class="cx-side">
+        <div class="cx-brand" onclick="location.href='/admin'">
+          <img src="/assets/clipency-logo.png" onerror="this.src='/clipency-logo.png'" alt="Clipency"/>
+          <span class="cx-brand-label">Admin OS</span>
+        </div>
+        <div class="cx-nav-group">
+          <div class="cx-nav-group-label">Operations</div>
+          <nav class="cx-nav">${navHtml}</nav>
+        </div>
+        <div class="cx-spacer"></div>
+        <div class="cx-user">
+          <div class="cx-user-card">
+            <div class="cx-av">${esc(initial)}</div>
+            <div class="cx-ui">
+              <div class="cx-un">${esc(name)}</div>
+              <div class="cx-ur">Admin</div>
+            </div>
+            <button class="cx-out" id="cx-logout" title="Sign out">↗</button>
+          </div>
+        </div>
+      </aside>
+      <main class="cx-main"><div class="cx-wrap">${content}</div></main>
+    </div>`;
+  }
+
+  function page({ kicker, title, sub, body }) {
+    return shell(`<div class="cx-kicker">${esc(kicker)}</div><h1 class="cx-h1">${esc(title)}</h1><p class="cx-sub">${esc(sub)}</p>${body||''}`);
+  }
+
+  /* ── PAGES ── */
   async function renderCommand() {
-    const [admins, reviewers] = await Promise.all([
-      safeCount("admin_users"),
-      safeCount("reviewer_users")
+    const [profiles, campaigns, payouts, leads, admins, reviewers] = await Promise.all([
+      safeCount('profiles'), safeCount('campaigns'), safeCount('payouts'),
+      safeCount('leads'), safeCount('admin_users'), safeCount('reviewer_users'),
     ]);
 
-    return renderBasePage({
-      kicker: "Command Center",
-      title: "Platform operations.",
-      subtitle: "One control room for reviews, campaigns, leads, payouts, user access and finance handoff.",
-      body: `
-        <section class="cx-admin-grid">
-          <div class="cx-admin-card"><h3>Admins</h3><strong>${admins}</strong><p>People who can operate the platform.</p></div>
-          <div class="cx-admin-card"><h3>Reviewers</h3><strong>${reviewers}</strong><p>People who can verify creator submissions.</p></div>
-          <div class="cx-admin-card"><h3>Finance OS</h3><strong>↗</strong><p>External finance workspace connected through secure access.</p></div>
-          <div class="cx-admin-card"><h3>Clipper view</h3><strong>Live</strong><p>Jump back to creator-facing campaign experience anytime.</p></div>
-        </section>
+    const statsHtml = [
+      ['Clippers', profiles, 'Registered users'],
+      ['Campaigns', campaigns, 'Active campaigns'],
+      ['Payouts', payouts, 'Processed'],
+      ['Leads', leads, 'Inbound'],
+      ['Admins', admins, 'Staff members'],
+      ['Reviewers', reviewers, 'Review team'],
+    ].map(([l,v,s])=>`<div class="cx-stat"><div class="cx-stat-l">${l}</div><div class="cx-stat-v">${v}</div><div class="cx-stat-s">${s}</div></div>`).join('');
 
-        <section class="cx-admin-section">
-          <div class="cx-admin-section-head">
-            <div>
-              <h2>Workspace shortcuts</h2>
-              <p>Move across the operating system without broken routes or mixed sidebars.</p>
-            </div>
-          </div>
+    const quickHtml = [
+      ['/admin/reviews', 'Review Queue', 'Approve submissions'],
+      ['/admin/campaigns', 'Campaigns', 'Manage campaigns'],
+      ['/admin/leads', 'Leads', 'Client pipeline'],
+      ['/admin/payouts', 'Payouts', 'Finance control'],
+      ['/admin/users', 'Users', 'Access management'],
+      ['https://v0-clipency-finance-dashboard.vercel.app/login', 'Finance OS', 'External dashboard', true],
+    ].map(([href,label,desc,ext])=>`<a class="cx-qc" href="${href}" ${ext?'target="_blank" rel="noopener noreferrer"':''}><div class="cx-qc-label">${desc}</div><div class="cx-qc-val">${label} →</div></a>`).join('');
 
-          <div class="cx-admin-actions">
-            <a class="cx-admin-button primary" href="/admin/reviews">Open reviews</a>
-            <a class="cx-admin-button" href="/admin/users">Manage users</a>
-            <a class="cx-admin-button green" href="${FINANCE_URL}" target="_blank" rel="noopener noreferrer">Open Finance OS</a>
-            <a class="cx-admin-button" href="/campaigns">Open clipper view</a>
-          </div>
-        </section>
-      `
+    return page({
+      kicker: 'Command Center',
+      title: 'Platform operations.',
+      sub: 'Everything that keeps Clipency moving — in one place.',
+      body: `<div class="cx-stats">${statsHtml}</div>
+        <div class="cx-sec">
+          <div class="cx-sec-head"><div><div class="cx-sec-title">Quick access</div><div class="cx-sec-desc">Jump to any section of the operating system.</div></div></div>
+          <div class="cx-quick">${quickHtml}</div>
+        </div>`
     });
-  }
-
-  async function fetchRows(table, columns = "*", limit = 20) {
-    try {
-      const { data, error } = await supabaseClient
-        .from(table)
-        .select(columns)
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
-    } catch {
-      return [];
-    }
   }
 
   async function renderReviews() {
-    const rows = await fetchRows("admin_submissions_view", "*", 25);
-
-    return renderBasePage({
-      kicker: "Review Queue",
-      title: "Creator proof review.",
-      subtitle: "Review submitted clips, approve valid proofs and keep payout status clean.",
-      body: `
-        <section class="cx-admin-section">
-          <div class="cx-admin-section-head">
-            <div>
-              <h2>Submissions</h2>
-              <p>${rows.length ? "Latest submitted proofs from creators." : "No submissions found yet."}</p>
-            </div>
-          </div>
-
-          ${rows.length ? `
-            <div class="cx-admin-table-wrap">
-              <table class="cx-admin-table">
-                <thead><tr><th>Creator</th><th>Campaign</th><th>Status</th><th>Submitted</th></tr></thead>
-                <tbody>
-                  ${rows.map((row) => `
-                    <tr>
-                      <td><strong>${escapeHtml(row.creator_email || row.email || row.user_email || "Creator")}</strong></td>
-                      <td>${escapeHtml(row.campaign_title || row.campaign_name || row.campaign || "Campaign")}</td>
-                      <td><span class="cx-admin-badge pending">${escapeHtml(row.status || "Pending")}</span></td>
-                      <td>${row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          ` : `<div class="cx-admin-empty">No review items are available right now.</div>`}
-        </section>
-      `
-    });
-  }
-
-  async function renderSimpleModule(kind) {
-    const content = {
-      campaigns: {
-        kicker: "Campaign Control",
-        title: "Campaign operations.",
-        subtitle: "Manage campaign visibility, performance status and creator-side availability.",
-        cta: "Campaign creation and editing will be connected here."
-      },
-      leads: {
-        kicker: "Lead Desk",
-        title: "Client leads.",
-        subtitle: "Track inbound brand and client interest from the landing page.",
-        cta: "Lead intake will be connected here."
-      },
-      payouts: {
-        kicker: "Payout Control",
-        title: "Payout operations.",
-        subtitle: "Payout approvals should stay connected with the finance system without breaking admin flow.",
-        cta: "Finance OS remains separate and secure. Open it from here."
-      }
-    }[kind];
-
-    return renderBasePage({
-      kicker: content.kicker,
-      title: content.title,
-      subtitle: content.subtitle,
-      body: `
-        <section class="cx-admin-section">
-          <div class="cx-admin-section-head">
-            <div>
-              <h2>${escapeHtml(content.title)}</h2>
-              <p>${escapeHtml(content.cta)}</p>
-            </div>
-            ${kind === "payouts" ? `<a class="cx-admin-button green" href="${FINANCE_URL}" target="_blank" rel="noopener noreferrer">Open Finance OS</a>` : ``}
-          </div>
-
-          <div class="cx-admin-grid">
-            <div class="cx-admin-card"><h3>Status</h3><strong>Ready</strong><p>This route is now inside Admin OS.</p></div>
-            <div class="cx-admin-card"><h3>Route</h3><strong>${escapeHtml(window.location.pathname.replace("/admin/", ""))}</strong><p>No more 404 or broken sidebar.</p></div>
-          </div>
-        </section>
-      `
-    });
-  }
-
-  async function fetchRoles() {
-    const [{ data: admins, error: adminError }, { data: reviewers, error: reviewerError }] = await Promise.all([
-      supabaseClient.from("admin_users").select("id,email,user_id,created_at").order("created_at", { ascending: false }),
-      supabaseClient.from("reviewer_users").select("id,email,user_id,created_at").order("created_at", { ascending: false })
-    ]);
-
-    if (adminError) throw adminError;
-    if (reviewerError) throw reviewerError;
-
-    const map = new Map();
-
-    (admins || []).forEach((row) => {
-      map.set(cleanEmail(row.email), {
-        email: cleanEmail(row.email),
-        role: "admin",
-        created_at: row.created_at
-      });
-    });
-
-    (reviewers || []).forEach((row) => {
-      const email = cleanEmail(row.email);
-
-      if (!map.has(email)) {
-        map.set(email, {
-          email,
-          role: "reviewer",
-          created_at: row.created_at
-        });
-      }
-    });
-
-    return Array.from(map.values()).sort((a, b) => {
-      if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
-      return a.email.localeCompare(b.email);
-    });
-  }
-
-  async function setRole(email, role) {
-    const value = cleanEmail(email);
-
-    if (!value || !value.includes("@")) throw new Error("Enter a valid email.");
-
-    if (role === "admin") {
-      const { error } = await supabaseClient.from("admin_users").upsert({ email: value }, { onConflict: "email" });
-      if (error) throw error;
-      await supabaseClient.from("reviewer_users").delete().eq("email", value);
-      return;
+    // try multiple possible table names for submissions
+    let rows = [], tableUsed = null;
+    const candidates = ['admin_submissions_view', 'clip_submissions', 'submissions', 'clips'];
+    for (const t of candidates) {
+      const { data, error } = await sb.from(t).select('*').limit(25).order('created_at',{ascending:false}).catch(()=>({data:null,error:true}));
+      if (!error && data !== null) { rows = data; tableUsed = t; break; }
     }
 
-    if (role === "reviewer") {
-      const { error } = await supabaseClient.from("reviewer_users").upsert({ email: value }, { onConflict: "email" });
-      if (error) throw error;
-      await supabaseClient.from("admin_users").delete().eq("email", value);
-      return;
-    }
+    const rowsHtml = rows.length ? `
+      <div class="cx-tbl-wrap"><table class="cx-tbl">
+        <thead><tr><th>Creator</th><th>Campaign</th><th>Status</th><th>Submitted</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td><strong>${esc(r.creator_email||r.email||r.user_email||'—')}</strong></td>
+          <td>${esc(r.campaign_title||r.campaign_name||r.campaign||'—')}</td>
+          <td><span class="cx-badge ${(r.status||'pending').toLowerCase()}">${esc(r.status||'Pending')}</span></td>
+          <td>${r.created_at?new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="cx-empty">No submissions yet${!tableUsed?' — submissions table not found':''}.${!tableUsed?'<br><small style="margin-top:8px;display:block">Create a <code>clip_submissions</code> table in Supabase.</small>':''}</div>`;
+
+    return page({
+      kicker: 'Review Control',
+      title: 'Submissions.',
+      sub: 'Approve clips with the exact earning amount. Approved earnings instantly increase the clipper\'s payout balance.',
+      body: `<div class="cx-sec"><div class="cx-sec-head"><div><div class="cx-sec-title">Pending review</div><div class="cx-sec-desc">${rows.length} submission${rows.length!==1?'s':''} found.</div></div></div>${rowsHtml}</div>`
+    });
   }
 
-  async function revokeRole(email) {
-    const value = cleanEmail(email);
-    await supabaseClient.from("reviewer_users").delete().eq("email", value);
-    await supabaseClient.from("admin_users").delete().eq("email", value);
+  async function renderCampaigns() {
+    const rows = await safeRows('campaigns', 'id,title,status,created_at,budget', 20);
+    const html = rows.length ? `
+      <div class="cx-tbl-wrap"><table class="cx-tbl">
+        <thead><tr><th>Campaign</th><th>Status</th><th>Budget</th><th>Created</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td><strong>${esc(r.title||r.name||r.id)}</strong></td>
+          <td><span class="cx-badge ${r.status==='active'?'active':'inactive'}">${esc(r.status||'Draft')}</span></td>
+          <td>${r.budget?'₹'+Number(r.budget).toLocaleString('en-IN'):'—'}</td>
+          <td>${r.created_at?new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="cx-empty">No campaigns yet.</div>`;
+
+    return page({ kicker:'Campaign Control', title:'Campaigns.', sub:'Manage campaign visibility, performance and creator availability.',
+      body:`<div class="cx-sec"><div class="cx-sec-head"><div><div class="cx-sec-title">All campaigns</div><div class="cx-sec-desc">${rows.length} total</div></div></div>${html}</div>` });
+  }
+
+  async function renderLeads() {
+    const rows = await safeRows('leads', '*', 30);
+    const html = rows.length ? `
+      <div class="cx-tbl-wrap"><table class="cx-tbl">
+        <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Date</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td><strong>${esc(r.name||r.full_name||'—')}</strong></td>
+          <td>${esc(r.email||'—')}</td>
+          <td>${esc(r.company||r.brand||'—')}</td>
+          <td>${r.created_at?new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="cx-empty">No leads yet.</div>`;
+
+    return page({ kicker:'Lead Desk', title:'Leads.', sub:'Track inbound brand and client interest.',
+      body:`<div class="cx-sec"><div class="cx-sec-head"><div><div class="cx-sec-title">Inbound leads</div><div class="cx-sec-desc">${rows.length} total</div></div></div>${html}</div>` });
+  }
+
+  async function renderPayouts() {
+    const rows = await safeRows('payouts', '*', 30);
+    const html = rows.length ? `
+      <div class="cx-tbl-wrap"><table class="cx-tbl">
+        <thead><tr><th>Clipper</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td><strong>${esc(r.email||r.user_email||r.clipper_email||'—')}</strong></td>
+          <td>${r.amount?'₹'+Number(r.amount).toLocaleString('en-IN'):'—'}</td>
+          <td><span class="cx-badge ${(r.status||'pending').toLowerCase()}">${esc(r.status||'Pending')}</span></td>
+          <td>${r.created_at?new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : `<div class="cx-empty">No payouts yet.</div>`;
+
+    return page({ kicker:'Payout Control', title:'Payouts.', sub:'Payout approvals stay connected with the finance system.',
+      body:`<div class="cx-sec">
+        <div class="cx-sec-head"><div><div class="cx-sec-title">Payout requests</div><div class="cx-sec-desc">${rows.length} total</div></div>
+        <a class="cx-btn green" href="https://v0-clipency-finance-dashboard.vercel.app/login" target="_blank" rel="noopener">Open Finance OS</a></div>
+        ${html}</div>` });
   }
 
   async function renderUsers() {
-    const users = await fetchRoles();
-    const currentEmail = cleanEmail(currentUser?.email);
+    const [{ data: admins }, { data: reviewers }] = await Promise.all([
+      sb.from('admin_users').select('id,email,user_id,created_at').order('created_at',{ascending:false}),
+      sb.from('reviewer_users').select('id,email,user_id,created_at').order('created_at',{ascending:false}),
+    ]);
 
-    return renderBasePage({
-      kicker: "Access Control",
-      title: "Users & roles.",
-      subtitle: "Add, upgrade, downgrade or revoke access for the people who operate Clipency.",
-      body: `
-        <section class="cx-admin-section">
-          <div class="cx-admin-section-head">
-            <div>
-              <h2>Add or update access</h2>
-              <p>Enter the person’s email, choose the role, and save. Changes apply the next time they sign in or refresh.</p>
-            </div>
-          </div>
+    const map = new Map();
+    (admins||[]).forEach(r => map.set(r.email.toLowerCase(), { email:r.email, role:'admin', created_at:r.created_at }));
+    (reviewers||[]).forEach(r => { const e=r.email.toLowerCase(); if (!map.has(e)) map.set(e, { email:r.email, role:'reviewer', created_at:r.created_at }); });
+    const users = [...map.values()].sort((a,b)=> a.role==='admin'&&b.role!=='admin'?-1:b.role==='admin'&&a.role!=='admin'?1:a.email.localeCompare(b.email));
+    const me = currentUser?.email?.toLowerCase();
 
-          <form class="cx-admin-form" id="cx-admin-role-form">
-            <input id="cx-admin-role-email" type="email" placeholder="name@example.com" required />
-            <select id="cx-admin-role-select">
-              <option value="reviewer">Reviewer</option>
-              <option value="admin">Admin</option>
-            </select>
-            <button type="submit">Save access</button>
-          </form>
-        </section>
+    const tableHtml = `<div class="cx-tbl-wrap"><table class="cx-tbl">
+      <thead><tr><th>Email</th><th>Role</th><th>Added</th><th>Actions</th></tr></thead>
+      <tbody>${users.length ? users.map(u => {
+        const isSelf = u.email.toLowerCase()===me;
+        return `<tr>
+          <td><strong>${esc(u.email)}</strong>${isSelf?'<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">You</div>':''}</td>
+          <td><span class="cx-badge ${u.role}">${u.role==='admin'?'Admin':'Reviewer'}</span></td>
+          <td>${u.created_at?new Date(u.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
+          <td><div class="cx-btns">
+            <button class="cx-btn ghost" data-ra="admin" data-email="${esc(u.email)}" ${u.role==='admin'?'disabled':''} style="padding:6px 12px;font-size:12px">Admin</button>
+            <button class="cx-btn ghost" data-ra="reviewer" data-email="${esc(u.email)}" ${u.role==='reviewer'?'disabled':''} style="padding:6px 12px;font-size:12px">Reviewer</button>
+            <button class="cx-btn danger" data-ra="revoke" data-email="${esc(u.email)}" ${isSelf?'disabled':''} style="padding:6px 12px;font-size:12px">Revoke</button>
+          </div></td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="4"><div class="cx-empty">No users found.</div></td></tr>`}</tbody>
+    </table></div>`;
 
-        <section class="cx-admin-section">
-          <div class="cx-admin-section-head">
-            <div>
-              <h2>Current access</h2>
-              <p>${users.length} people currently have admin or reviewer access.</p>
-            </div>
-          </div>
-
-          <div class="cx-admin-table-wrap">
-            <table class="cx-admin-table">
-              <thead>
-                <tr><th>Email</th><th>Role</th><th>Added</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                ${users.length ? users.map((user) => {
-                  const isSelf = cleanEmail(user.email) === currentEmail;
-
-                  return `
-                    <tr>
-                      <td>
-                        <strong>${escapeHtml(user.email)}</strong>
-                        ${isSelf ? `<div style="color:rgba(255,255,255,.42);font-size:12px;margin-top:4px;">Current signed-in admin</div>` : ``}
-                      </td>
-                      <td><span class="cx-admin-badge ${user.role}">${escapeHtml(user.role === "admin" ? "Admin" : "Reviewer")}</span></td>
-                      <td>${user.created_at ? new Date(user.created_at).toLocaleString() : "—"}</td>
-                      <td>
-                        <div class="cx-admin-actions">
-                          <button data-role-action="admin" data-email="${escapeHtml(user.email)}" ${user.role === "admin" ? "disabled" : ""}>Make admin</button>
-                          <button data-role-action="reviewer" data-email="${escapeHtml(user.email)}" ${user.role === "reviewer" ? "disabled" : ""}>Make reviewer</button>
-                          <button class="danger" data-role-action="revoke" data-email="${escapeHtml(user.email)}" ${isSelf ? "disabled title='You cannot revoke yourself here.'" : ""}>Revoke</button>
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-                }).join("") : `<tr><td colspan="4"><div class="cx-admin-empty">No users found.</div></td></tr>`}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      `
-    });
+    return page({ kicker:'Access Control', title:'Users & roles.', sub:'Add, upgrade, downgrade or revoke access for the team.',
+      body:`<div class="cx-sec">
+        <div class="cx-sec-head"><div><div class="cx-sec-title">Add or update access</div><div class="cx-sec-desc">Changes apply the next time they sign in.</div></div></div>
+        <div class="cx-form" id="cx-role-form">
+          <input class="cx-input" id="cx-role-email" type="email" placeholder="name@example.com" required/>
+          <select class="cx-select" id="cx-role-select"><option value="reviewer">Reviewer</option><option value="admin">Admin</option></select>
+          <button class="cx-btn primary" id="cx-role-save">Save access</button>
+        </div>
+      </div>
+      <div class="cx-sec"><div class="cx-sec-head"><div><div class="cx-sec-title">Current team</div><div class="cx-sec-desc">${users.length} people with admin or reviewer access.</div></div></div>${tableHtml}</div>` });
   }
 
   async function renderRoute() {
-    const path = window.location.pathname;
-
-    if (path === "/admin" || path === "/workspace") return renderCommand();
-    if (path === "/admin/reviews") return renderReviews();
-    if (path === "/admin/campaigns") return renderSimpleModule("campaigns");
-    if (path === "/admin/leads") return renderSimpleModule("leads");
-    if (path === "/admin/payouts") return renderSimpleModule("payouts");
-    if (path === "/admin/users") return renderUsers();
-
+    if (PATH==='/admin'||PATH==='/workspace') return renderCommand();
+    if (PATH==='/admin/reviews') return renderReviews();
+    if (PATH==='/admin/campaigns') return renderCampaigns();
+    if (PATH === '/admin/leads') return renderLeads();
+    if (PATH==='/admin/payouts') return renderPayouts();
+    if (PATH==='/admin/users') return renderUsers();
     return renderCommand();
   }
 
+  /* ── EVENTS ── */
   function bindEvents() {
-    document.getElementById("cx-admin-logout")?.addEventListener("click", async () => {
-      try {
-        await supabaseClient.auth.signOut({ scope: "global" });
-      } catch {}
-      window.location.replace("/login");
+    document.getElementById('cx-logout')?.addEventListener('click', async()=>{
+      try { await sb.auth.signOut({scope:'global'}); } catch {}
+      window.location.replace('/login');
     });
 
-    document.getElementById("cx-admin-role-form")?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const email = document.getElementById("cx-admin-role-email").value;
-      const role = document.getElementById("cx-admin-role-select").value;
-      const button = event.target.querySelector("button");
-
+    document.getElementById('cx-role-save')?.addEventListener('click', async()=>{
+      const email = document.getElementById('cx-role-email')?.value?.trim();
+      const role = document.getElementById('cx-role-select')?.value;
+      const btn = document.getElementById('cx-role-save');
+      if (!email||!email.includes('@')) return alert('Enter a valid email.');
       try {
-        button.disabled = true;
-        button.textContent = "Saving…";
-        await setRole(email, role);
-        await boot();
-      } catch (error) {
-        alert(error.message || "Could not save access.");
-        button.disabled = false;
-        button.textContent = "Save access";
-      }
-    });
-
-    document.querySelectorAll("[data-role-action]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const action = button.dataset.roleAction;
-        const email = button.dataset.email;
-
-        try {
-          button.disabled = true;
-
-          if (action === "revoke") {
-            if (!confirm(`Revoke access for ${email}?`)) {
-              button.disabled = false;
-              return;
-            }
-            await revokeRole(email);
-          } else {
-            await setRole(email, action);
-          }
-
-          await boot();
-        } catch (error) {
-          alert(error.message || "Could not update access.");
-          button.disabled = false;
+        btn.disabled=true; btn.textContent='Saving…';
+        if (role==='admin') {
+          await sb.from('admin_users').upsert({email},{onConflict:'email'});
+          await sb.from('reviewer_users').delete().eq('email',email);
+        } else {
+          await sb.from('reviewer_users').upsert({email},{onConflict:'email'});
+          await sb.from('admin_users').delete().eq('email',email);
         }
+        await boot();
+      } catch(e) { alert(e.message||'Could not save.'); btn.disabled=false; btn.textContent='Save access'; }
+    });
+
+    document.querySelectorAll('[data-ra]').forEach(btn=>{
+      btn.addEventListener('click', async()=>{
+        const action=btn.dataset.ra, email=btn.dataset.email;
+        if (!email) return;
+        if (action==='revoke' && !confirm(`Revoke access for ${email}?`)) return;
+        try {
+          btn.disabled=true;
+          if (action==='revoke') {
+            await sb.from('reviewer_users').delete().eq('email',email);
+            await sb.from('admin_users').delete().eq('email',email);
+          } else if (action==='admin') {
+            await sb.from('admin_users').upsert({email},{onConflict:'email'});
+            await sb.from('reviewer_users').delete().eq('email',email);
+          } else {
+            await sb.from('reviewer_users').upsert({email},{onConflict:'email'});
+            await sb.from('admin_users').delete().eq('email',email);
+          }
+          await boot();
+        } catch(e) { alert(e.message||'Error'); btn.disabled=false; }
       });
     });
   }
 
+  /* ── BOOT ── */
   async function boot() {
-    document.body.classList.add("cx-admin-os-active");
-
-    document.body.innerHTML = `
-      <div class="cx-admin-loader">
-        <div>
-          <div class="cx-admin-spinner"></div>
-        </div>
-      </div>
-    `;
-
+    document.body.classList.add('cx-on');
+    document.body.innerHTML='<div class="cx-loader"><div class="cx-spinner"></div></div>';
     try {
       const ok = await initAuth();
       if (!ok) return;
-
       document.body.innerHTML = await renderRoute();
+      document.title = 'Clipency | Admin OS';
       bindEvents();
-      document.title = "Clipency | Admin OS";
-    } catch (error) {
-      document.body.innerHTML = `
-        <div class="cx-admin-loader">
-          <div style="max-width:520px;text-align:center;">
-            <h1 style="color:white;margin:0 0 10px;">Admin OS could not load.</h1>
-            <p style="color:rgba(255,255,255,.58);line-height:1.6;">${escapeHtml(error.message || "Please refresh once.")}</p>
-            <a class="cx-admin-button primary" href="/campaigns" style="margin-top:18px;">Go to Clipper View</a>
-          </div>
-        </div>
-      `;
+    } catch(e) {
+      document.body.innerHTML=`<div class="cx-loader"><div style="text-align:center;max-width:440px"><h2 style="color:#f5f5f7;margin-bottom:10px;font-size:24px">Something went wrong.</h2><p style="color:rgba(255,255,255,.45);font-size:14px;line-height:1.6">${esc(e.message||'Please refresh.')}</p><a class="cx-btn primary" href="/admin" style="margin-top:20px;display:inline-flex">Retry</a></div></div>`;
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
