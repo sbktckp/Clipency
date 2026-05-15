@@ -15,7 +15,7 @@
     { "source": "/role-router.js",             "destination": "/auth/role-router.js" },
     { "source": "/experience.js",              "destination": "/auth/experience.js" },
     { "source": "/app.js",                     "destination": "/auth/app.js" },
-    { "source": "/styles.css",                 "destination": "/auth/login/styles.css" },
+    { "source": "/styles.css",                 "destination": "/auth/styles.css" },
     { "source": "/assets/:file*",              "destination": "/auth/assets/:file*" }
   ],
   "headers": [
