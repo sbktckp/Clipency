@@ -3820,18 +3820,29 @@ async function submitForReview(platformName, platformKey, username){
       return;
     }
 
-    // Upsert into Supabase
-    const{error}=await sb.from('connected_accounts').upsert({
-      user_id:user.id,
-      platform:platformKey,
-      handle:handle,
-      username:handle,
-      verification_code:FIXED_CODE,
-      status:'pending',
-      is_verified:false,
-      expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
-      updated_at:new Date().toISOString()
-    },{onConflict:'user_id,platform,handle'});
+    // Check if already exists then insert or update
+    const{data:existingAcct}=await sb.from('connected_accounts')
+      .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
+    let error;
+    if(existingAcct){
+      if(existingAcct.status==='verified'){
+        showToast('✓ This account is already verified!');
+        closeConnectModal();
+        return;
+      }
+      ({error}=await sb.from('connected_accounts').update({
+        verification_code:FIXED_CODE,status:'pending',is_verified:false,
+        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
+        updated_at:new Date().toISOString()
+      }).eq('id',existingAcct.id));
+    }else{
+      ({error}=await sb.from('connected_accounts').insert({
+        user_id:user.id,platform:platformKey,handle:handle,username:handle,
+        verification_code:FIXED_CODE,status:'pending',is_verified:false,
+        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
+        created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }));
+    }
     if(error) throw error;
 
     // Add to local pending state
@@ -3870,6 +3881,94 @@ document.getElementById('connect-modal').addEventListener('click', function(e){
   if(e.target === this){ clearCountdown(); closeConnectModal(); }
 });
 
+// Load real profile data from Supabase
+async function loadProfileFromSupabase(){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:{user},error:authErr}=await sb.auth.getUser();
+    if(authErr||!user)return;
+
+    // Load profile row
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!profile)return;
+
+    const fullName=(profile.full_name||profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||user.email?.split('@')[0]||'Clipper').trim();
+    const firstName=profile.first_name||fullName.split(' ')[0]||'';
+    const lastName=profile.last_name||fullName.split(' ').slice(1).join(' ')||'';
+    const username=profile.username||'';
+    const email=profile.email||user.email||'';
+    const displayName=profile.display_name||fullName;
+    const initials=(fullName.split(' ').map(w=>w[0]||'').join('').slice(0,2)||'C').toUpperCase();
+
+    // Update name/email wherever shown
+    document.querySelectorAll('[data-user-name],[class*="user-name"],[id*="user-name"]').forEach(el=>el.textContent=fullName);
+    document.querySelectorAll('[data-user-email],[class*="user-email"]').forEach(el=>el.textContent=email);
+    document.querySelectorAll('[data-user-initials],[class*="avatar"],[class*="initials"]').forEach(el=>{if(el.textContent.length<=2)el.textContent=initials;});
+
+    // Profile section fields
+    const setById=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+    const setValById=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+
+    // Display name label
+    document.querySelectorAll('[data-field="display_name"],[id*="display-name"],[id*="displayname"]').forEach(el=>el.textContent=displayName);
+    // Username chip
+    document.querySelectorAll('[data-field="username"],[id*="username-val"],[id*="username-display"]').forEach(el=>el.textContent='@'+username);
+    // Email field
+    document.querySelectorAll('[data-field="email"]').forEach(el=>el.textContent=email);
+
+    // Sidebar user info
+    document.querySelectorAll('.sb-user-name,.user-display-name,[class*="sidebar"] [class*="name"]').forEach(el=>{
+      if(el.textContent.length<40)el.textContent=fullName;
+    });
+    document.querySelectorAll('.sb-user-role,.user-role').forEach(el=>el.textContent=profile.role||'Clipper');
+
+    // Sidebar avatar initials
+    document.querySelectorAll('.sb-avatar,.user-avatar,[class*="avatar-initials"]').forEach(el=>{
+      if(el.children.length===0)el.textContent=initials;
+    });
+
+    // Edit profile form fields
+    setValById('edit-first-name',firstName);
+    setValById('edit-last-name',lastName);
+    setValById('edit-display-name',displayName);
+    setValById('edit-username',username);
+    setValById('edit-email',email);
+    document.querySelectorAll('input[name="first_name"],input[placeholder*="first"]').forEach(el=>el.value=firstName);
+    document.querySelectorAll('input[name="last_name"],input[placeholder*="last"]').forEach(el=>el.value=lastName);
+    document.querySelectorAll('input[name="display_name"]').forEach(el=>el.value=displayName);
+    document.querySelectorAll('input[name="username"]').forEach(el=>el.value=username);
+
+    // Load real earnings stats from clip_submissions
+    const[{data:subs},{data:payReqs}]=await Promise.all([
+      sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
+      sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
+    ]);
+    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count)||0),0);
+    const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
+    const totalWithdrawn=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
+    const availBal=Math.max(totalEarned-totalWithdrawn,0);
+
+    const fmtNum=n=>n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toString();
+    const fmtMoney=n=>'₹'+Number(n).toLocaleString('en-IN');
+
+    // Update stats wherever they appear
+    document.querySelectorAll('[data-stat="total-views"],[id*="total-views"],[id*="totalviews"]').forEach(el=>el.textContent=fmtNum(totalViews));
+    document.querySelectorAll('[data-stat="total-earned"],[id*="total-earned"],[id*="totalearned"]').forEach(el=>el.textContent=fmtMoney(totalEarned));
+    document.querySelectorAll('[data-stat="available-balance"],[id*="available-balance"],[id*="availbal"]').forEach(el=>el.textContent=fmtMoney(availBal));
+
+    // Also set any text node that shows "0" for views/earned in performance section
+    document.querySelectorAll('.perf-val,.stat-val,[class*="perf-value"],[class*="stat-value"]').forEach(el=>{
+      const label=el.previousElementSibling?.textContent?.toLowerCase()||el.closest('[class*="stat"]')?.querySelector('[class*="label"]')?.textContent?.toLowerCase()||'';
+      if(label.includes('view'))el.textContent=fmtNum(totalViews);
+      if(label.includes('earn'))el.textContent=fmtMoney(totalEarned);
+      if(label.includes('balance'))el.textContent=fmtMoney(availBal);
+    });
+
+    console.log('[Clipency] Profile loaded:',fullName,'| Earned:',totalEarned,'| Views:',totalViews);
+  }catch(e){console.warn('loadProfileFromSupabase:',e.message);}
+}
+
 // Init platform account lists — load from Supabase
 async function loadAccountsFromSupabase(){
   try{
@@ -3899,6 +3998,7 @@ async function loadAccountsFromSupabase(){
 ['tiktok','instagram','youtube'].forEach(k => renderPlatformAccounts(k));
 // Load real data from Supabase after page ready
 setTimeout(loadAccountsFromSupabase, 800);
+setTimeout(loadProfileFromSupabase, 400);
 
 
 
