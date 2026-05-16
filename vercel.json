@@ -3,6 +3,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/clipency-profile-supabase.js",
+      "destination": "/auth/clipency-profile-supabase.js"
+    },
+    {
       "source": "/clipency-admin-os.js",
       "destination": "/auth/clipency-admin-os.js"
     },
