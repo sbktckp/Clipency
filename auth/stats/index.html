@@ -1999,16 +1999,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 
 <script>
 // ── DATA ──
-const CAMPAIGNS = [
-  {id:1,title:"Doja Cat x Bebe Rexha",icon:"🎵",iconType:"music",genre:"Music",payout:"$5 / 1M views",rpmUsd:5,budget:25000,spent:8200,platforms:["TikTok","Instagram","YouTube"],reqs:["Clip must be 15–60s","Use official audio","Tag @clipency","No explicit content"],sparkData:[40,55,35,70,60,85,90],views:"12.4M",creators:142,banner:null,tags:["New"]},
-  {id:2,title:"Geometry Dash - Slowed",icon:"🎮",iconType:"gaming",genre:"Gaming",payout:"$3 / 1M views",rpmUsd:3,budget:15000,spent:4800,platforms:["YouTube","TikTok"],reqs:["Gameplay must be real","No auto-clickers","Min 500 views to qualify"],sparkData:[20,30,55,45,70,65,80],views:"8.1M",creators:97,banner:null,tags:["New"]},
-  {id:3,title:"WoT Heat",icon:"💥",iconType:"gaming",genre:"Clipping",payout:"$1,250 / 1M views",rpmUsd:1250,budget:20000,spent:18750,platforms:["TikTok","YouTube"],reqs:["Min 10s gameplay","Show tank name in clip","No explicit content"],sparkData:[60,80,75,90,85,95,100],views:"18.7M",creators:203,banner:null,tags:["Clipping","New"]},
-  {id:4,title:"La Isla Bonita",icon:"🌴",iconType:"music",genre:"Music",payout:"$150 / 1M views",rpmUsd:150,budget:12000,spent:2100,platforms:["Instagram","TikTok"],reqs:["Must use official audio","Aesthetic quality edits","No low-effort content"],sparkData:[30,45,40,60,55,70,65],views:"5.2M",creators:61,banner:null,tags:["Music","New"]},
-  {id:5,title:"Dom Dolla [SPORTS]",icon:"🎶",iconType:"music",genre:"Music",payout:"$800 / 1M views",rpmUsd:800,budget:30000,spent:7200,platforms:["TikTok","YouTube","Instagram"],reqs:["Recent games only","Include player names","Max 90s per clip"],sparkData:[50,65,80,70,90,85,95],views:"22.1M",creators:16,banner:null,tags:["Music","New"]},
-  {id:6,title:"Something 'Bout",icon:"🎶",iconType:"music",genre:"Music",payout:"$1,000 / 1M views",rpmUsd:1000,budget:18000,spent:5400,platforms:["TikTok","Instagram"],reqs:["Must be authentic","Show product clearly","Disclose partnership"],sparkData:[25,35,45,50,60,70,75],views:"4.8M",creators:12,banner:null,tags:["Music","New"]},
-  {id:7,title:"Doja Cat x Bebe Rexha",icon:"✂️",iconType:"clipping",genre:"Clipping",payout:"$2 / 1M views",rpmUsd:2,budget:10000,spent:3400,platforms:["TikTok","YouTube Shorts"],reqs:["Original source required","No copyrighted music","Credit original creator"],sparkData:[35,40,38,50,48,60,65],views:"9.3M",creators:421,banner:null,tags:["Clipping","New"]},
-  {id:8,title:"Unfollow Me [EDITS]",icon:"☁️",iconType:"music",genre:"Music",payout:"$5 / 1M views",rpmUsd:5,budget:8000,spent:1600,platforms:["TikTok","Instagram"],reqs:["Artist must be on SoundCloud","Tag the artist","Use their audio only"],sparkData:[15,25,30,40,45,55,60],views:"2.9M",creators:38,banner:null,tags:["Music","New"]},
-];
+let CAMPAIGNS = [];
 
 const PERFORMERS = [
   {name:"Alex Rivera", handle:"@alexriv",  views:"4.2M", earn:"$420", earnUsd:420},
@@ -2100,7 +2091,47 @@ function navigate(section){
 // ── CAMPAIGNS ──
 const SPARK_COLORS = {Music:'#C4956A',Gaming:'#6EE7B7',UGC:'#A78BFA',Sports:'#60A5FA',Clipping:'#F472B6',Edits:'#FBBF24'};
 
+async function loadCampaignsFromSupabase(){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:camps,error}=await sb.from('campaigns')
+      .select('*').eq('status','active').order('created_at',{ascending:false});
+    if(error||!camps)return;
+    CAMPAIGNS=camps.map(c=>({
+      id:c.id,
+      title:c.title||'Campaign',
+      icon:c.category==='music'?'🎵':c.category==='gaming'?'🎮':c.category==='sports'?'🏆':'📎',
+      genre:c.genre||c.category||'General',
+      rpmUsd:Number(c.rpm||c.rate_per_million_usd)||0,
+      budget:Number(c.budget)||0,
+      spent:Number(c.budget_used||c.spent_usd)||0,
+      platforms:c.platform?[c.platform]:['TikTok','Instagram','YouTube'],
+      reqs:c.requirements?c.requirements.split('\n').filter(Boolean):[],
+      description:c.description||'',
+      sparkData:[30,50,40,70,60,80,90],
+      views:'—',
+      creators:Number(c.creators_count)||0,
+      clippers:Number(c.creators_count)||0,
+      banner:c.asset_url||null,
+      tags:c.is_new?['New']:[],
+      start_date:c.start_date,
+      end_date:c.end_date,
+      brand_name:c.brand_name||''
+    }));
+    renderCampaigns(_lastGenre||'All');
+  }catch(e){console.warn('loadCampaignsFromSupabase:',e.message);}
+}
+let _lastGenre='All';
 function renderCampaigns(genre='All'){
+  _lastGenre=genre;
+  if(!CAMPAIGNS.length){
+    const grid=document.getElementById('camp-grid');
+    if(grid)grid.innerHTML='<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--tm,rgba(255,255,255,.4));font-size:14px">Loading campaigns…</div>';
+    document.getElementById('camp-count').textContent='Loading…';
+    loadCampaignsFromSupabase();
+    return;
+  }
   const filtered = genre==='All'?CAMPAIGNS:CAMPAIGNS.filter(c=>c.genre===genre);
   document.getElementById('camp-count').textContent=filtered.length+' campaigns';
   const grid=document.getElementById('camp-grid');
@@ -2118,7 +2149,7 @@ function renderCampaigns(genre='All'){
            <span>Campaign Banner</span>
          </div>`;
     return `
-    <div class="camp-card" onclick="showCampDetail(${c.id})" style="--prog-w:${pct}%">
+    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${pct}%">
       <div class="cc-header">
         <div class="cc-icon">${c.icon}</div>
         <div class="cc-title-wrap">
@@ -2159,7 +2190,7 @@ function renderCampaigns(genre='All'){
 }
 
 function showCampDetail(id){
-  const c=CAMPAIGNS.find(x=>x.id===id);
+  const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
   grid.classList.add('hidden');
@@ -2181,9 +2212,9 @@ function showCampDetail(id){
           <span class="tag">${c.genre}</span>
           ${c.platforms.map(p=>`<span class="tag">${p}</span>`).join('')}
         </div>
-        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
       </div>
-      <button class="submit-btn submit-btn-header" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+      <button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
     </div>
 
     <!-- ROW 1: Campaign info (left) + Views chart (right) -->
@@ -2235,7 +2266,7 @@ function showCampDetail(id){
         </div>
         <div id="detail-x-labels" style="display:flex;justify-content:space-between;padding:6px 48px 0 56px;"></div>
         <div style="margin-top:16px;text-align:right;">
-          <button class="submit-btn" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+          <button class="submit-btn" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
         </div>
       </div>
     </div>
@@ -2480,7 +2511,7 @@ function closeSubmitModal(){
 }
 
 function renderModalStep(){
-  const c = CAMPAIGNS.find(x=>x.id===_submitState.campaignId);
+  const c = CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
   const s = _submitState;
   const steps = `
     <div class="modal-steps">
@@ -2518,7 +2549,11 @@ function renderModalStep(){
   else if(s.step===2){
     // Get accounts connected for this platform from connectedState
     const pKey = PLATFORM_KEY_MAP[s.platform] || s.platform.toLowerCase();
-    const platformAccs = (connectedState[pKey]||[]);
+    // Use _verifiedAccounts loaded from Supabase, fallback to connectedState
+    const allVerified = window._verifiedAccountsList||[];
+    const platformAccs = allVerified.length
+      ? allVerified.filter(a=>a.platform===pKey||a.platform===s.platform.toLowerCase()).map(a=>a.handle)
+      : (connectedState[pKey]||[]);
     const noAccounts = platformAccs.length === 0;
     content = `
       ${steps}
@@ -2580,11 +2615,44 @@ function renderModalStep(){
   `;
 }
 
-function submitClip(){
-  const url = document.getElementById('clip-url-input')?.value;
-  if(!url){showToast('Please paste your clip URL');return;}
-  closeSubmitModal();
-  showToast('✓ Clip submitted for review!');
+async function submitClip(){
+  const url=document.getElementById('clip-url-input')?.value?.trim();
+  if(!url||!url.startsWith('http')){showToast('Please paste a valid clip URL');return;}
+  const btn=document.querySelector('.modal-btn-next:not([disabled])');
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)throw new Error('Not connected');
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('Not logged in');
+    // Find the connected account id for this platform+handle
+    const pKey=PLATFORM_KEY_MAP[_submitState.platform]||_submitState.platform.toLowerCase();
+    const{data:acct}=await sb.from('connected_accounts')
+      .select('id').eq('user_id',user.id)
+      .eq('platform',pKey).eq('handle',_submitState.account).eq('status','verified').maybeSingle();
+    if(!acct)throw new Error('Account not verified. Please verify your account first.');
+    const camp=CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
+    const{error}=await sb.from('clip_submissions').insert({
+      user_id:user.id,
+      connected_account_id:acct.id,
+      campaign_id:String(_submitState.campaignId),
+      campaign_title:camp?.title||'Campaign',
+      platform:_submitState.platform,
+      handle:_submitState.account,
+      clip_url:url,
+      views_count:0,
+      status:'pending',
+      earning_status:'pending',
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    });
+    if(error)throw error;
+    closeSubmitModal();
+    showToast('✓ Clip submitted! Our team will review within 24–48 hours.');
+  }catch(e){
+    showToast('Error: '+(e.message||'Could not submit'));
+    if(btn){btn.disabled=false;btn.textContent='Submit Clip';}
+  }
 }
 
 
@@ -3957,6 +4025,26 @@ document.getElementById('reject-modal').addEventListener('click',function(e){if(
 
 // ── INIT ──
 window.addEventListener('load',()=>{
+  // Load verified accounts for clip submission modal
+  (async()=>{
+    try{
+      const sb=window.clipencySupabase||window.supabaseClient;
+      if(!sb)return;
+      for(let i=0;i<30;i++){const c=window.clipencySupabase||window.supabaseClient;if(c?.auth){break;}await new Promise(r=>setTimeout(r,200));}
+      const sb2=window.clipencySupabase||window.supabaseClient;
+      if(!sb2)return;
+      const{data:{user}}=await sb2.auth.getUser();
+      if(!user)return;
+      const{data:accts}=await sb2.from('connected_accounts').select('*').eq('user_id',user.id).eq('status','verified');
+      window._verifiedAccountsList=accts||[];
+      // Also update connectedState for backward compat
+      (accts||[]).forEach(a=>{
+        const pk=(a.platform||'').toLowerCase();
+        if(connectedState[pk]!==undefined&&!connectedState[pk].includes(a.handle))
+          connectedState[pk].push(a.handle);
+      });
+    }catch(e){console.warn('loadVerifiedAccounts:',e.message);}
+  })();
   const overlay=document.getElementById('loading-overlay');
   overlay.classList.add('fade-out');
   setTimeout(()=>overlay.remove(),500);
