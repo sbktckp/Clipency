@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency — Clipper Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabaseClient.js"></script>
 <style>
 :root{
   --bg:#0A0908;--s1:#111009;--s2:#181410;--s3:#221D18;--s4:#332B23;
@@ -1525,6 +1523,96 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   .pg-title{font-size:1.3rem;}
   .pg-eyebrow{font-size:.52rem;}
 }
+
+/* ===== CLIPENCY V4 MOBILE HARDENING ===== */
+@supports (height: 100dvh){
+  html, body, #app, .sidebar { height: 100dvh; }
+}
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  touch-action: manipulation;
+}
+.main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+img, svg, canvas {
+  max-width: 100%;
+}
+.sub-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 700px) {
+  .pg-head {
+    gap: 14px;
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+  .user-chip {
+    align-self: flex-end;
+    margin-top: -46px;
+    max-width: calc(100vw - 70px);
+  }
+  .filter-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-btn {
+    flex: 0 0 auto;
+  }
+  .camp-count {
+    margin-left: 0;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+  }
+  .modal-overlay,
+  .withdraw-overlay,
+  .connect-modal-overlay,
+  .reject-modal-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+  .modal-box,
+  .withdraw-box,
+  .connect-modal-box,
+  .reject-modal-box {
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+}
+@media (max-width: 420px) {
+  .section {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .pg-title {
+    font-size: 1.55rem;
+  }
+  .user-chip {
+    display: none;
+  }
+  .stats-row,
+  .detail-kpi-row,
+  .platform-grid,
+  .pay-type-grid,
+  .crypto-token-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1541,7 +1629,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-logo">
-      <img src="clipencylogo2.png" alt="Clipency" class="sb-logo-img" />
+      <img src="/assets/clipper-v4/clipencylogo2.png" alt="Clipency" class="sb-logo-img" />
     </div>
     <div class="sb-nav">
       <p class="nav-label">Clipper</p>
@@ -2132,7 +2220,7 @@ function renderCampaigns(genre='All'){
            <span>Campaign Banner</span>
          </div>`;
     return `
-    <div class="camp-card" onclick="showCampDetail(${c.id})" style="--prog-w:${pct}%">
+    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${pct}%">
       <div class="cc-header">
         <div class="cc-icon">${c.icon}</div>
         <div class="cc-title-wrap">
@@ -2173,7 +2261,8 @@ function renderCampaigns(genre='All'){
 }
 
 function showCampDetail(id){
-  const c=CAMPAIGNS.find(x=>x.id===id);
+  const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
+  if(!c){ showToast('Campaign not found'); return; }
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
   grid.classList.add('hidden');
@@ -2195,9 +2284,9 @@ function showCampDetail(id){
           <span class="tag">${c.genre}</span>
           ${c.platforms.map(p=>`<span class="tag">${p}</span>`).join('')}
         </div>
-        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
       </div>
-      <button class="submit-btn submit-btn-header" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+      <button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
     </div>
 
     <!-- ROW 1: Campaign info (left) + Views chart (right) -->
@@ -2249,7 +2338,7 @@ function showCampDetail(id){
         </div>
         <div id="detail-x-labels" style="display:flex;justify-content:space-between;padding:6px 48px 0 56px;"></div>
         <div style="margin-top:16px;text-align:right;">
-          <button class="submit-btn" onclick="openSubmitModal(${c.id})">Submit Your Clip →</button>
+          <button class="submit-btn" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
         </div>
       </div>
     </div>
@@ -2303,10 +2392,10 @@ function showCampDetail(id){
     <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${PERFORMERS.map((p,i)=>`
+      ${(c.performers && c.performers.length ? c.performers : PERFORMERS).map((p,i)=>`
         <div class="perf-item">
           <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
-          <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
+          <div class="perf-av">${p.initials || ((p.name||'C').split(' ').map(x=>x[0]).join('').slice(0,2)||'C').toUpperCase()}</div>
           <div style="flex:1"><div class="perf-name">${p.name}</div><div class="perf-handle">${p.handle}</div></div>
           <div style="text-align:right;"><div class="perf-views" style="font-size:.9rem;font-weight:700;">${p.views}</div><div class="perf-earn">${fmt(p.earnUsd)}</div></div>
         </div>
@@ -2494,7 +2583,7 @@ function closeSubmitModal(){
 }
 
 function renderModalStep(){
-  const c = CAMPAIGNS.find(x=>x.id===_submitState.campaignId);
+  const c = CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
   const s = _submitState;
   const steps = `
     <div class="modal-steps">
@@ -3311,9 +3400,9 @@ document.getElementById('btn-add-payment').addEventListener('click',()=>{
 function renderPayStep1(){
   const box=document.getElementById('pay-modal-box');
   const availTypes=[];
-  if(!hasType('upi')) availTypes.push({key:'upi',icon:'<img src="upilogo.png" alt="UPI" style="width:28px;height:28px;object-fit:contain;"/>',label:'UPI',sub:'India Payments'});
-  if(!hasType('paypal')) availTypes.push({key:'paypal',icon:'<img src="paypallogo.jpg" alt="PayPal" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'PayPal',sub:'Email-based'});
-  if(!hasType('crypto')) availTypes.push({key:'crypto',icon:'<img src="usdlogo.jpg" alt="Crypto" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'Crypto',sub:'USDC / SOL'});
+  if(!hasType('upi')) availTypes.push({key:'upi',icon:'<img src="/assets/clipper-v4/upilogo.png" alt="UPI" style="width:28px;height:28px;object-fit:contain;"/>',label:'UPI',sub:'India Payments'});
+  if(!hasType('paypal')) availTypes.push({key:'paypal',icon:'<img src="/assets/clipper-v4/paypallogo.jpg" alt="PayPal" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'PayPal',sub:'Email-based'});
+  if(!hasType('crypto')) availTypes.push({key:'crypto',icon:'<img src="/assets/clipper-v4/usdlogo.jpg" alt="Crypto" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'Crypto',sub:'USDC / SOL'});
 
   if(availTypes.length===0){
     box.innerHTML=`
@@ -3364,12 +3453,12 @@ function renderPayStep2Crypto(){
     <p class="modal-subtitle">Choose your preferred cryptocurrency.</p>
     <div class="crypto-token-grid">
       <div class="crypto-token-card" id="ct-usdc" onclick="selectCryptoToken('usdc')">
-        <div class="crypto-token-icon"><img src="usdlogo.jpg" alt="USDC" style="width:32px;height:32px;object-fit:contain;border-radius:50%;"/></div>
+        <div class="crypto-token-icon"><img src="/assets/clipper-v4/usdlogo.jpg" alt="USDC" style="width:32px;height:32px;object-fit:contain;border-radius:50%;"/></div>
         <div class="crypto-token-name">USDC</div>
         <div class="crypto-token-sub">USD Coin</div>
       </div>
       <div class="crypto-token-card" id="ct-sol" onclick="selectCryptoToken('sol')">
-        <div class="crypto-token-icon"><img src="sollogo.png" alt="SOL" style="width:32px;height:32px;object-fit:contain;"/></div>
+        <div class="crypto-token-icon"><img src="/assets/clipper-v4/sollogo.png" alt="SOL" style="width:32px;height:32px;object-fit:contain;"/></div>
         <div class="crypto-token-name">SOL</div>
         <div class="crypto-token-sub">Solana</div>
       </div>
@@ -3416,7 +3505,7 @@ function finalizeAddPay(){
   if(!detail) return;
   const type=_addPayState.type;
   const token=_addPayState.cryptoToken;
-  const icons={upi:'<img src="upilogo.png" alt="UPI" style="width:24px;height:24px;object-fit:contain;"/>',paypal:'<img src="paypallogo.jpg" alt="PayPal" style="width:24px;height:24px;object-fit:contain;border-radius:4px;"/>',crypto:token==='usdc'?'<img src="usdlogo.jpg" alt="USDC" style="width:24px;height:24px;object-fit:contain;border-radius:50%;"/>':'<img src="sollogo.png" alt="SOL" style="width:24px;height:24px;object-fit:contain;"/>'};
+  const icons={upi:'<img src="/assets/clipper-v4/upilogo.png" alt="UPI" style="width:24px;height:24px;object-fit:contain;"/>',paypal:'<img src="/assets/clipper-v4/paypallogo.jpg" alt="PayPal" style="width:24px;height:24px;object-fit:contain;border-radius:4px;"/>',crypto:token==='usdc'?'<img src="/assets/clipper-v4/usdlogo.jpg" alt="USDC" style="width:24px;height:24px;object-fit:contain;border-radius:50%;"/>':'<img src="/assets/clipper-v4/sollogo.png" alt="SOL" style="width:24px;height:24px;object-fit:contain;"/>'};
   const names={upi:'UPI',paypal:'PayPal',crypto:token==='usdc'?'USDC Wallet':'SOL Wallet'};
   const newMethod={id:Date.now(),type,cryptoToken:token||null,icon:icons[type],name:names[type],detail,primary:paymentMethods.length===0};
   paymentMethods.push(newMethod);
@@ -3682,9 +3771,10 @@ function saveUsername(){
 
 // ── CONNECT ACCOUNT MODAL ──
 const connectedState = { tiktok: [], instagram: [], youtube: [] };
-const pendingVerifications = { tiktok: [], instagram: [], youtube: [] };
-const FIXED_CODE = '150506';
+const CONNECT_CODES  = {};
 let _countdownTimer = null;
+
+function generateCode(){ return Math.floor(100000 + Math.random()*900000).toString(); }
 
 function clearCountdown(){ if(_countdownTimer){ clearInterval(_countdownTimer); _countdownTimer=null; } }
 
@@ -3698,48 +3788,28 @@ function closeConnectModal(){
   document.getElementById('connect-modal').classList.add('hidden');
 }
 
-// Render verified + pending chips for a platform
+// Render connected account chips under a platform
 function renderPlatformAccounts(platformKey){
   const el = document.getElementById(`conn-${platformKey}-accounts`);
   if(!el) return;
-  const verified = connectedState[platformKey];
-  const pending  = (pendingVerifications[platformKey]||[]).filter(p=>p.status==='pending');
-  if(!verified.length && !pending.length){
+  const accs = connectedState[platformKey];
+  if(!accs.length){
     el.innerHTML = `<span style="font-size:.74rem;color:var(--tm);">No accounts connected</span>`;
     return;
   }
-  const vHtml = verified.map(u=>`
-    <span class="conn-chip" title="Verified">
-      <span style="font-size:.65rem;color:var(--green);">✓</span>
+  el.innerHTML = accs.map(u => `
+    <span class="conn-chip">
       <span class="conn-chip-handle">${u.startsWith('@')?u:'@'+u}</span>
       <button class="conn-chip-remove" onclick="removeAccount('${platformKey}','${u}')" title="Remove">
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </span>`).join('');
-  const pHtml = pending.map(p=>`
-    <span class="conn-chip" style="background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.2);" title="Pending team review">
-      <span style="font-size:.65rem;color:#FACC15;">⏳</span>
-      <span class="conn-chip-handle" style="color:#FACC15;">${p.handle}</span>
-    </span>`).join('');
-  el.innerHTML = vHtml + pHtml;
 }
 
 function removeAccount(platformKey, username){
-  connectedState[platformKey] = connectedState[platformKey].filter(u=>u!==username);
-  pendingVerifications[platformKey] = (pendingVerifications[platformKey]||[]).filter(p=>p.handle!==username&&p.handle!==('@'+username));
+  connectedState[platformKey] = connectedState[platformKey].filter(u => u !== username);
   renderPlatformAccounts(platformKey);
   showToast(`Removed ${username.startsWith('@')?username:'@'+username}`);
-  // Delete from Supabase
-  (async()=>{
-    try{
-      const sb=window.clipencySupabase||window.supabaseClient;
-      if(!sb)return;
-      const{data:{user}}=await sb.auth.getUser();
-      if(!user)return;
-      const handle=username.startsWith('@')?username:'@'+username;
-      await sb.from('connected_accounts').delete().eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle);
-    }catch(e){console.warn('removeAccount supabase:',e.message);}
-  })();
 }
 
 function renderConnectStep1(platformName, platformKey){
@@ -3748,13 +3818,13 @@ function renderConnectStep1(platformName, platformKey){
     <button class="cm-close" onclick="closeConnectModal()">✕</button>
     <p class="cm-eyebrow">Connect Account</p>
     <div class="cm-title">Connect ${platformName}</div>
-    <p class="cm-subtitle">Enter your ${platformName} username to receive your verification code.</p>
+    <p class="cm-subtitle">Enter your ${platformName} username to generate a verification code.</p>
     <label style="font-family:'Space Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.12em;color:var(--tm);display:block;margin-bottom:5px;">${platformName} Username</label>
     <input class="cm-input" id="cm-username-input" type="text" placeholder="@yourusername" autofocus/>
     <div class="cm-actions">
       <button class="cm-btn-cancel" onclick="closeConnectModal()">Close</button>
       <button class="cm-btn-verify" id="cm-next-btn" onclick="renderConnectStep2('${platformName}','${platformKey}')" disabled>
-        Get Verification Code →
+        Generate Code →
       </button>
     </div>`;
   const inp = document.getElementById('cm-username-input');
@@ -3767,238 +3837,173 @@ function renderConnectStep2(platformName, platformKey){
   const username = document.getElementById('cm-username-input')?.value.trim();
   if(!username) return;
   clearCountdown();
-  const code = FIXED_CODE;
+  const code = generateCode();
+  const expiresAt = Date.now() + 30*60*1000;
+  CONNECT_CODES[platformKey] = { code, username, expiresAt };
 
+  const box = document.getElementById('connect-modal-box');
+  function buildStep2(secsLeft){
+    const m = String(Math.floor(secsLeft/60)).padStart(2,'0');
+    const s = String(secsLeft%60).padStart(2,'0');
+    box.innerHTML = `
+      <button class="cm-close" onclick="closeConnectModal()">✕</button>
+      <p class="cm-eyebrow">Verify · ${platformName}</p>
+      <div class="cm-title">Add Code to Your Bio</div>
+      <p class="cm-subtitle">Copy this 6-digit code, paste it anywhere in your ${platformName} bio, then click Verify.</p>
+      <div class="cm-code-box">
+        <p class="cm-code-label">Your Verification Code</p>
+        <div class="cm-code-val">${code}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="cm-code-expiry">Expires in <strong id="cm-countdown">${m}:${s}</strong></span>
+        </div>
+      </div>
+      <div class="cm-instruction">
+        1. Open <strong>${platformName}</strong> → go to your profile → Edit Bio.<br>
+        2. Paste the code <strong>${code}</strong> anywhere in your bio.<br>
+        3. Come back here and click <strong>Verify</strong>.
+      </div>
+      <div class="cm-actions">
+        <button class="cm-btn-cancel" onclick="renderConnectStep1('${platformName}','${platformKey}')">← Back</button>
+        <button class="cm-btn-verify" id="cm-verify-btn" onclick="runVerifyAnimation('${platformName}','${platformKey}','${username}','${code}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Verify
+        </button>
+      </div>`;
+  }
+
+  let secsLeft = Math.round((expiresAt - Date.now()) / 1000);
+  buildStep2(secsLeft);
+
+  _countdownTimer = setInterval(() => {
+    secsLeft--;
+    const cd = document.getElementById('cm-countdown');
+    if(secsLeft <= 0){
+      clearCountdown();
+      renderExpired(platformName, platformKey, username);
+      return;
+    }
+    if(cd){
+      const m = String(Math.floor(secsLeft/60)).padStart(2,'0');
+      const s = String(secsLeft%60).padStart(2,'0');
+      cd.textContent = `${m}:${s}`;
+      if(secsLeft <= 60) cd.style.color = 'var(--red)';
+    }
+  }, 1000);
+}
+
+function renderExpired(platformName, platformKey, username){
+  clearCountdown();
   const box = document.getElementById('connect-modal-box');
   box.innerHTML = `
     <button class="cm-close" onclick="closeConnectModal()">✕</button>
-    <p class="cm-eyebrow">Verify · ${platformName}</p>
-    <div class="cm-title">Add Code to Your Bio</div>
-    <p class="cm-subtitle">Copy this code and paste it <strong style="color:var(--amber)">anywhere in your ${platformName} bio</strong>, then click the button below.</p>
-    <div class="cm-code-box">
-      <p class="cm-code-label">Your Verification Code</p>
-      <div class="cm-code-val">${code}</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;">
-        <button onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('\u2713 Code copied!'))" style="padding:5px 16px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--amber);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;">Copy Code</button>
+    <div style="text-align:center;padding:10px 0;">
+      <div style="width:58px;height:58px;border-radius:50%;background:rgba(248,113,113,.1);border:2px solid rgba(248,113,113,.25);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:14px;">⏰</div>
+      <p class="cm-eyebrow" style="text-align:center;color:var(--red);">Code Expired</p>
+      <div class="cm-title" style="margin-bottom:6px;">Your code has expired</div>
+      <p class="cm-subtitle" style="margin-bottom:22px;">The 30-minute window has passed. Generate a new code to continue verification.</p>
+      <div class="cm-actions">
+        <button class="cm-btn-cancel" onclick="closeConnectModal()">Cancel</button>
+        <button class="cm-btn-verify" onclick="generateNewCode('${platformName}','${platformKey}','${username}')">
+          Generate New Code
+        </button>
       </div>
-    </div>
-    <div class="cm-instruction">
-      1. Open <strong>${platformName}</strong> → your profile → Edit Bio.<br>
-      2. Paste <strong style="color:var(--amber);font-family:'Space Mono',monospace">${code}</strong> anywhere in your bio and save.<br>
-      3. Come back here and click <strong>I've Added the Code</strong>.
-    </div>
-    <div class="cm-actions">
-      <button class="cm-btn-cancel" onclick="renderConnectStep1('${platformName}','${platformKey}')">← Back</button>
-      <button class="cm-btn-verify" id="cm-verify-btn" onclick="submitForReview('${platformName}','${platformKey}','${username}')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        I've Added the Code
-      </button>
     </div>`;
 }
 
-async function submitForReview(platformName, platformKey, username){
+function generateNewCode(platformName, platformKey, prevUsername){
+  // Pre-fill username and re-enter step2
   clearCountdown();
-  const handle = username.startsWith('@') ? username : '@'+username;
+  const code = generateCode();
+  const expiresAt = Date.now() + 30*60*1000;
+  CONNECT_CODES[platformKey] = { code, username: prevUsername, expiresAt };
+  // Build a mock input so renderConnectStep2 can read it
   const box = document.getElementById('connect-modal-box');
-  // Disable button immediately
-  const btn = document.getElementById('cm-verify-btn');
-  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  box.innerHTML = `<input id="cm-username-input" type="hidden" value="${prevUsername}"/>`;
+  renderConnectStep2(platformName, platformKey);
+}
 
-  try{
-    const sb = window.clipencySupabase||window.supabaseClient;
-    if(!sb) throw new Error('Not connected to database');
-    const{data:{user},error:authErr}=await sb.auth.getUser();
-    if(authErr||!user) throw new Error('Please sign in again');
-
-    // Check not already submitted
-    const{data:existing}=await sb.from('connected_accounts')
-      .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
-
-    if(existing && existing.status==='verified'){
-      showToast('✓ This account is already verified!');
-      closeConnectModal();
-      return;
-    }
-
-    // Check if already exists then insert or update
-    const{data:existingAcct}=await sb.from('connected_accounts')
-      .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
-    let error;
-    if(existingAcct){
-      if(existingAcct.status==='verified'){
-        showToast('✓ This account is already verified!');
-        closeConnectModal();
-        return;
-      }
-      ({error}=await sb.from('connected_accounts').update({
-        verification_code:FIXED_CODE,status:'pending',is_verified:false,
-        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
-        updated_at:new Date().toISOString()
-      }).eq('id',existingAcct.id));
-    }else{
-      ({error}=await sb.from('connected_accounts').insert({
-        user_id:user.id,platform:platformKey,handle:handle,username:handle,
-        verification_code:FIXED_CODE,status:'pending',is_verified:false,
-        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
-        created_at:new Date().toISOString(),updated_at:new Date().toISOString()
-      }));
-    }
-    if(error) throw error;
-
-    // Add to local pending state
-    if(!pendingVerifications[platformKey].find(p=>p.handle===handle)){
-      pendingVerifications[platformKey].push({id:Date.now(),handle,platformName,platformKey,code:FIXED_CODE,submittedAt:new Date().toISOString(),status:'pending'});
-    }
-    renderPlatformAccounts(platformKey);
-
-    // Show success UI
-    if(box) box.innerHTML = `
-      <div style="text-align:center;padding:8px 0;">
-        <div style="width:66px;height:66px;border-radius:50%;background:rgba(250,204,21,.1);border:2px solid rgba(250,204,21,.3);display:inline-flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:16px;animation:successPop2 .5s var(--ease-spring);">⏳</div>
-        <p class="cm-eyebrow" style="text-align:center;color:#FACC15;">Under Review</p>
-        <div class="cm-success-title">Submitted for Verification</div>
-        <p class="cm-success-msg">Your <strong>${platformName}</strong> account <strong>${handle}</strong> is now <strong style="color:#FACC15;">under review</strong> by the Clipency team.<br><br>Verification takes up to <strong>24 hours</strong>. Once approved, it moves to ✓ Connected.</p>
-        <div style="background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.2);border-radius:11px;padding:13px 16px;margin-bottom:20px;text-align:left;font-size:.79rem;color:var(--ts);line-height:1.6;">
-          ⚠ <strong style="color:#FACC15;">Keep the code ${FIXED_CODE} in your bio</strong> until verification is complete.
-        </div>
-        <button class="cm-btn-verify" style="width:100%;justify-content:center;" onclick="closeConnectModal()">Got it — Close</button>
-      </div>`;
-    showToast('⏳ Submitted — team reviewing within 24h');
-
-  }catch(e){
-    console.error('submitForReview error:',e);
-    if(box){
-      const errEl=document.createElement('div');
-      errEl.style.cssText='background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:.83rem;color:#F87171;';
-      errEl.textContent='Error: '+(e.message||'Could not submit. Try again.');
-      box.appendChild(errEl);
-    }
-    if(btn){btn.disabled=false;btn.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> I've Added the Code`;}
+// simulate: 40% chance of failure for realistic UI
+let _verifyAttempts = {};
+function runVerifyAnimation(platformName, platformKey, username, code){
+  clearCountdown();
+  const entry = CONNECT_CODES[platformKey];
+  if(entry && Date.now() > entry.expiresAt){
+    renderExpired(platformName, platformKey, username);
+    return;
   }
+  const box = document.getElementById('connect-modal-box');
+  box.innerHTML = `
+    <p class="cm-eyebrow">Verifying…</p>
+    <div class="cm-title" style="margin-bottom:20px;">Checking Your Bio</div>
+    <div style="font-size:.82rem;color:var(--ts);margin-bottom:14px;text-align:center;">Looking for code <strong style="color:var(--amber);font-family:'Space Mono',monospace;">${code}</strong> in ${username}'s bio</div>
+    <div class="cm-scan-bar"><div class="cm-scan-fill"></div></div>
+    <p class="cm-scan-text">Scanning ${platformName} profile…</p>`;
+
+  _verifyAttempts[platformKey] = (_verifyAttempts[platformKey]||0) + 1;
+  // Fail on first attempt for demo realism, succeed on retry
+  const willSucceed = _verifyAttempts[platformKey] > 1;
+
+  setTimeout(() => {
+    if(willSucceed){
+      renderConnectSuccess(platformName, platformKey, username);
+    } else {
+      renderVerifyFailed(platformName, platformKey, username, code);
+    }
+  }, 2400);
+}
+
+function renderVerifyFailed(platformName, platformKey, username, code){
+  const box = document.getElementById('connect-modal-box');
+  box.innerHTML = `
+    <button class="cm-close" onclick="closeConnectModal()">✕</button>
+    <div style="text-align:center;padding:10px 0;">
+      <div style="width:58px;height:58px;border-radius:50%;background:rgba(248,113,113,.1);border:2px solid rgba(248,113,113,.25);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:14px;">✗</div>
+      <p class="cm-eyebrow" style="text-align:center;color:var(--red);">Verification Failed</p>
+      <div class="cm-title" style="margin-bottom:6px;">Code Not Found in Bio</div>
+      <p class="cm-subtitle" style="margin-bottom:16px;">We couldn't find code <strong style="color:var(--amber);font-family:'Space Mono',monospace;">${code}</strong> in <strong>${username.startsWith('@')?username:'@'+username}</strong>'s ${platformName} bio.</p>
+      <div class="cm-instruction" style="margin-bottom:20px;text-align:left;">
+        ✓ Make sure you saved the bio after pasting the code.<br>
+        ✓ The code must be visible in your public bio.<br>
+        ✓ Check the account is set to <strong>public</strong>.
+      </div>
+      <div class="cm-actions">
+        <button class="cm-btn-cancel" onclick="renderConnectStep1('${platformName}','${platformKey}')">← Start Over</button>
+        <button class="cm-btn-verify" onclick="runVerifyAnimation('${platformName}','${platformKey}','${username}','${code}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+          Retry Verification
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderConnectSuccess(platformName, platformKey, username){
+  clearCountdown();
+  _verifyAttempts[platformKey] = 0;
+  const handle = username.startsWith('@') ? username : '@'+username;
+  if(!connectedState[platformKey].includes(handle)){
+    connectedState[platformKey].push(handle);
+  }
+  renderPlatformAccounts(platformKey);
+
+  const box = document.getElementById('connect-modal-box');
+  box.innerHTML = `
+    <div style="text-align:center;padding:8px 0;">
+      <div class="cm-success-icon">✓</div>
+      <p class="cm-eyebrow" style="text-align:center;">Success</p>
+      <div class="cm-success-title">${platformName} Connected!</div>
+      <p class="cm-success-msg">Account <strong>${handle}</strong> has been successfully linked to your Clipency profile.</p>
+      <button class="cm-btn-verify" style="width:100%;justify-content:center;" onclick="closeConnectModal()">Done</button>
+    </div>`;
+  showToast(`✓ ${platformName} connected as ${handle}`);
 }
 
 document.getElementById('connect-modal').addEventListener('click', function(e){
   if(e.target === this){ clearCountdown(); closeConnectModal(); }
 });
 
-// Load real profile data from Supabase
-async function loadProfileFromSupabase(){
-  try{
-    const sb=window.clipencySupabase||window.supabaseClient;
-    if(!sb)return;
-    const{data:{user},error:authErr}=await sb.auth.getUser();
-    if(authErr||!user)return;
-
-    // Load profile row
-    const{data:profile}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-    if(!profile)return;
-
-    const fullName=(profile.full_name||profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||user.email?.split('@')[0]||'Clipper').trim();
-    const firstName=profile.first_name||fullName.split(' ')[0]||'';
-    const lastName=profile.last_name||fullName.split(' ').slice(1).join(' ')||'';
-    const username=profile.username||'';
-    const email=profile.email||user.email||'';
-    const displayName=profile.display_name||fullName;
-    const initials=(fullName.split(' ').map(w=>w[0]||'').join('').slice(0,2)||'C').toUpperCase();
-
-    // Update name/email wherever shown
-    document.querySelectorAll('[data-user-name],[class*="user-name"],[id*="user-name"]').forEach(el=>el.textContent=fullName);
-    document.querySelectorAll('[data-user-email],[class*="user-email"]').forEach(el=>el.textContent=email);
-    document.querySelectorAll('[data-user-initials],[class*="avatar"],[class*="initials"]').forEach(el=>{if(el.textContent.length<=2)el.textContent=initials;});
-
-    // Profile section fields
-    const setById=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-    const setValById=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
-
-    // Display name label
-    document.querySelectorAll('[data-field="display_name"],[id*="display-name"],[id*="displayname"]').forEach(el=>el.textContent=displayName);
-    // Username chip
-    document.querySelectorAll('[data-field="username"],[id*="username-val"],[id*="username-display"]').forEach(el=>el.textContent='@'+username);
-    // Email field
-    document.querySelectorAll('[data-field="email"]').forEach(el=>el.textContent=email);
-
-    // Sidebar user info
-    document.querySelectorAll('.sb-user-name,.user-display-name,[class*="sidebar"] [class*="name"]').forEach(el=>{
-      if(el.textContent.length<40)el.textContent=fullName;
-    });
-    document.querySelectorAll('.sb-user-role,.user-role').forEach(el=>el.textContent=profile.role||'Clipper');
-
-    // Sidebar avatar initials
-    document.querySelectorAll('.sb-avatar,.user-avatar,[class*="avatar-initials"]').forEach(el=>{
-      if(el.children.length===0)el.textContent=initials;
-    });
-
-    // Edit profile form fields
-    setValById('edit-first-name',firstName);
-    setValById('edit-last-name',lastName);
-    setValById('edit-display-name',displayName);
-    setValById('edit-username',username);
-    setValById('edit-email',email);
-    document.querySelectorAll('input[name="first_name"],input[placeholder*="first"]').forEach(el=>el.value=firstName);
-    document.querySelectorAll('input[name="last_name"],input[placeholder*="last"]').forEach(el=>el.value=lastName);
-    document.querySelectorAll('input[name="display_name"]').forEach(el=>el.value=displayName);
-    document.querySelectorAll('input[name="username"]').forEach(el=>el.value=username);
-
-    // Load real earnings stats from clip_submissions
-    const[{data:subs},{data:payReqs}]=await Promise.all([
-      sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
-      sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
-    ]);
-    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count)||0),0);
-    const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
-    const totalWithdrawn=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
-    const availBal=Math.max(totalEarned-totalWithdrawn,0);
-
-    const fmtNum=n=>n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toString();
-    const fmtMoney=n=>'₹'+Number(n).toLocaleString('en-IN');
-
-    // Update stats wherever they appear
-    document.querySelectorAll('[data-stat="total-views"],[id*="total-views"],[id*="totalviews"]').forEach(el=>el.textContent=fmtNum(totalViews));
-    document.querySelectorAll('[data-stat="total-earned"],[id*="total-earned"],[id*="totalearned"]').forEach(el=>el.textContent=fmtMoney(totalEarned));
-    document.querySelectorAll('[data-stat="available-balance"],[id*="available-balance"],[id*="availbal"]').forEach(el=>el.textContent=fmtMoney(availBal));
-
-    // Also set any text node that shows "0" for views/earned in performance section
-    document.querySelectorAll('.perf-val,.stat-val,[class*="perf-value"],[class*="stat-value"]').forEach(el=>{
-      const label=el.previousElementSibling?.textContent?.toLowerCase()||el.closest('[class*="stat"]')?.querySelector('[class*="label"]')?.textContent?.toLowerCase()||'';
-      if(label.includes('view'))el.textContent=fmtNum(totalViews);
-      if(label.includes('earn'))el.textContent=fmtMoney(totalEarned);
-      if(label.includes('balance'))el.textContent=fmtMoney(availBal);
-    });
-
-    console.log('[Clipency] Profile loaded:',fullName,'| Earned:',totalEarned,'| Views:',totalViews);
-  }catch(e){console.warn('loadProfileFromSupabase:',e.message);}
-}
-
-// Init platform account lists — load from Supabase
-async function loadAccountsFromSupabase(){
-  try{
-    const sb=window.clipencySupabase||window.supabaseClient;
-    if(!sb)return;
-    const{data:{user}}=await sb.auth.getUser();
-    if(!user)return;
-    const{data:accounts}=await sb.from('connected_accounts').select('*').eq('user_id',user.id);
-    if(!accounts?.length)return;
-    accounts.forEach(a=>{
-      const pk=(a.platform||'').toLowerCase();
-      const handle=a.handle||a.username||'';
-      if(!handle)return;
-      if(a.status==='verified'||a.is_verified===true){
-        if(connectedState[pk]!==undefined&&!connectedState[pk].includes(handle))
-          connectedState[pk].push(handle);
-        if(pendingVerifications[pk])
-          pendingVerifications[pk]=pendingVerifications[pk].filter(p=>p.handle!==handle);
-      }else if(a.status==='pending'){
-        if(pendingVerifications[pk]!==undefined&&!pendingVerifications[pk].find(p=>p.handle===handle))
-          pendingVerifications[pk].push({handle,status:'pending',platformName:a.platform});
-      }
-    });
-    ['tiktok','instagram','youtube'].forEach(k=>renderPlatformAccounts(k));
-  }catch(e){console.warn('loadAccountsFromSupabase:',e.message);}
-}
+// Init platform account lists on load
 ['tiktok','instagram','youtube'].forEach(k => renderPlatformAccounts(k));
-// Load real data from Supabase after page ready
-setTimeout(loadAccountsFromSupabase, 800);
-setTimeout(loadProfileFromSupabase, 400);
 
 
 
@@ -4018,5 +4023,773 @@ window.addEventListener('load',()=>{
   renderWallet();
 });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabaseClient.js?v=clipper-v4"></script>
+<script>
+/* ===== CLIPENCY V4 AUTH + ROUTE GUARD ===== */
+(function(){
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if(el && value) el.textContent = value;
+  }
+
+  function initials(value){
+    const raw = String(value || "C").trim();
+    const clean = raw.includes("@") ? raw.split("@")[0] : raw;
+    const parts = clean.replace(/[._-]+/g, " ").split(/\s+/).filter(Boolean);
+    if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return (parts[0] || "C")[0].toUpperCase();
+  }
+
+  async function hydrateUser(){
+    const client = getClient();
+    if(!client || !client.auth || !client.auth.getSession) return;
+
+    try {
+      const { data } = await client.auth.getSession();
+      const session = data && data.session;
+
+      if(!session || !session.user){
+        window.location.replace("/login/");
+        return;
+      }
+
+      const user = session.user;
+      const meta = user.user_metadata || {};
+      const name = meta.full_name || meta.name || meta.display_name || user.email || "Clipency User";
+      const email = user.email || "";
+      const av = initials(name || email);
+
+      ["sb-name","user-name-camps","profile-display-name","pi-display-name"].forEach(id => setText(id, name));
+      setText("profile-email", email);
+      ["sb-avatar","user-avatar","profile-avatar"].forEach(id => setText(id, av));
+
+      const signout = document.getElementById("btn-signout");
+      if(signout){
+        signout.addEventListener("click", async function(e){
+          e.preventDefault();
+          try { await client.auth.signOut(); } catch(err){}
+          window.location.replace("/login/");
+        }, true);
+      }
+    } catch(err) {
+      console.warn("Clipency auth guard warning:", err);
+    }
+  }
+
+  function openRouteSection(){
+    const path = window.location.pathname.replace(/\/+$/, "");
+    const map = {
+      "/campaigns": "campaigns",
+      "/stats": "stats",
+      "/payouts": "payouts",
+      "/wallet": "wallet",
+      "/profile": "profile",
+      "/dashboard": "campaigns"
+    };
+    const section = map[path] || "campaigns";
+    setTimeout(function(){
+      if(typeof navigate === "function") navigate(section);
+    }, 80);
+  }
+
+  window.addEventListener("load", function(){
+    hydrateUser();
+    openRouteSection();
+  });
+})();
+</script>
+
+
+<script>
+/* ===== CLIPENCY V4 HARD ROUTE SYNC ===== */
+(function(){
+  const ROUTE_BY_SECTION = {
+    campaigns: "/campaigns",
+    stats: "/stats",
+    payouts: "/payouts",
+    wallet: "/wallet",
+    profile: "/profile"
+  };
+
+  const SECTION_BY_ROUTE = {
+    "/campaigns": "campaigns",
+    "/stats": "stats",
+    "/payouts": "payouts",
+    "/wallet": "wallet",
+    "/profile": "profile",
+    "/dashboard": "campaigns",
+    "/dashboard.html": "campaigns"
+  };
+
+  const TITLE_BY_SECTION = {
+    campaigns: "Clipency — Campaigns",
+    stats: "Clipency — Stats",
+    payouts: "Clipency — Payouts",
+    wallet: "Clipency — Wallet",
+    profile: "Clipency — Profile"
+  };
+
+  function cleanPath(){
+    return window.location.pathname.replace(/\/+$/, "") || "/campaigns";
+  }
+
+  function sectionFromPath(){
+    return SECTION_BY_ROUTE[cleanPath()] || "campaigns";
+  }
+
+  function manualSectionSwitch(section){
+    document.querySelectorAll(".section").forEach(function(el){
+      el.classList.remove("active");
+    });
+
+    document.querySelectorAll(".nav-item").forEach(function(el){
+      el.classList.remove("active");
+    });
+
+    const sectionEl = document.getElementById("section-" + section);
+    if(sectionEl) sectionEl.classList.add("active");
+
+    const navEl = document.getElementById("nav-" + section);
+    if(navEl) navEl.classList.add("active");
+
+    try {
+      window.currentSection = section;
+    } catch(e) {}
+
+    try {
+      if(section === "campaigns"){
+        if(typeof renderCampaigns === "function") renderCampaigns();
+        if(typeof hideCampDetail === "function") hideCampDetail();
+      }
+      if(section === "stats" && typeof renderStats === "function") renderStats();
+      if(section === "payouts" && typeof renderPayouts === "function") renderPayouts();
+      if(section === "wallet" && typeof renderWallet === "function") renderWallet();
+    } catch(e) {
+      console.warn("Route render warning:", e);
+    }
+
+    document.title = TITLE_BY_SECTION[section] || "Clipency";
+  }
+
+  function goToSection(section, pushUrl){
+    if(!ROUTE_BY_SECTION[section]) section = "campaigns";
+
+    manualSectionSwitch(section);
+
+    const wantedPath = ROUTE_BY_SECTION[section];
+    if(pushUrl && cleanPath() !== wantedPath){
+      history.pushState({ section: section }, "", wantedPath);
+    }
+  }
+
+  function bindSidebarRoutes(){
+    document.querySelectorAll(".nav-item[data-section]").forEach(function(btn){
+      if(btn.dataset.routeBound === "true") return;
+      btn.dataset.routeBound = "true";
+
+      btn.addEventListener("click", function(e){
+        const section = btn.getAttribute("data-section");
+        if(!section) return;
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        goToSection(section, true);
+      }, true);
+    });
+  }
+
+  window.addEventListener("popstate", function(){
+    goToSection(sectionFromPath(), false);
+  });
+
+  function boot(){
+    bindSidebarRoutes();
+    goToSection(sectionFromPath(), false);
+
+    setTimeout(function(){
+      bindSidebarRoutes();
+      goToSection(sectionFromPath(), false);
+    }, 150);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+
+  window.addEventListener("load", boot);
+})();
+</script>
+
+
+<script>
+/* ===== CLIPENCY V4 LIVE CAMPAIGNS FROM SUPABASE ===== */
+(function(){
+  const DEFAULT_PLATFORMS = ["Instagram", "TikTok", "YouTube Shorts"];
+
+  const ICON_BY_TYPE = {
+    music: "🎵",
+    gaming: "🎮",
+    ugc: "📱",
+    sports: "🏆",
+    clipping: "✂️",
+    edits: "✨",
+    edit: "✨",
+    general: "🎬"
+  };
+
+  const COLOR_BY_TYPE = {
+    music: "#C4956A",
+    gaming: "#6EE7B7",
+    ugc: "#A78BFA",
+    sports: "#60A5FA",
+    clipping: "#F472B6",
+    edits: "#FBBF24",
+    general: "#C4956A"
+  };
+
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function cleanText(){
+    for(const value of arguments){
+      if(value !== null && value !== undefined && String(value).trim() !== ""){
+        return String(value).trim();
+      }
+    }
+    return "";
+  }
+
+  function num(){
+    for(const value of arguments){
+      const n = Number(value);
+      if(Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  }
+
+  function parseList(value, fallback){
+    if(Array.isArray(value)){
+      return value.map(x => String(x).trim()).filter(Boolean);
+    }
+
+    if(typeof value === "string" && value.trim()){
+      const parts = value
+        .split(/\n|,|;|\|/g)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      return parts.length ? parts : [value.trim()];
+    }
+
+    return fallback || [];
+  }
+
+  function safeImageUrl(value){
+    const url = String(value || "").trim();
+    if(!url) return null;
+
+    const isHttp = /^https?:\/\//i.test(url) || url.startsWith("/");
+    const looksLikeImage = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(url);
+
+    if(isHttp && looksLikeImage) return url;
+    return null;
+  }
+
+  function formatCompactViews(value){
+    const n = Number(value || 0);
+    if(!Number.isFinite(n) || n <= 0) return "0";
+    if(n >= 1000000000) return (n / 1000000000).toFixed(1).replace(".0", "") + "B";
+    if(n >= 1000000) return (n / 1000000).toFixed(1).replace(".0", "") + "M";
+    if(n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "K";
+    return String(Math.round(n));
+  }
+
+  function creatorInitials(name){
+    const raw = String(name || "Creator").trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return raw.slice(0, 2).toUpperCase();
+  }
+
+  function makeSpark(seedA, seedB, index){
+    const base = Math.max(12, Number(seedA || 0) / 1000 + Number(seedB || 0) / 1000 + index * 7);
+    return [
+      Math.round(base * 0.35 + 12),
+      Math.round(base * 0.48 + 18),
+      Math.round(base * 0.62 + 20),
+      Math.round(base * 0.74 + 28),
+      Math.round(base * 0.88 + 34),
+      Math.round(base * 1.03 + 42),
+      Math.round(base * 1.18 + 50)
+    ];
+  }
+
+  function isVisibleCampaign(row){
+    const status = String(row.status || "active").toLowerCase();
+    return !["archived", "deleted", "inactive", "draft"].includes(status);
+  }
+
+  function normalizeCampaign(row, index, leaderboardRows){
+    const id = String(row.id);
+    const primaryType = cleanText(row.type, row.campaign_type, row.category, row.genre, "General");
+    const typeKey = primaryType.toLowerCase();
+
+    const rpm = num(row.rpm, row.rate_per_million_usd);
+    const budget = num(row.budget_usd, row.budget);
+    const spent = num(row.spent_usd, row.budget_used);
+
+    const campaignLeaders = leaderboardRows
+      .filter(x => String(x.campaign_id) === id)
+      .sort((a, b) => Number(b.total_views || 0) - Number(a.total_views || 0));
+
+    const totalViews = campaignLeaders.reduce((sum, x) => sum + Number(x.total_views || 0), 0);
+    const approvedCreators = campaignLeaders.length;
+
+    const performers = campaignLeaders.slice(0, 5).map(x => {
+      const creatorName = cleanText(x.creator_name, x.handle, "Creator");
+      return {
+        name: creatorName,
+        handle: x.handle ? "@" + String(x.handle).replace(/^@/, "") : "@clipper",
+        views: formatCompactViews(x.total_views),
+        earn: "$" + Number(x.total_earnings || 0).toLocaleString(),
+        earnUsd: Number(x.total_earnings || 0),
+        initials: creatorInitials(creatorName)
+      };
+    });
+
+    const platforms = parseList(row.platform, DEFAULT_PLATFORMS);
+    const reqs = parseList(row.requirements, ["Submit your published content link with account handle."]);
+
+    const tags = [];
+    const dbGenre = cleanText(row.genre);
+    if(dbGenre && dbGenre.toLowerCase() !== primaryType.toLowerCase()) tags.push(dbGenre);
+    if(row.is_new) tags.push("New");
+
+    return {
+      id,
+      title: cleanText(row.title, "Untitled Campaign"),
+      description: cleanText(row.description, ""),
+      icon: ICON_BY_TYPE[typeKey] || ICON_BY_TYPE.general,
+      iconType: typeKey,
+      genre: primaryType,
+      payout: "$" + rpm.toLocaleString() + " / 1M views",
+      rpmUsd: rpm,
+      budget,
+      spent,
+      platforms,
+      reqs,
+      sparkData: makeSpark(spent, budget, index),
+      views: totalViews > 0 ? formatCompactViews(totalViews) : "0",
+      creators: approvedCreators,
+      clippers: approvedCreators,
+      banner: safeImageUrl(row.asset_url),
+      tags,
+      performers,
+      chartColor: row.chart_color || COLOR_BY_TYPE[typeKey] || COLOR_BY_TYPE.general,
+      raw: row
+    };
+  }
+
+  async function waitForClient(){
+    for(let i = 0; i < 30; i++){
+      const client = getClient();
+      if(client && client.from && client.auth) return client;
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    return null;
+  }
+
+  async function loadLiveCampaigns(){
+    const client = await waitForClient();
+
+    if(!client){
+      console.warn("Clipency live campaigns: Supabase client not found.");
+      return;
+    }
+
+    try{
+      const { data: campaignRows, error: campaignError } = await client
+        .from("campaigns")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if(campaignError) throw campaignError;
+
+      let leaderboardRows = [];
+      const { data: leaderData, error: leaderError } = await client
+        .from("campaign_leaderboard_public")
+        .select("*");
+
+      if(!leaderError && Array.isArray(leaderData)){
+        leaderboardRows = leaderData;
+      }
+
+      const liveCampaigns = (campaignRows || [])
+        .filter(isVisibleCampaign)
+        .map((row, index) => normalizeCampaign(row, index, leaderboardRows));
+
+      CAMPAIGNS.length = 0;
+      CAMPAIGNS.push(...liveCampaigns);
+
+      window.__clipencyLiveCampaignsLoaded = true;
+      window.__clipencyLiveCampaignCount = liveCampaigns.length;
+
+      if(typeof renderCampaigns === "function"){
+        renderCampaigns("All");
+      }
+
+      console.log("Clipency live campaigns loaded:", liveCampaigns.length);
+    }catch(err){
+      console.error("Clipency live campaigns failed:", err);
+      if(typeof showToast === "function"){
+        showToast("");
+      }
+    }
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(loadLiveCampaigns, 450);
+  });
+})();
+</script>
+
+
+<script>
+/* ===== CLIPENCY CAMPAIGN ACCURACY BRIDGE ===== */
+(function(){
+  function getClient(){
+    return window.clipencySupabase || window.supabaseClient || window.sbClient || null;
+  }
+
+  function n(value){
+    const x = Number(value);
+    return Number.isFinite(x) ? x : 0;
+  }
+
+  function clean(value, fallback){
+    const v = String(value ?? "").trim();
+    return v || fallback || "";
+  }
+
+  function safeImageUrl(value){
+    const url = String(value || "").trim();
+    if(!url) return null;
+    const validStart = /^https?:\/\//i.test(url) || url.startsWith("/");
+    const imageLike = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(url);
+    return validStart && imageLike ? url : null;
+  }
+
+  function compact(value){
+    const x = n(value);
+    if(x >= 1000000000) return (x / 1000000000).toFixed(1).replace(".0","") + "B";
+    if(x >= 1000000) return (x / 1000000).toFixed(1).replace(".0","") + "M";
+    if(x >= 1000) return (x / 1000).toFixed(1).replace(".0","") + "K";
+    return String(Math.round(x));
+  }
+
+  function parseList(value){
+    if(Array.isArray(value)) return value.map(String).map(x => x.trim()).filter(Boolean);
+    const raw = String(value || "").trim();
+    if(!raw) return ["Instagram", "TikTok", "YouTube Shorts"];
+    return raw.split(/\n|,|;|\|/g).map(x => x.trim()).filter(Boolean);
+  }
+
+  function iconFor(row){
+    const key = clean(row.type, row.category || row.genre || "general").toLowerCase();
+    if(key.includes("gaming")) return "🎮";
+    if(key.includes("sport")) return "🏆";
+    if(key.includes("edit")) return "✨";
+    if(key.includes("ugc")) return "📱";
+    if(key.includes("clip")) return "✂️";
+    if(key.includes("music")) return "🎵";
+    return "🎬";
+  }
+
+  function normalize(row, leaderboard){
+    const id = String(row.id);
+    const leaders = leaderboard
+      .filter(x => String(x.campaign_id) === id)
+      .sort((a,b) => n(b.total_views) - n(a.total_views));
+
+    const approvedViews = n(row.approved_views) || leaders.reduce((s,x) => s + n(x.total_views), 0);
+    const approvedClippers = n(row.approved_clippers) || leaders.length;
+
+    const rpm = n(row.rpm);
+    const budget = n(row.budget);
+    const spent = n(row.spent);
+
+    return {
+      id,
+      title: clean(row.title, "Untitled Campaign"),
+      description: "",
+      icon: iconFor(row),
+      iconType: clean(row.type, row.category || "General").toLowerCase(),
+      genre: clean(row.category, row.genre || row.type || "General"),
+      payout: "$" + rpm.toLocaleString() + " / 1M views",
+      rpmUsd: rpm,
+      budget,
+      spent,
+      platforms: parseList(row.platform),
+      reqs: parseList(row.requirements),
+      sparkData: [12, 22, 34, 48, 63, 79, 98],
+      views: compact(approvedViews),
+      totalViews: approvedViews,
+      creators: approvedClippers,
+      clippers: approvedClippers,
+      banner: safeImageUrl(row.asset_url),
+      tags: row.is_new ? ["New"] : [],
+      chartColor: row.chart_color || "#C4956A",
+      performers: leaders.slice(0, 5).map(x => ({
+        name: clean(x.creator_name, "Creator"),
+        handle: x.handle ? "@" + String(x.handle).replace(/^@/,"") : "@clipper",
+        views: compact(x.total_views),
+        earnUsd: n(x.total_earnings),
+        earn: "$" + n(x.total_earnings).toLocaleString(),
+        initials: clean(x.creator_name, "CR").split(/\s+/).map(p => p[0]).join("").slice(0,2).toUpperCase()
+      })),
+      raw: row
+    };
+  }
+
+  async function waitClient(){
+    for(let i=0; i<30; i++){
+      const c = getClient();
+      if(c && c.from) return c;
+      await new Promise(r => setTimeout(r, 150));
+    }
+    return null;
+  }
+
+  function enhanceBanners(){
+    if(!window.CAMPAIGNS && typeof CAMPAIGNS === "undefined") return;
+
+    const list = window.CAMPAIGNS || CAMPAIGNS || [];
+    list.forEach(c => {
+      if(!c.banner) return;
+
+      document.querySelectorAll('[onclick*="' + c.id + '"]').forEach(card => {
+        const icon = card.querySelector(".camp-icon, .campaign-icon, .card-icon");
+        if(icon && !icon.querySelector("img")){
+          icon.innerHTML = '<img class="cx-campaign-icon-img" src="' + c.banner + '" alt="">';
+        }
+
+        const bannerBox = Array.from(card.querySelectorAll("*")).find(el =>
+          /campaign banner/i.test(el.textContent || "")
+        );
+
+        if(bannerBox){
+          const box = bannerBox.closest("div") || bannerBox;
+          if(!box.querySelector("img")){
+            box.innerHTML = '<img class="cx-campaign-banner-img" src="' + c.banner + '" alt="Campaign banner">';
+          }
+        }
+      });
+    });
+  }
+
+  async function loadAccurateCampaigns(){
+    const client = await waitClient();
+    if(!client) return;
+
+    try{
+      const { data: rows, error } = await client
+        .from("campaigns_clipper_public")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if(error) throw error;
+
+      const { data: leaderboard } = await client
+        .from("campaign_leaderboard_public")
+        .select("*");
+
+      const campaigns = (rows || [])
+        .filter(x => !["archived","deleted","inactive","draft"].includes(String(x.status || "active").toLowerCase()))
+        .map(x => normalize(x, leaderboard || []));
+
+      if(typeof CAMPAIGNS !== "undefined"){
+        CAMPAIGNS.length = 0;
+        CAMPAIGNS.push(...campaigns);
+      }
+
+      window.CAMPAIGNS = campaigns;
+      window.__clipencyAccurateCampaigns = campaigns;
+
+      if(typeof renderCampaigns === "function") renderCampaigns("All");
+
+      setTimeout(enhanceBanners, 80);
+      setTimeout(enhanceBanners, 300);
+
+      console.log("Accurate campaigns loaded:", campaigns.length);
+    }catch(err){
+      console.error("Accurate campaign load failed:", err);
+    }
+  }
+
+  function wrapDetail(){
+    if(typeof showCampDetail === "function" && !showCampDetail.__cxWrapped){
+      const original = showCampDetail;
+      window.showCampDetail = function(id){
+        const result = original.apply(this, arguments);
+        setTimeout(enhanceBanners, 80);
+        setTimeout(enhanceBanners, 300);
+        return result;
+      };
+      window.showCampDetail.__cxWrapped = true;
+    }
+  }
+
+  if(!document.getElementById("cx-campaign-accuracy-style")){
+    const style = document.createElement("style");
+    style.id = "cx-campaign-accuracy-style";
+    style.textContent = `
+      .cx-campaign-icon-img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        border-radius:inherit;
+        display:block;
+      }
+      .cx-campaign-banner-img{
+        width:100%;
+        height:100%;
+        min-height:140px;
+        object-fit:cover;
+        border-radius:18px;
+        display:block;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(function(){
+      wrapDetail();
+      loadAccurateCampaigns();
+    }, 500);
+  });
+})();
+</script>
+
+
+<script>
+/* ===== CLIPENCY CAMPAIGN BANNER DISPLAY FIX ===== */
+(function(){
+  function getCampaigns(){
+    try{
+      if(window.__clipencyAccurateCampaigns && window.__clipencyAccurateCampaigns.length) return window.__clipencyAccurateCampaigns;
+      if(window.CAMPAIGNS && window.CAMPAIGNS.length) return window.CAMPAIGNS;
+      if(typeof CAMPAIGNS !== "undefined" && CAMPAIGNS.length) return CAMPAIGNS;
+    }catch(e){}
+    return [];
+  }
+
+  function safeUrl(url){
+    const value = String(url || "").trim();
+    if(!value) return "";
+    if(value.startsWith("/") || /^https?:\/\//i.test(value)) return value;
+    return "";
+  }
+
+  function enhance(){
+    const campaigns = getCampaigns();
+
+    campaigns.forEach(c => {
+      const banner = safeUrl(c.banner || c.asset_url || (c.raw && c.raw.asset_url));
+      if(!banner) return;
+
+      const id = String(c.id);
+      const title = String(c.title || "").trim();
+
+      const candidates = Array.from(document.querySelectorAll(".camp-card, .campaign-card, [onclick]")).filter(card => {
+        const onclick = String(card.getAttribute("onclick") || "");
+        const text = String(card.textContent || "");
+        return onclick.includes(id) || (title && text.includes(title));
+      });
+
+      candidates.forEach(card => {
+        const icon = card.querySelector(".camp-icon, .campaign-icon, .card-icon");
+        if(icon && !icon.querySelector("img")){
+          icon.innerHTML = `<img class="cx-campaign-thumb-img" src="${banner}" alt="">`;
+        }
+
+        const bannerAreas = Array.from(card.querySelectorAll("div, span, p")).filter(el =>
+          /campaign banner/i.test(String(el.textContent || ""))
+        );
+
+        bannerAreas.forEach(area => {
+          const box = area.closest("div") || area;
+          box.innerHTML = `<img class="cx-campaign-banner-img" src="${banner}" alt="Campaign banner">`;
+        });
+      });
+
+      const detailAreas = Array.from(document.querySelectorAll("div, span, p")).filter(el =>
+        /campaign banner/i.test(String(el.textContent || ""))
+      );
+
+      detailAreas.forEach(area => {
+        const nearTitle = document.body.textContent.includes(title);
+        if(!nearTitle) return;
+        const box = area.closest("div") || area;
+        if(!box.querySelector("img")){
+          box.innerHTML = `<img class="cx-campaign-banner-img" src="${banner}" alt="Campaign banner">`;
+        }
+      });
+    });
+  }
+
+  if(!document.getElementById("cx-campaign-banner-display-style")){
+    const style = document.createElement("style");
+    style.id = "cx-campaign-banner-display-style";
+    style.textContent = `
+      .cx-campaign-thumb-img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        border-radius:inherit;
+        display:block;
+      }
+      .cx-campaign-banner-img{
+        width:100%;
+        height:100%;
+        min-height:140px;
+        object-fit:cover;
+        border-radius:18px;
+        display:block;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  window.addEventListener("load", function(){
+    setTimeout(enhance, 500);
+    setTimeout(enhance, 1200);
+    setTimeout(enhance, 2500);
+  });
+
+  document.addEventListener("click", function(){
+    setTimeout(enhance, 120);
+    setTimeout(enhance, 450);
+  }, true);
+})();
+</script>
+
+<script defer src="/admin/admin-session-logger.js?v=logs-1"></script>
+<script defer src="/clipency-force-leads-submit.js?v=force-leads-submit-1"></script>
+<script defer src="/clipency-leads-direct-rest.js?v=direct-rest-leads-1"></script>
+<script defer src="/clipency-launch-passive.js?v=launch-passive-20260510051936"></script>
+<script defer src="/clipency-sidebar-accounts-link.js?v=accounts-20260510135019"></script>
+
+<script defer src="/clipency-stats-dynamic.js?v=stats-dynamic-20260510145026"></script>
 </body>
 </html>
