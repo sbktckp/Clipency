@@ -3,6 +3,38 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/signup",
+      "destination": "/auth/signup/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/auth/login/index.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/auth/dashboard.html"
+    },
+    {
+      "source": "/wallet",
+      "destination": "/auth/wallet/index.html"
+    },
+    {
+      "source": "/payouts",
+      "destination": "/auth/payouts/index.html"
+    },
+    {
+      "source": "/stats",
+      "destination": "/auth/stats/index.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/auth/profile/index.html"
+    },
+    {
+      "source": "/campaigns",
+      "destination": "/auth/campaigns/index.html"
+    },
+    {
       "source": "/clipency-profile-supabase.js",
       "destination": "/auth/clipency-profile-supabase.js"
     },
