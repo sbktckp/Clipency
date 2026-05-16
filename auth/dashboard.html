@@ -2589,16 +2589,7 @@ function submitClip(){
 
 
 // ── STATS DATA ──
-const ALL_SUBMISSIONS = [
-  {camp:'Doja Cat x Bebe Rexha',  platform:'TikTok',    views:'284K', earn:'$284', earnUsd:284,  status:'Approved', url:'https://tiktok.com/@ayushbera/video/123456'},
-  {camp:'Geometry Dash - Slowed', platform:'YouTube',   views:'156K', earn:'$156', earnUsd:156,  status:'Approved', url:'https://youtube.com/shorts/abc123'},
-  {camp:'WoT Heat',               platform:'TikTok',    views:'420K', earn:'$420', earnUsd:420,  status:'Approved', url:'https://tiktok.com/@ayushbera/video/789012'},
-  {camp:'La Isla Bonita',         platform:'Instagram', views:'180K', earn:'$180', earnUsd:180,  status:'Approved', url:'https://instagram.com/reel/xyz456'},
-  {camp:'NBA Highlights',         platform:'YouTube',   views:'512K', earn:'$512', earnUsd:512,  status:'Approved', url:'https://youtube.com/shorts/nba789'},
-  {camp:'Soundcloud Rising',      platform:'TikTok',    views:'—',    earn:'—',    earnUsd:null, status:'Pending',  url:'https://tiktok.com/@ayushbera/video/pending1'},
-  {camp:'Dom Dolla [SPORTS]',     platform:'Instagram', views:'210K', earn:'—',    earnUsd:null, status:'Rejected', url:'https://instagram.com/reel/ddi9x', reason:'Content contained player footage from a non-qualifying match. Only footage from official league games dated after Jan 1 2026 is accepted per campaign brief.', appealed:false},
-  {camp:'Soundcloud Rising',      platform:'TikTok',    views:'84K',  earn:'—',    earnUsd:null, status:'Rejected', url:'https://tiktok.com/@ayushbera/video/rej99', reason:'The clip did not meet the minimum duration requirement of 30 seconds. Additionally, the official audio track was not used — a remixed version was detected which violates campaign rules.', appealed:false},
-];
+let ALL_SUBMISSIONS = [];
 
 // ── CHART STATE ──
 let _chartMetric  = 'earnings';
@@ -2607,21 +2598,21 @@ let _chartAnim    = 0; // 0→1 progress
 let _chartAnimRAF = null;
 let _openAppealIdx = null;
 
-const CHART_DATA = {
+let CHART_DATA = {
   earnings:{
-    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],  values:[48,72,55,90,110,85,140], prefix:'$'},
-    '30d': {labels:['Apr 1','Apr 8','Apr 15','Apr 22','Apr 30'], values:[120,280,450,320,680],    prefix:'$'},
-    '90d': {labels:['Feb','Mar','Apr'],                          values:[980,1340,2090],           prefix:'$'},
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0], prefix:'$'},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0],        prefix:'$'},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0],          prefix:'$'},
   },
   views:{
-    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],  values:[120,280,220,450,600,380,720],  prefix:'',suffix:'K'},
-    '30d': {labels:['Apr 1','Apr 8','Apr 15','Apr 22','Apr 30'], values:[800,1560,2200,1800,4200],       prefix:'',suffix:'K'},
-    '90d': {labels:['Feb','Mar','Apr'],                          values:[5200,8100,16320],               prefix:'',suffix:'K'},
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0], prefix:'',suffix:'K'},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0],        prefix:'',suffix:'K'},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0],          prefix:'',suffix:'K'},
   },
   submissions:{
-    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],  values:[1,0,1,2,1,0,2]},
-    '30d': {labels:['Apr 1','Apr 8','Apr 15','Apr 22','Apr 30'], values:[2,3,1,4,2]},
-    '90d': {labels:['Feb','Mar','Apr'],                          values:[4,7,8]},
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0]},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0]},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0]},
   },
 };
 
@@ -2906,17 +2897,18 @@ function switchKpiPeriod(p){
 }
 
 // ── STATS RENDER ENTRY ──
-const TOTAL_EARNED_USD = 3280; // sum of all approved earnings in USD
+let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
 
 function renderStats(){
-  // Update Total Earned KPI with current currency
-  const el = document.getElementById('stat-total-earned');
-  if(el) el.textContent = fmt(TOTAL_EARNED_USD);
+  const el=document.getElementById('stat-total-earned');
+  if(el)el.textContent=fmt(TOTAL_EARNED_USD);
   animateChart();
   setTimeout(initChartHover,100);
-  _myPage=0; _rejPage=0;
+  _myPage=0;_rejPage=0;
   renderMySubmissions();
   renderRejectedSubmissions();
+  // Load real data
+  loadStatsFromSupabase();
 }
 
 // ── PAGINATION HELPERS ──
