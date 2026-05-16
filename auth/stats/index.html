@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Clipency — Clipper Dashboard</title>
+<title>Clipency</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -4791,5 +4791,33 @@ window.addEventListener('load',()=>{
 <script defer src="/clipency-sidebar-accounts-link.js?v=accounts-20260510135019"></script>
 
 <script defer src="/clipency-stats-dynamic.js?v=stats-dynamic-20260510145026"></script>
+<script>
+(function(){
+  var sectionMap={"/campaigns":"campaigns","/dashboard":"campaigns","/stats":"stats","/payouts":"payouts","/wallet":"wallet","/profile":"profile"};
+  var titleMap={"campaigns":"Clipency | Campaigns","stats":"Clipency | Stats","payouts":"Clipency | Payouts","wallet":"Clipency | Wallet","profile":"Clipency | Profile"};
+  var path=window.location.pathname.replace(/\/$/,"");
+  var section=sectionMap[path]||"campaigns";
+  window.addEventListener("load",function(){
+    setTimeout(function(){
+      if(typeof navigate==="function"){navigate(section);document.title=titleMap[section]||"Clipency";}
+    },120);
+  });
+  document.addEventListener("DOMContentLoaded",function(){
+    var urlMap={campaigns:"/campaigns",stats:"/stats",payouts:"/payouts",wallet:"/wallet",profile:"/profile"};
+    document.querySelectorAll(".nav-item[data-section]").forEach(function(btn){
+      var sec=btn.dataset.section;
+      if(!urlMap[sec])return;
+      btn.addEventListener("click",function(){
+        history.pushState({section:sec},"",urlMap[sec]);
+        document.title=titleMap[sec]||"Clipency";
+      },true);
+    });
+    window.addEventListener("popstate",function(e){
+      var sec=(e.state&&e.state.section)||sectionMap[location.pathname.replace(/\/$/,"")]||"campaigns";
+      if(typeof navigate==="function"){navigate(sec);document.title=titleMap[sec]||"Clipency";}
+    });
+  });
+})();
+</script>
 </body>
 </html>
