@@ -12,11 +12,11 @@
     },
     {
       "source": "/dashboard",
-      "destination": "/auth/profile/index.html"
+      "destination": "/auth/profile"
     },
     {
       "source": "/campaigns",
-      "destination": "/auth/profile/index.html"
+      "destination": "/auth/profile"
     },
     {
       "source": "/profile",
@@ -24,15 +24,15 @@
     },
     {
       "source": "/stats",
-      "destination": "/auth/profile/index.html"
+      "destination": "/auth/profile"
     },
     {
       "source": "/payouts",
-      "destination": "/auth/profile/index.html"
+      "destination": "/auth/profile"
     },
     {
       "source": "/wallet",
-      "destination": "/auth/profile/index.html"
+      "destination": "/auth/profile"
     },
     {
       "source": "/workspace",
