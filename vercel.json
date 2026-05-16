@@ -2,180 +2,48 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    {
-      "source": "/signup",
-      "destination": "/auth/signup/index.html"
-    },
-    {
-      "source": "/login",
-      "destination": "/auth/login/index.html"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/auth/dashboard.html"
-    },
-    {
-      "source": "/wallet",
-      "destination": "/auth/wallet/index.html"
-    },
-    {
-      "source": "/payouts",
-      "destination": "/auth/payouts/index.html"
-    },
-    {
-      "source": "/stats",
-      "destination": "/auth/stats/index.html"
-    },
-    {
-      "source": "/profile",
-      "destination": "/auth/profile/index.html"
-    },
-    {
-      "source": "/campaigns",
-      "destination": "/auth/campaigns/index.html"
-    },
-    {
-      "source": "/clipency-profile-supabase.js",
-      "destination": "/auth/clipency-profile-supabase.js"
-    },
-    {
-      "source": "/clipency-admin-os.js",
-      "destination": "/auth/clipency-admin-os.js"
-    },
-    {
-      "source": "/login",
-      "destination": "/auth/login"
-    },
-    {
-      "source": "/signup",
-      "destination": "/auth/signup"
-    },
-    {
-      "source": "/workspace",
-      "destination": "/auth/workspace"
-    },
-    {
-      "source": "/campaigns",
-      "destination": "/auth/campaigns"
-    },
-    {
-      "source": "/profile",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/accounts",
-      "destination": "/auth/accounts"
-    },
-    {
-      "source": "/payouts",
-      "destination": "/auth/payouts"
-    },
-    {
-      "source": "/admin/:file+",
-      "destination": "/auth/admin/:file+"
-    },
-    {
-      "source": "/admin",
-      "destination": "/auth/admin"
-    },
-    {
-      "source": "/clipency-:rest*",
-      "destination": "/auth/clipency-:rest*"
-    },
-    {
-      "source": "/access-control.js",
-      "destination": "/auth/access-control.js"
-    },
-    {
-      "source": "/role-router.js",
-      "destination": "/auth/role-router.js"
-    },
-    {
-      "source": "/experience.js",
-      "destination": "/auth/experience.js"
-    },
-    {
-      "source": "/app.js",
-      "destination": "/auth/app.js"
-    },
-    {
-      "source": "/styles.css",
-      "destination": "/auth/styles.css"
-    },
-    {
-      "source": "/supabaseClient.js",
-      "destination": "/auth/supabaseClient.js"
-    },
-    {
-      "source": "/assets/:file*",
-      "destination": "/auth/assets/:file*"
-    }
+    { "source": "/login",                          "destination": "/auth/login" },
+    { "source": "/signup",                         "destination": "/auth/signup" },
+    { "source": "/dashboard",                      "destination": "/auth/dashboard" },
+    { "source": "/campaigns",                      "destination": "/auth/campaigns" },
+    { "source": "/profile",                        "destination": "/auth/profile" },
+    { "source": "/stats",                          "destination": "/auth/stats" },
+    { "source": "/payouts",                        "destination": "/auth/payouts" },
+    { "source": "/wallet",                         "destination": "/auth/wallet" },
+    { "source": "/workspace",                      "destination": "/auth/workspace" },
+    { "source": "/accounts",                       "destination": "/auth/accounts" },
+    { "source": "/admin",                          "destination": "/auth/admin" },
+    { "source": "/admin/:file+",                   "destination": "/auth/admin/:file+" },
+    { "source": "/review",                         "destination": "/auth/review" },
+    { "source": "/clipency-admin-os.js",           "destination": "/auth/clipency-admin-os.js" },
+    { "source": "/clipency-profile-supabase.js",   "destination": "/auth/clipency-profile-supabase.js" },
+    { "source": "/clipency-account-connect.js",    "destination": "/auth/clipency-account-connect.js" },
+    { "source": "/clipency-clip-submit.js",        "destination": "/auth/clipency-clip-submit.js" },
+    { "source": "/clipency-wallet.js",             "destination": "/auth/clipency-wallet.js" },
+    { "source": "/clipency-:rest*",                "destination": "/auth/clipency-:rest*" },
+    { "source": "/supabaseClient.js",              "destination": "/auth/supabaseClient.js" },
+    { "source": "/access-control.js",              "destination": "/auth/access-control.js" },
+    { "source": "/role-router.js",                 "destination": "/auth/role-router.js" },
+    { "source": "/experience.js",                  "destination": "/auth/experience.js" },
+    { "source": "/app.js",                         "destination": "/auth/app.js" },
+    { "source": "/styles.css",                     "destination": "/auth/styles.css" },
+    { "source": "/assets/:file*",                  "destination": "/auth/assets/:file*" }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Strict-Transport-Security",
-          "value": "max-age=31536000; includeSubDomains"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.supabase.co https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.app https://cdn.jsdelivr.net https://www.google-analytics.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
-        }
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
+        { "key": "X-Content-Type-Options",    "value": "nosniff" },
+        { "key": "X-Frame-Options",           "value": "DENY" },
+        { "key": "Referrer-Policy",           "value": "strict-origin-when-cross-origin" },
+        { "key": "Cross-Origin-Opener-Policy","value": "same-origin-allow-popups" },
+        { "key": "Content-Security-Policy",   "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.supabase.co https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.frankfurter.app https://cdn.jsdelivr.net https://www.google-analytics.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" }
       ]
     },
-    {
-      "source": "/",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, s-maxage=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, s-maxage=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).(js|css)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).(png|jpg|jpeg|webp|svg|ico|woff|woff2)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
+    { "source": "/",           "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] },
+    { "source": "/(.*).html",  "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] },
+    { "source": "/(.*).(js|css)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] },
+    { "source": "/(.*).(png|jpg|jpeg|webp|svg|ico|woff|woff2)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
   ]
 }
