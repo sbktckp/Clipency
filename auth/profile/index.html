@@ -2018,23 +2018,9 @@ const PERFORMERS = [
   {name:"Leo Martinez",handle:"@leomart",  views:"1.9M", earn:"$190", earnUsd:190},
 ];
 
-const TRANSACTIONS = [
-  {icon:"📎",desc:"Doja Cat x Bebe Rexha · TikTok",    date:"Apr 20, 2026",amount:"+$284",rawAmount:284,  status:"Paid"},
-  {icon:"📎",desc:"Geometry Dash - Slowed · YouTube",   date:"Apr 14, 2026",amount:"+$156",rawAmount:156,  status:"Paid"},
-  {icon:"📎",desc:"WoT Heat · TikTok",                  date:"Apr 7, 2026", amount:"+$420",rawAmount:420,  status:"Paid"},
-  {icon:"📎",desc:"La Isla Bonita · Instagram",         date:"Mar 28, 2026",amount:"+$180",rawAmount:180,  status:"Paid"},
-  {icon:"💸",desc:"Payout withdrawal",                  date:"Mar 25, 2026",amount:"-$800",rawAmount:-800, status:"Sent"},
-  {icon:"📎",desc:"NBA Highlights · YouTube",           date:"Mar 15, 2026",amount:"+$512",rawAmount:512,  status:"Paid"},
-];
+const TRANSACTIONS = [];
 
-const SUBMISSIONS = [
-  {camp:"Doja Cat x Bebe Rexha",platform:"TikTok",views:"284K",earn:"$284",status:"Approved",url:"https://tiktok.com/@ayushbera/video/123456"},
-  {camp:"Geometry Dash - Slowed",platform:"YouTube",views:"156K",earn:"$156",status:"Approved",url:"https://youtube.com/shorts/abc123"},
-  {camp:"WoT Heat",platform:"TikTok",views:"420K",earn:"$420",status:"Approved",url:"https://tiktok.com/@ayushbera/video/789012"},
-  {camp:"La Isla Bonita",platform:"Instagram",views:"180K",earn:"$180",status:"Approved",url:"https://instagram.com/reel/xyz456"},
-  {camp:"NBA Highlights",platform:"YouTube",views:"512K",earn:"$512",status:"Approved",url:"https://youtube.com/shorts/nba789"},
-  {camp:"Soundcloud Rising",platform:"TikTok",views:"—",earn:"—",status:"Pending",url:""},
-];
+const SUBMISSIONS = [];
 
 const PAYMENT_METHODS = [];
 
@@ -2106,8 +2092,8 @@ function navigate(section){
   if(navEl) navEl.classList.add('active');
   currentSection=section;
   if(section==='campaigns'){renderCampaigns();hideCampDetail();}
-  if(section==='stats') renderStats();
-  if(section==='payouts') renderPayouts();
+  if(section==='stats'){renderStats();setTimeout(loadStatsFromSupabase,300);}
+  if(section==='payouts'){renderPayouts();}
   if(section==='wallet') renderWallet();
 }
 
@@ -3087,37 +3073,21 @@ function sendAppeal(){
 }
 
 // ── PAYOUTS ──
-let availableBalance = 1240;
-const BASE_AVAILABLE = 1240;
-const BASE_PENDING   = 320;
-const BASE_PAID      = 1552;
+let availableBalance = 0;
+const BASE_AVAILABLE = 0;
+const BASE_PENDING   = 0;
+const BASE_PAID      = 0;
 
 function renderPayouts(){
-  // Update KPI balance cards
-  const balAvail = document.getElementById('bal-available');
-  const balPend  = document.getElementById('bal-pending');
-  const balPaid  = document.getElementById('bal-paid');
-  if(balAvail) balAvail.textContent = fmt(availableBalance);
-  if(balPend)  balPend.textContent  = fmt(BASE_PENDING);
-  if(balPaid)  balPaid.textContent  = fmt(BASE_PAID);
-
+  const balAvail=document.getElementById('bal-available');
+  const balPend=document.getElementById('bal-pending');
+  const balPaid=document.getElementById('bal-paid');
+  if(balAvail)balAvail.textContent=fmt(0);
+  if(balPend)balPend.textContent=fmt(0);
+  if(balPaid)balPaid.textContent=fmt(0);
   const list=document.getElementById('tx-list');
-  if(!list) return;
-  list.innerHTML=TRANSACTIONS.map(t=>{
-    // Convert raw USD amount to current currency
-    const isNeg = t.rawAmount < 0;
-    const converted = fmt(Math.abs(t.rawAmount));
-    const display = isNeg ? '-'+converted : converted;
-    return `
-    <div class="tx-item">
-      <div class="tx-icon">${t.icon}</div>
-      <div style="flex:1"><div class="tx-desc">${t.desc}</div><div class="tx-date">${t.date}</div></div>
-      <div>
-        <div class="tx-amount" style="${isNeg?'color:var(--red)':''}">${display}</div>
-        <div class="tx-status">${t.status}</div>
-      </div>
-    </div>`;
-  }).join('');
+  if(list)list.innerHTML='<div style="padding:28px;text-align:center;color:var(--tm,rgba(255,255,255,.35))">Loading transactions…</div>';
+  loadPayoutsFromSupabase();
 }
 
 // ── WITHDRAW MODAL ──
@@ -3211,41 +3181,26 @@ function validateWdAmount(){
   btn.disabled = amt <= 0 || amt > availableBalance;
 }
 
-function confirmWithdraw(){
-  const amt = getWdAmount();
-  if(amt <= 0 || amt > availableBalance) return;
-  
-  const content = document.getElementById('wd-content');
-  content.innerHTML = `
-    <div class="wd-success">
-      <div class="wd-success-icon">✓</div>
-      <h2 class="wd-success-title">Withdrawal Request Submitted</h2>
-      <p class="wd-success-msg">
-        Your request to withdraw <strong>${fmt(amt)}</strong> has been forwarded to the Clipency finance team for processing. 
-        You can expect the funds to arrive within <strong>5–7 business days</strong>.
-        <br/><br/>
-        We'll notify you once the transfer is complete.
-      </p>
-      <button class="wd-btn-close" onclick="closeWithdrawModal()">Close</button>
-    </div>
-  `;
-  
-  // Update the available balance display
-  availableBalance -= amt;
-  document.getElementById('bal-available').textContent = fmt(availableBalance);
-  
-  // Add to transaction history
-  TRANSACTIONS.unshift({
-    icon:'💸',
-    desc:'Payout withdrawal',
-    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
-    amount: '-$' + amt.toLocaleString(),
-    rawAmount: -amt,
-    status:'Processing'
-  });
-
-  renderPayouts();
-  showToast('✓ Withdrawal request submitted!');
+async function confirmWithdraw(){
+  const amt=getWdAmount();
+  if(amt<=0||amt>availableBalance)return;
+  const btn=document.getElementById('wd-confirm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Submitting\u2026';}
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)throw new Error('Not connected');
+    const{data,error}=await sb.rpc('clipper_request_payout',{p_amount:amt,p_note:null});
+    if(error)throw error;
+    const content=document.getElementById('wd-content');
+    content.innerHTML=`<div class="wd-success"><div class="wd-success-icon">\u2713</div><h2 class="wd-success-title">Withdrawal Request Submitted</h2><p class="wd-success-msg">Your request to withdraw <strong>${fmt(amt)}</strong> has been forwarded to the Clipency finance team.<br><br>Expected within 5\u20137 business days.</p><button class="wd-btn-close" onclick="closeWithdrawModal()">Close</button></div>`;
+    availableBalance-=amt;
+    if(document.getElementById('bal-available'))document.getElementById('bal-available').textContent=fmt(availableBalance);
+    setTimeout(()=>loadPayoutsFromSupabase(),800);
+    showToast('\u2713 Withdrawal request submitted!');
+  }catch(e){
+    showToast('Error: '+(e.message||'Could not submit'));
+    if(btn){btn.disabled=false;btn.textContent='Confirm Withdrawal';}
+  }
 }
 
 // Close withdraw modal on overlay click
