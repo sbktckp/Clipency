@@ -333,110 +333,204 @@ async function renderAccounts(){
 }
 
 /* ══ CAMPAIGNS ════════════════════════════════════════════════════════ */
-window.renderCampaigns = async function renderCampaigns(){
+async function renderCampaigns(){
   let rows=[];
   try{const r=await sb.from('campaigns').select('*').order('created_at',{ascending:false});rows=r.data||[];}catch(e){rows=[];}
-  const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
-    <thead><tr><th>Campaign</th><th>Platform</th><th>RPM</th><th>Budget</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead>
-    <tbody>${(rows||[]).map(r=>`<tr>
-      <td>
-        ${r.asset_url?`<img src="${esc(r.asset_url)}" style="width:40px;height:25px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle" onerror="this.style.display='none'">`:''}
-        <strong>${esc(r.title||'—')}</strong>
-        <div style="font-size:11px;color:rgba(255,255,255,.4)">${esc(r.brand_name||'')}</div>
-      </td>
-      <td>${esc(r.platform||'All')}</td>
-      <td>${r.rpm?'₹'+fmt(r.rpm):'—'}</td>
-      <td>${fmtMoney(r.budget)}</td>
-      <td><span class="cx-badge ${r.status||'draft'}">${esc(r.status||'draft')}</span></td>
-      <td style="font-size:11.5px;color:rgba(255,255,255,.4)">${r.start_date?r.start_date.slice(0,10):'?'} → ${r.end_date?r.end_date.slice(0,10):'?'}</td>
-      <td><div class="cx-btns">
-        <button class="cx-btn ghost sm" data-edit-campaign="${esc(r.id)}">Edit</button>
-      </div></td>
-    </tr>`).join('')}</tbody>
-  </table></div>`:`<div class="cx-empty">No campaigns yet. Create one to get started.</div>`;
+
+  const STATUS_COLOR={active:'approved',draft:'draft',paused:'paused',ended:'inactive'};
+  const PLAT_COLOR={youtube:'rgba(255,0,0,.15)',instagram:'rgba(225,48,108,.15)',tiktok:'rgba(255,255,255,.08)',all:'rgba(196,149,106,.1)'};
+  const PLAT_TC={youtube:'#FF4444',instagram:'#E1306C',tiktok:'rgba(255,255,255,.8)',all:'#C4956A'};
+
+  const cardsHtml = rows.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:4px">
+    ${rows.map(r=>{
+      const plat=(r.platform||'All').toLowerCase();
+      return`<div style="background:linear-gradient(135deg,rgba(24,20,16,.95),rgba(14,12,9,.8));border:1px solid rgba(196,149,106,.14);border-radius:16px;overflow:hidden;transition:all .2s;cursor:pointer" onmouseover="this.style.borderColor='rgba(196,149,106,.35)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(196,149,106,.14)';this.style.transform='none'">
+        ${r.asset_url?`<div style="width:100%;height:120px;overflow:hidden"><img src="${esc(r.asset_url)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/></div>`:`<div style="width:100%;height:6px;background:linear-gradient(90deg,#C4956A,rgba(196,149,106,.3))"></div>`}
+        <div style="padding:16px 18px 18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+            <div>
+              <div style="font-family:'Instrument Serif',serif;font-size:1.1rem;color:#F5F0EB;line-height:1.2;margin-bottom:4px">${esc(r.title||'—')}</div>
+              ${r.brand_name?`<div style="font-size:.72rem;color:#6A6158">${esc(r.brand_name)}</div>`:''}
+            </div>
+            <span class="cx-badge ${STATUS_COLOR[r.status]||'draft'}" style="flex-shrink:0">${esc(r.status||'draft')}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span style="background:${PLAT_COLOR[plat]||PLAT_COLOR.all};color:${PLAT_TC[plat]||PLAT_TC.all};padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;font-family:'Space Mono',monospace">${esc(r.platform||'All')}</span>
+            ${r.genre||r.category?`<span style="background:rgba(196,149,106,.1);color:#C4956A;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600">${esc(r.genre||r.category)}</span>`:''}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+            <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 10px">
+              <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:3px">RPM</div>
+              <div style="font-size:.95rem;font-weight:700;color:#C4956A">${r.rpm?'₹'+Number(r.rpm).toLocaleString('en-IN'):'—'}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 10px">
+              <div style="font-family:'Space Mono',monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:3px">Budget</div>
+              <div style="font-size:.95rem;font-weight:700;color:#F5F0EB">${r.budget?'₹'+Number(r.budget).toLocaleString('en-IN'):'—'}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="cx-btn pri" style="flex:1;justify-content:center;background:#C4956A;color:#0A0908;font-size:.76rem" data-edit-campaign="${esc(r.id)}">Edit Campaign</button>
+            <button class="cx-btn ghost" style="font-size:.76rem;padding:6px 10px" onclick="toggleCampStatus('${esc(r.id)}','${esc(r.status)}')">${r.status==='active'?'Pause':'Activate'}</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : `<div class="cx-empty" style="border:1px dashed rgba(196,149,106,.15);border-radius:14px">No campaigns yet. Create your first one.</div>`;
+
   return page({kicker:'Campaign Control',title:'Campaigns.',sub:'Create and manage campaigns. Upload banners, set rates and control visibility.',
     body:`<div class="cx-sec">
-    <div class="cx-sh"><div><div class="cx-st">All campaigns</div><div class="cx-sd">${(rows||[]).length} total</div></div>
-    <button class="cx-btn pri" id="cx-new-campaign">${svg('plus')} New Campaign</button></div>
-    ${rowsHtml}</div>`});
+    <div class="cx-sh">
+      <div>
+        <div class="cx-st">All campaigns</div>
+        <div class="cx-sd">${rows.length} total · ${rows.filter(r=>r.status==='active').length} active</div>
+      </div>
+      <button class="cx-btn pri" id="cx-new-campaign" style="background:#C4956A;color:#0A0908">${svg('plus')} New Campaign</button>
+    </div>
+    ${cardsHtml}</div>`});
+}
+
+async function toggleCampStatus(id, currentStatus){
+  const newStatus = currentStatus==='active'?'paused':'active';
+  await sb.from('campaigns').update({status:newStatus}).eq('id',id);
+  await boot();
 }
 
 async function showCampaignForm(existing=null){
   const c=existing||{};
+  const selPlatforms = c.platforms||[c.platform||'All'];
+
   const panel=document.createElement('div');
   panel.className='cx-panel';
-  panel.innerHTML=`<div class="cx-panel-head">
-    <h2>${existing?'Edit Campaign':'New Campaign'}</h2>
-    <button class="cx-btn ghost" id="cp-close">${svg('x')} Close</button>
-  </div>
-  <div id="cp-err"></div>
-  <div class="cx-form-grid">
-    <div class="full"><span class="cx-fl">Campaign Banner</span>
-      <div class="cx-banner-drop" id="cp-banner-drop">
-        ${c.asset_url?`<img src="${esc(c.asset_url)}" id="cp-banner-preview">`:''}
-        <input type="file" id="cp-banner-file" accept="image/*"/>
-        <div class="cx-banner-label" id="cp-banner-label" style="${c.asset_url?'display:none':''}">
-          <div style="font-size:24px;margin-bottom:6px">🖼</div>
-          <div>Click or drag to upload banner</div>
-          <div style="font-size:11px;margin-top:4px;color:rgba(255,255,255,.3)">Recommended: 1280×400px</div>
-        </div>
+  panel.style.cssText='position:fixed;inset:0;background:#0A0908;z-index:8000;overflow-y:auto;padding:0';
+  panel.innerHTML=`<div style="max-width:720px;margin:0 auto;padding:40px 32px 80px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:#C4956A;margin-bottom:6px">${existing?'Edit Campaign':'New Campaign'}</div>
+        <h2 style="font-family:'Instrument Serif',serif;font-size:1.8rem;color:#F5F0EB;font-weight:400">${existing?esc(c.title||''):'Create a new campaign'}</h2>
+      </div>
+      <button id="cp-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#B8AFA8;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="cp-err"></div>
+
+    <!-- Banner -->
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Campaign Banner</label>
+      <div id="cp-banner-drop" style="width:100%;aspect-ratio:16/5;border:2px dashed rgba(196,149,106,.2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:rgba(196,149,106,.03)">
+        ${c.asset_url?`<img src="${esc(c.asset_url)}" id="cp-banner-preview" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:''}
+        <input type="file" id="cp-banner-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+        <div id="cp-banner-label" style="font-size:.8rem;color:#6A6158;text-align:center;pointer-events:none;z-index:1;line-height:1.8${c.asset_url?';display:none':''}">🖼<br/>Click to upload banner<br/><span style="font-size:.68rem">1280×400px recommended</span></div>
       </div>
     </div>
-    <div><span class="cx-fl">Title *</span><input class="cx-input" id="cp-title" value="${esc(c.title||'')}" placeholder="Campaign title"/></div>
-    <div><span class="cx-fl">Brand Name</span><input class="cx-input" id="cp-brand" value="${esc(c.brand_name||'')}" placeholder="Brand or client name"/></div>
-    <div><span class="cx-fl">Platform</span>
-      <select class="cx-select" id="cp-platform">
-        ${['All','YouTube','Instagram','TikTok'].map(p=>`<option value="${p}" ${(c.platform||'All')===p?'selected':''}>${p}</option>`).join('')}
-      </select>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px">
+      <div style="grid-column:1/-1">
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Campaign Title *</label>
+        <input id="cp-title" class="cx-input" value="${esc(c.title||'')}" placeholder="e.g. La Isla Bonita · Summer 2026" style="width:100%"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Brand Name</label>
+        <input id="cp-brand" class="cx-input" value="${esc(c.brand_name||'')}" placeholder="Client or brand" style="width:100%"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Category</label>
+        <select id="cp-genre" class="cx-select" style="width:100%">
+          ${['Music','Gaming','UGC','Sports','Clipping','Edits','Finance','Other'].map(g=>`<option value="${g}" ${(c.genre||c.category||'Music')===g?'selected':''}>${g}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Status</label>
+        <select id="cp-status" class="cx-select" style="width:100%">
+          ${['draft','active','paused','ended'].map(s=>`<option value="${s}" ${(c.status||'draft')===s?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">RPM (₹ per million views)</label>
+        <input id="cp-rpm" class="cx-input" type="number" min="0" step="0.01" value="${c.rpm||''}" placeholder="e.g. 250" style="width:100%"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Budget (₹)</label>
+        <input id="cp-budget" class="cx-input" type="number" min="0" value="${c.budget||''}" placeholder="e.g. 50000" style="width:100%"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Start Date</label>
+        <input id="cp-start" class="cx-input" type="date" value="${c.start_date||''}" style="width:100%;color-scheme:dark"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">End Date</label>
+        <input id="cp-end" class="cx-input" type="date" value="${c.end_date||''}" style="width:100%;color-scheme:dark"/>
+      </div>
     </div>
-    <div><span class="cx-fl">Status</span>
-      <select class="cx-select" id="cp-status">
-        ${['draft','active','paused','ended'].map(s=>`<option value="${s}" ${(c.status||'draft')===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
-      </select>
+
+    <!-- Platforms -->
+    <div style="margin:16px 0">
+      <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Platforms</label>
+      <div style="display:flex;gap:8px">
+        ${[['All','#C4956A','rgba(196,149,106,.12)'],['YouTube','#FF4444','rgba(255,0,0,.12)'],['Instagram','#E1306C','rgba(225,48,108,.12)'],['TikTok','rgba(255,255,255,.8)','rgba(255,255,255,.08)']].map(([p,tc,bg])=>`
+        <button type="button" class="cp-plat" data-plat="${p}" style="padding:7px 16px;border-radius:20px;border:1px solid ${tc}33;background:${(c.platform||'All')===p?bg:'transparent'};color:${(c.platform||'All')===p?tc:'rgba(255,255,255,.4)'};font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif">${p}</button>`).join('')}
+      </div>
     </div>
-    <div><span class="cx-fl">Type</span><input class="cx-input" id="cp-type" value="${esc(c.type||'')}" placeholder="e.g. Clip Farming"/></div>
-    <div><span class="cx-fl">Genre / Category</span><input class="cx-input" id="cp-genre" value="${esc(c.genre||c.category||'')}" placeholder="e.g. Gaming, Finance"/></div>
-    <div><span class="cx-fl">RPM (₹ per million views)</span><input class="cx-input" id="cp-rpm" type="number" min="0" step="0.01" value="${c.rpm||''}" placeholder="e.g. 250"/></div>
-    <div><span class="cx-fl">Budget (₹)</span><input class="cx-input" id="cp-budget" type="number" min="0" value="${c.budget||''}" placeholder="e.g. 50000"/></div>
-    <div><span class="cx-fl">Start Date</span><input class="cx-input" id="cp-start" type="date" value="${c.start_date||''}"/></div>
-    <div><span class="cx-fl">End Date</span><input class="cx-input" id="cp-end" type="date" value="${c.end_date||''}"/></div>
-    <div class="full"><span class="cx-fl">Requirements</span><textarea class="cx-textarea" id="cp-req" placeholder="What clippers need to do, platform requirements, minimum views etc." style="min-height:100px">${esc(c.requirements||'')}</textarea></div>
-    <div class="full"><span class="cx-fl">Description</span><textarea class="cx-textarea" id="cp-desc" placeholder="Campaign description for clippers" style="min-height:80px">${esc(c.description||'')}</textarea></div>
-    <div class="full"><div class="cx-btns">
-      ${existing?`<button class="cx-btn danger" id="cp-delete">Delete Campaign</button>`:''}
+
+    <!-- Requirements -->
+    <div style="margin:16px 0 20px">
+      <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Requirements</label>
+      <textarea id="cp-req" class="cx-textarea" style="width:100%;min-height:90px" placeholder="One requirement per line&#10;e.g. Min 30 seconds&#10;Tag @clipency&#10;Use original audio">${esc((c.requirements||[]).join('\n'))}</textarea>
+      <div style="font-size:.72rem;color:#6A6158;margin-top:4px">One requirement per line. Shown as checklist to clippers.</div>
+    </div>
+
+    <!-- Description -->
+    <div style="margin-bottom:24px">
+      <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Description</label>
+      <textarea id="cp-desc" class="cx-textarea" style="width:100%;min-height:72px" placeholder="Campaign brief for clippers…">${esc(c.description||'')}</textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)">
+      ${existing?`<button id="cp-delete" class="cx-btn danger">Delete</button>`:''}
       <div style="flex:1"></div>
-      <button class="cx-btn ghost" id="cp-close2">Cancel</button>
-      <button class="cx-btn pri" id="cp-save">Save Campaign</button>
-    </div></div>
+      <button id="cp-close2" class="cx-btn ghost">Cancel</button>
+      <button id="cp-save" class="cx-btn pri" style="background:#C4956A;color:#0A0908;min-width:130px">Save Campaign</button>
+    </div>
   </div>`;
+
   document.body.appendChild(panel);
   const close=()=>document.body.removeChild(panel);
   panel.querySelector('#cp-close').onclick=close;
   panel.querySelector('#cp-close2').onclick=close;
+
+  // Platform toggle
+  panel.querySelectorAll('.cp-plat').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      panel.querySelectorAll('.cp-plat').forEach(b=>{
+        const p=b.dataset.plat;
+        const colors={All:['#C4956A','rgba(196,149,106,.12)'],YouTube:['#FF4444','rgba(255,0,0,.12)'],Instagram:['#E1306C','rgba(225,48,108,.12)'],TikTok:['rgba(255,255,255,.8)','rgba(255,255,255,.08)']};
+        const[tc,bg]=colors[p]||['#C4956A','rgba(196,149,106,.12)'];
+        const active=b===btn;
+        b.style.background=active?bg:'transparent';
+        b.style.color=active?tc:'rgba(255,255,255,.4)';
+      });
+    });
+  });
+
   // Banner preview
-  const fileInput=panel.querySelector('#cp-banner-file');
-  const previewImg=panel.querySelector('#cp-banner-preview');
-  const labelEl=panel.querySelector('#cp-banner-label');
-  fileInput.onchange=()=>{
-    const f=fileInput.files[0];
-    if(!f)return;
+  const fi=panel.querySelector('#cp-banner-file');
+  fi.onchange=()=>{
+    const f=fi.files[0];if(!f)return;
     const url=URL.createObjectURL(f);
-    if(previewImg){previewImg.src=url;}
-    else{
-      const img=document.createElement('img');img.src=url;img.id='cp-banner-preview';
-      panel.querySelector('#cp-banner-drop').appendChild(img);
-    }
-    if(labelEl)labelEl.style.display='none';
+    let img=panel.querySelector('#cp-banner-preview');
+    if(!img){img=document.createElement('img');img.id='cp-banner-preview';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';panel.querySelector('#cp-banner-drop').appendChild(img);}
+    img.src=url;
+    const bl=panel.querySelector('#cp-banner-label');if(bl)bl.style.display='none';
   };
+
   // Delete
   if(existing){
     panel.querySelector('#cp-delete').onclick=async()=>{
-      if(!confirm('Delete this campaign?'))return;
+      if(!confirm('Delete this campaign? This cannot be undone.'))return;
       const{error}=await sb.from('campaigns').delete().eq('id',existing.id);
-      if(error)return alert(error.message);
+      if(error){alert(error.message);return;}
       close();await boot();
     };
   }
+
   // Save
   panel.querySelector('#cp-save').onclick=async()=>{
     const btn=panel.querySelector('#cp-save');
@@ -446,7 +540,7 @@ async function showCampaignForm(existing=null){
     btn.disabled=true;btn.textContent='Saving…';
     try{
       let asset_url=c.asset_url||null;
-      const file=fileInput.files[0];
+      const file=fi.files[0];
       if(file){
         const ext=file.name.split('.').pop();
         const path=`banners/${Date.now()}.${ext}`;
@@ -455,37 +549,35 @@ async function showCampaignForm(existing=null){
         const{data:{publicUrl}}=sb.storage.from('campaign-banners').getPublicUrl(path);
         asset_url=publicUrl;
       }
+      const activePlat=panel.querySelector('.cp-plat[style*="rgb"]:not([style*="transparent"])')||panel.querySelector('.cp-plat[data-plat="All"]');
+      const platform=activePlat?.dataset?.plat||'All';
+      const reqRaw=panel.querySelector('#cp-req').value;
+      const requirements=reqRaw.split('\n').map(x=>x.trim()).filter(Boolean);
       const payload={
         title,brand_name:panel.querySelector('#cp-brand').value.trim()||null,
-        platform:panel.querySelector('#cp-platform').value,
+        genre:panel.querySelector('#cp-genre').value,
         status:panel.querySelector('#cp-status').value,
-        type:panel.querySelector('#cp-type').value.trim()||null,
-        genre:panel.querySelector('#cp-genre').value.trim()||null,
+        platform,
         rpm:parseFloat(panel.querySelector('#cp-rpm').value)||null,
         budget:parseFloat(panel.querySelector('#cp-budget').value)||null,
         start_date:panel.querySelector('#cp-start').value||null,
         end_date:panel.querySelector('#cp-end').value||null,
-        requirements:panel.querySelector('#cp-req').value.trim()||null,
+        requirements,
         description:panel.querySelector('#cp-desc').value.trim()||null,
         asset_url,updated_at:new Date().toISOString()
       };
       let err;
-      if(existing){
-        ({error:err}=await sb.from('campaigns').update(payload).eq('id',existing.id));
-      }else{
-        payload.created_by=me.id;payload.created_at=new Date().toISOString();
-        ({error:err}=await sb.from('campaigns').insert(payload));
-      }
+      if(existing){({error:err}=await sb.from('campaigns').update(payload).eq('id',existing.id));}
+      else{payload.created_by=me.id;payload.created_at=new Date().toISOString();({error:err}=await sb.from('campaigns').insert(payload));}
       if(err)throw err;
       close();await boot();
     }catch(e){
-      errEl.innerHTML=`<div class="cx-alert err">${esc(e.message||'Save failed')}</div>`;
+      errEl.innerHTML=`<div class="cx-alert err" style="margin-bottom:14px">${esc(e.message||'Save failed')}</div>`;
       btn.disabled=false;btn.textContent='Save Campaign';
     }
   };
 }
 
-/* ══ REVIEWS ════════════════════════════════════════════════════════ */
 async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
   const{data:rows}=await sb.rpc('admin_get_submissions',{p_status:tab});
