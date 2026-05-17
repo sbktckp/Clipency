@@ -477,7 +477,7 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     <!-- Requirements -->
     <div style="margin:16px 0 20px">
       <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Requirements</label>
-      <textarea id="cp-req" class="cx-textarea" style="width:100%;min-height:90px" placeholder="One requirement per line&#10;e.g. Min 30 seconds&#10;Tag @clipency&#10;Use original audio">${esc((c.requirements||[]).join('\n'))}</textarea>
+      <textarea id="cp-req" class="cx-textarea" style="width:100%;min-height:90px" placeholder="One requirement per line&#10;e.g. Min 30 seconds&#10;Tag @clipency&#10;Use original audio">${esc(Array.isArray(c.requirements)?c.requirements.join('\n'):(c.requirements||""))}</textarea>
       <div style="font-size:.72rem;color:#6A6158;margin-top:4px">One requirement per line. Shown as checklist to clippers.</div>
     </div>
 
