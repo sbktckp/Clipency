@@ -596,10 +596,12 @@ function bindEvents(){
   });
   // New campaign
   document.getElementById('cx-new-campaign')?.addEventListener('click',()=>showCampaignForm());
-  // Edit campaign
-  document.querySelectorAll('[data-edit-campaign]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      try{showCampaignForm(JSON.parse(btn.dataset.campaign));}catch{}
+  // Edit campaign — fetch from Supabase by id to avoid CSP eval
+  document.querySelectorAll('[data-camp-edit]').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.campEdit;
+      const{data}=await sb.from('campaigns').select('*').eq('id',id).maybeSingle();
+      if(data)showCampaignForm(data);
     });
   });
   // Approve account
