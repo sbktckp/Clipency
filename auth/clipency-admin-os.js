@@ -369,7 +369,7 @@ async function renderCampaigns(){
             </div>
           </div>
           <div style="display:flex;gap:6px">
-            <button class="cx-btn pri" style="flex:1;justify-content:center;background:#C4956A;color:#0A0908;font-size:.76rem" data-edit-campaign="${esc(r.id)}">Edit Campaign</button>
+            <button class="cx-btn pri" style="flex:1;justify-content:center;background:#C4956A;color:#0A0908;font-size:.76rem" data-camp-id="${esc(r.id)}">Edit Campaign</button>
             <button class="cx-btn ghost" style="font-size:.76rem;padding:6px 10px" onclick="toggleCampStatus('${esc(r.id)}','${esc(r.status)}')">${r.status==='active'?'Pause':'Activate'}</button>
           </div>
         </div>
@@ -389,7 +389,7 @@ async function renderCampaigns(){
     ${cardsHtml}</div>`});
 }
 
-async function toggleCampStatus(id, currentStatus){
+window.toggleCampStatus = async function(id, currentStatus){
   const newStatus = currentStatus==='active'?'paused':'active';
   await sb.from('campaigns').update({status:newStatus}).eq('id',id);
   await boot();
