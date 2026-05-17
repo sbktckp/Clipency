@@ -589,7 +589,9 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
 
 async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const{data:rows}=await sb.rpc('admin_get_submissions',{p_status:tab});
+  const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,status,rejection_reason,approved_amount,created_at,profiles(email,full_name)').order('created_at',{ascending:false});
+  const srAll=(srQ.data||[]).map(x=>({...x,user_email:x.profiles?.email,user_name:x.profiles?.full_name}));
+  const rows=tab==='all'?srAll:srAll.filter(x=>x.status===tab);
   const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Clipper</th><th>Campaign</th><th>Platform / Handle</th><th>Clip</th><th>Views</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead>
