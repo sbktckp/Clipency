@@ -301,7 +301,13 @@ async function renderCommand(){
 /* ══ ACCOUNTS ════════════════════════════════════════════════════════ */
 async function renderAccounts(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const{data:rows}=await sb.rpc('admin_get_accounts',{p_status:tab}).catch(()=>({data:[]}));
+  // Direct query — avoids ambiguous status column in RPC
+  const caQuery = await sb
+    .from('connected_accounts')
+    .select('id,user_id,platform,username,handle,verification_code,status,rejection_reason,created_at,expires_at,verified_at,is_verified,profiles(email,full_name)')
+    .order('created_at',{ascending:false});
+  const rows = caQuery.error ? [] : (tab==='all' ? caQuery.data : (caQuery.data||[]).filter(x=>x.status===tab))
+    .map(x=>({...x,acct_status:x.status,user_email:x.profiles?.email,user_name:x.profiles?.full_name}));
   const tabs=['pending','verified','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const platformIcon={youtube:'📹',instagram:'📸',tiktok:'🎵',yt:'📹',ig:'📸',tt:'🎵'};
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
