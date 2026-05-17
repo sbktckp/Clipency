@@ -12,7 +12,7 @@ if(!ADMIN_PATHS.includes(PATH))return;
 const STYLE=`
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body.cxon{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;background:#000;color:#f5f5f7;height:100vh;overflow:hidden}
-body.cxon>*:not(#cxos):not(.cx-loader):not(.cx-overlay){display:none!important}
+body.cxon>*:not(#cxos):not(.cx-loader):not(.cx-overlay):not(.cx-panel){display:none!important}
 #cxos{display:flex;height:100vh;overflow:hidden}
 .cx-side{width:232px;flex-shrink:0;background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow-y:auto}
 .cx-brand{padding:22px 20px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.07)}
@@ -495,7 +495,7 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     </div>
   </div>`;
 
-  document.body.appendChild(panel);
+  (document.getElementById("cxos")||document.body).appendChild(panel);
   const close=()=>document.body.removeChild(panel);
   panel.querySelector('#cp-close').onclick=close;
   panel.querySelector('#cp-close2').onclick=close;
