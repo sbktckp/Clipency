@@ -499,7 +499,7 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
   </div>`;
 
   (document.getElementById("cxos")||document.body).appendChild(panel);
-  const close=()=>document.body.removeChild(panel);
+  const close=()=>panel.remove();
   panel.querySelector('#cp-close').onclick=close;
   panel.querySelector('#cp-close2').onclick=close;
 
