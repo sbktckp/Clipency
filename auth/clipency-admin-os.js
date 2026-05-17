@@ -268,7 +268,7 @@ function showModal({title,desc,fields,confirmLabel,confirmClass,onConfirm}){
 
 /* ══ COMMAND CENTER ══════════════════════════════════════════════════ */
 async function renderCommand(){
-  const{data:stats}=await sb.rpc('admin_get_stats').catch(()=>({data:null}));
+  const{data:stats}=await sb.rpc('admin_get_stats');
   const s=stats||{};
   const cards=[
     ['Clippers',s.total_clippers||0,'Registered users','info'],
@@ -334,7 +334,8 @@ async function renderAccounts(){
 
 /* ══ CAMPAIGNS ════════════════════════════════════════════════════════ */
 window.renderCampaigns = async function renderCampaigns(){
-  const{data:rows}=await sb.from('campaigns').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}));
+  let rows=[];
+  try{const r=await sb.from('campaigns').select('*').order('created_at',{ascending:false});rows=r.data||[];}catch(e){rows=[];}
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Campaign</th><th>Platform</th><th>RPM</th><th>Budget</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead>
     <tbody>${(rows||[]).map(r=>`<tr>
@@ -487,7 +488,7 @@ async function showCampaignForm(existing=null){
 /* ══ REVIEWS ════════════════════════════════════════════════════════ */
 async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const{data:rows}=await sb.rpc('admin_get_submissions',{p_status:tab}).catch(()=>({data:[]}));
+  const{data:rows}=await sb.rpc('admin_get_submissions',{p_status:tab});
   const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Clipper</th><th>Campaign</th><th>Platform / Handle</th><th>Clip</th><th>Views</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead>
@@ -517,7 +518,7 @@ async function renderReviews(){
 /* ══ PAYOUTS ════════════════════════════════════════════════════════ */
 async function renderPayouts(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const{data:rows}=await sb.rpc('admin_get_payouts',{p_status:tab}).catch(()=>({data:[]}));
+  const{data:rows}=await sb.rpc('admin_get_payouts',{p_status:tab});
   const totalPending=(rows||[]).filter(r=>r.status==='pending').reduce((a,r)=>a+(r.amount||0),0);
   const tabs=['pending','paid','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
