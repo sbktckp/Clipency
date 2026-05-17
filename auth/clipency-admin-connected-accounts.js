@@ -168,7 +168,15 @@
     const area = document.getElementById("table-area");
 
     try{
-      rows = await rpc("clipency_admin_connected_accounts", {});
+      {
+  const client = window.clipencySupabase||window.supabaseClient;
+  const{data,error}=await client
+    .from('connected_accounts')
+    .select('id,user_id,platform,handle,username,verification_code,connected_accounts.status,rejection_reason,created_at,expires_at,verified_at,is_verified,profiles(email,full_name)')
+    .order('created_at',{ascending:false});
+  if(error)throw error;
+  rows=(data||[]).map(r=>({...r,status:r.status,creator_email:r.profiles?.email,creator_name:r.profiles?.full_name}));
+}
       render();
     }catch(error){
       area.className = "empty";
