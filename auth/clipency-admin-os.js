@@ -12,7 +12,7 @@ if(!ADMIN_PATHS.includes(PATH))return;
 const STYLE=`
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body.cxon{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;background:#000;color:#f5f5f7;height:100vh;overflow:hidden}
-body.cxon>*:not(#cxos){display:none!important}
+body.cxon>*:not(#cxos):not(.cx-loader):not(.cx-overlay){display:none!important}
 #cxos{display:flex;height:100vh;overflow:hidden}
 .cx-side{width:232px;flex-shrink:0;background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow-y:auto}
 .cx-brand{padding:22px 20px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.07)}
@@ -333,7 +333,7 @@ async function renderAccounts(){
 }
 
 /* ══ CAMPAIGNS ════════════════════════════════════════════════════════ */
-async function renderCampaigns(){
+window.renderCampaigns = async function renderCampaigns(){
   const{data:rows}=await sb.from('campaigns').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}));
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Campaign</th><th>Platform</th><th>RPM</th><th>Budget</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead>
@@ -723,7 +723,7 @@ async function boot(){
     document.title='Clipency | Admin OS';
     bindEvents();
   }catch(e){
-    document.body.innerHTML=`<div class="cx-loader"><div style="text-align:center;max-width:440px">
+    document.body.innerHTML=`<div id="cxos" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000"><div style="text-align:center;max-width:440px">
       <h2 style="color:#f5f5f7;font-size:22px;margin-bottom:10px">Something went wrong.</h2>
       <p style="color:rgba(255,255,255,.45);font-size:13.5px;line-height:1.6;margin-bottom:20px">${esc(e.message||'Please refresh.')}</p>
       <a class="cx-btn pri" href="/admin">Retry</a>
