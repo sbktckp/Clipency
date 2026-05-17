@@ -349,7 +349,7 @@ async function renderCampaigns(){
       <td><span class="cx-badge ${r.status||'draft'}">${esc(r.status||'draft')}</span></td>
       <td style="font-size:11.5px;color:rgba(255,255,255,.4)">${r.start_date?r.start_date.slice(0,10):'?'} → ${r.end_date?r.end_date.slice(0,10):'?'}</td>
       <td><div class="cx-btns">
-        <button class="cx-btn ghost sm" data-edit-campaign="${esc(r.id)}" data-campaign='${esc(JSON.stringify(r))}'>Edit</button>
+        <button class="cx-btn ghost sm" data-edit-campaign="${esc(r.id)}">Edit</button>
       </div></td>
     </tr>`).join('')}</tbody>
   </table></div>`:`<div class="cx-empty">No campaigns yet. Create one to get started.</div>`;
