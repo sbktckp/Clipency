@@ -369,7 +369,7 @@ async function renderCampaigns(){
             </div>
           </div>
           <div style="display:flex;gap:6px">
-            <button class="cx-btn pri" style="flex:1;justify-content:center;background:#C4956A;color:#0A0908;font-size:.76rem" data-camp-id="${esc(r.id)}">Edit Campaign</button>
+            <button class="cx-btn pri" style="flex:1;justify-content:center;background:#C4956A;color:#0A0908;font-size:.76rem" onclick="window.__editCamp('${esc(r.id)}')">Edit Campaign</button>
             <button class="cx-btn ghost" style="font-size:.76rem;padding:6px 10px" onclick="toggleCampStatus('${esc(r.id)}','${esc(r.status)}')">${r.status==='active'?'Pause':'Activate'}</button>
           </div>
         </div>
@@ -389,13 +389,17 @@ async function renderCampaigns(){
     ${cardsHtml}</div>`});
 }
 
+window.__editCamp = async function(id){
+  const{data}=await sb.from('campaigns').select('*').eq('id',id).maybeSingle();
+  if(data)window.showCampaignForm(data);
+};
 window.toggleCampStatus = async function(id, currentStatus){
   const newStatus = currentStatus==='active'?'paused':'active';
   await sb.from('campaigns').update({status:newStatus}).eq('id',id);
   await boot();
 }
 
-async function showCampaignForm(existing=null){
+window.showCampaignForm = async function showCampaignForm(existing=null){
   const c=existing||{};
   const selPlatforms = c.platforms||[c.platform||'All'];
 
@@ -688,7 +692,7 @@ function bindEvents(){
     window.location.replace('/login');
   });
   // New campaign
-  document.getElementById('cx-new-campaign')?.addEventListener('click',()=>showCampaignForm());
+  document.getElementById('cx-new-campaign')?.addEventListener('click',()=>window.showCampaignForm(null));
   // Edit campaign — fetch from Supabase by id to avoid CSP eval
   document.querySelectorAll('[data-camp-edit]').forEach(btn=>{
     btn.addEventListener('click',async()=>{
