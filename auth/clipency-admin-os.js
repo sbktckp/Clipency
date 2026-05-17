@@ -468,9 +468,12 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     <!-- Platforms -->
     <div style="margin:16px 0">
       <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Platforms</label>
-      <div style="display:flex;gap:8px">
-        ${[['All','#C4956A','rgba(196,149,106,.12)'],['YouTube','#FF4444','rgba(255,0,0,.12)'],['Instagram','#E1306C','rgba(225,48,108,.12)'],['TikTok','rgba(255,255,255,.8)','rgba(255,255,255,.08)']].map(([p,tc,bg])=>`
-        <button type="button" class="cp-plat" data-plat="${p}" style="padding:7px 16px;border-radius:20px;border:1px solid ${tc}33;background:${(c.platform||'All')===p?bg:'transparent'};color:${(c.platform||'All')===p?tc:'rgba(255,255,255,.4)'};font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif">${p}</button>`).join('')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="cp-plat-group">
+        ${[['YouTube','#FF4444','rgba(255,0,0,.15)'],['Instagram','#E1306C','rgba(225,48,108,.15)'],['TikTok','rgba(255,255,255,.85)','rgba(255,255,255,.1)']].map(([p,tc,bg])=>{
+          const sel=(()=>{const pl=c.platforms||c.platform||'';return Array.isArray(pl)?pl.includes(p):pl===p||pl==='All';})();
+          return`<button type="button" class="cp-plat" data-plat="${p}" data-tc="${tc}" data-bg="${bg}" style="padding:7px 18px;border-radius:20px;border:1px solid ${sel?tc+'88':tc+'33'};background:${sel?bg:'transparent'};color:${sel?tc:'rgba(255,255,255,.38)'};font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif">${p}</button>`;
+        }).join('')}
+        <div style="font-size:.72rem;color:#6A6158;display:flex;align-items:center;margin-left:4px">Select one or more</div>
       </div>
     </div>
 
@@ -500,18 +503,20 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
   panel.querySelector('#cp-close').onclick=close;
   panel.querySelector('#cp-close2').onclick=close;
 
-  // Platform toggle
+  // Platform multi-select toggle
   panel.querySelectorAll('.cp-plat').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      panel.querySelectorAll('.cp-plat').forEach(b=>{
-        const p=b.dataset.plat;
-        const colors={All:['#C4956A','rgba(196,149,106,.12)'],YouTube:['#FF4444','rgba(255,0,0,.12)'],Instagram:['#E1306C','rgba(225,48,108,.12)'],TikTok:['rgba(255,255,255,.8)','rgba(255,255,255,.08)']};
-        const[tc,bg]=colors[p]||['#C4956A','rgba(196,149,106,.12)'];
-        const active=b===btn;
-        b.style.background=active?bg:'transparent';
-        b.style.color=active?tc:'rgba(255,255,255,.4)';
-      });
+      const isOn=btn.dataset.on==='1';
+      btn.dataset.on=isOn?'0':'1';
+      const tc=btn.dataset.tc;const bg=btn.dataset.bg;
+      btn.style.background=isOn?'transparent':bg;
+      btn.style.color=isOn?'rgba(255,255,255,.38)':tc;
+      btn.style.borderColor=isOn?tc+'33':tc+'88';
     });
+  });
+  // Mark initially selected
+  panel.querySelectorAll('.cp-plat').forEach(btn=>{
+    if(btn.style.background&&btn.style.background!=='transparent'){btn.dataset.on='1';}
   });
 
   // Banner preview
@@ -553,8 +558,8 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
         const{data:{publicUrl}}=sb.storage.from('campaign-banners').getPublicUrl(path);
         asset_url=publicUrl;
       }
-      const activePlat=panel.querySelector('.cp-plat[style*="rgb"]:not([style*="transparent"])')||panel.querySelector('.cp-plat[data-plat="All"]');
-      const platform=activePlat?.dataset?.plat||'All';
+      const selectedPlats=[...panel.querySelectorAll('.cp-plat[data-on="1"]')].map(b=>b.dataset.plat);
+      const platform=selectedPlats.length===1?selectedPlats[0]:selectedPlats.length>1?selectedPlats.join(','):'All';
       const reqRaw=panel.querySelector('#cp-req').value;
       const requirements=reqRaw.split('\n').map(x=>x.trim()).filter(Boolean);
       const payload={
