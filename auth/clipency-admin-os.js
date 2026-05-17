@@ -1,3 +1,9 @@
+// Block legacy admin scripts that conflict
+window.__clipencyAdminLaunchBlocked = true;
+window.reviews = ()=>{};
+window.accounts = ()=>{};
+window.campaigns_legacy = ()=>{};
+
 (function(){
 'use strict';
 if(window.__clipencyAdminOSLoaded)return;
@@ -589,8 +595,12 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
 
 async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,status,rejection_reason,approved_amount,created_at,profiles(email,full_name)').order('created_at',{ascending:false});
-  const srAll=(srQ.data||[]).map(x=>({...x,user_email:x.profiles?.email,user_name:x.profiles?.full_name}));
+  const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,status,rejection_reason,approved_amount,created_at').order('created_at',{ascending:false});
+  const srData=srQ.data||[];
+  const uids=[...new Set(srData.map(x=>x.user_id).filter(Boolean))];
+  const profQ=uids.length?await sb.from('profiles').select('id,email,full_name').in('id',uids):{data:[]};
+  const profMap=Object.fromEntries((profQ.data||[]).map(p=>[p.id,p]));
+  const srAll=srData.map(x=>({...x,user_email:profMap[x.user_id]?.email||'—',user_name:profMap[x.user_id]?.full_name||''}));
   const rows=tab==='all'?srAll:srAll.filter(x=>x.status===tab);
   const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
