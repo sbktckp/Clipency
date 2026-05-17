@@ -2106,7 +2106,7 @@ async function loadCampaignsFromSupabase(){
       rpmUsd:Number(c.rpm||c.rate_per_million_usd)||0,
       budget:Number(c.budget)||0,
       spent:Number(c.budget_used||c.spent_usd)||0,
-      platforms:c.platform?[c.platform]:['TikTok','Instagram','YouTube'],
+      platforms:(()=>{const p=c.platform||'All';return p==='All'?['YouTube','Instagram','TikTok']:p.split(',').map(x=>x.trim()).filter(Boolean);})(),
       reqs:c.requirements?c.requirements.split('\n').filter(Boolean):[],
       description:c.description||'',
       sparkData:[30,50,40,70,60,80,90],
@@ -2523,7 +2523,11 @@ function renderModalStep(){
   let content = '';
 
   if(s.step===1){
-    const platforms = c.platforms.length ? c.platforms : ['TikTok','Instagram','YouTube Shorts'];
+    // Parse platforms: support "All", "YouTube,Instagram", or array
+    const rawPlat = (Array.isArray(c.platforms)&&c.platforms.length) ? c.platforms.join(',') : (c.platform||'All');
+    const platforms = rawPlat==='All'||rawPlat===''
+      ? ['YouTube','Instagram','TikTok']
+      : rawPlat.split(',').map(p=>p.trim()).filter(Boolean);
     content = `
       ${steps}
       <div class="modal-eyebrow">Step 1 of 3</div>
@@ -2552,7 +2556,7 @@ function renderModalStep(){
     // Use _verifiedAccounts loaded from Supabase, fallback to connectedState
     const allVerified = window._verifiedAccountsList||[];
     const platformAccs = allVerified.length
-      ? allVerified.filter(a=>a.platform===pKey||a.platform===s.platform.toLowerCase()).map(a=>a.handle)
+      ? allVerified.filter(a=>a.platform?.toLowerCase()===pKey||a.platform?.toLowerCase()===s.platform?.toLowerCase()).map(a=>a.handle||a.username)
       : (connectedState[pKey]||[]);
     const noAccounts = platformAccs.length === 0;
     content = `
