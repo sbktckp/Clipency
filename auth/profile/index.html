@@ -3965,17 +3965,20 @@ async function loadProfileFromSupabase(){
     // ── Edit profile form ──
     const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
     const setValQ=(sel,v)=>{const el=document.querySelector(sel);if(el)el.value=v;};
-    setVal('edit-first-name',p.first_name||'');
-    setVal('edit-last-name',p.last_name||'');
-    setVal('edit-display-name',displayName);
-    setVal('edit-username',username);
-    setValQ('input[name="first_name"]',p.first_name||'');
-    setValQ('input[name="last_name"]',p.last_name||'');
-    setValQ('input[name="display_name"]',displayName);
-    setValQ('input[name="username"]',username);
-    // Also target inputs with placeholder hints
-    document.querySelectorAll('input[placeholder*="irst"]').forEach(el=>{if(!el.value)el.value=p.first_name||'';});
-    document.querySelectorAll('input[placeholder*="ast"]').forEach(el=>{if(!el.value)el.value=p.last_name||'';});
+    // Edit profile form — exact IDs
+    setVal('ep-first', p.first_name||'');
+    setVal('ep-last',  p.last_name||'');
+    setVal('ep-display', displayName);
+    setVal('pi-username-input', username);
+
+    // Sidebar name elements
+    setVal('sb-name', fullName);
+    const sbName=document.getElementById('sb-name');
+    if(sbName)sbName.textContent=fullName;
+    const unCamps=document.getElementById('user-name-camps');
+    if(unCamps)unCamps.textContent=fullName;
+    const uAv=document.getElementById('user-avatar');
+    if(uAv)uAv.textContent=initials;
 
     // ── Stats: views + earned ──
     const[{data:subs},{data:payReqs}]=await Promise.all([
@@ -4000,29 +4003,31 @@ async function loadProfileFromSupabase(){
     });
 
     // ── Clipency Rank ──
-    // Get all users sorted by total paid payout
-    const{data:rankings}=await sb.rpc('get_clipper_balance',{p_user_id:user.id}).catch(()=>({data:null}));
-    // Count how many users have earned more (rank by total_earned)
-    const{count:totalClippers}=await sb.from('profiles').select('*',{count:'exact',head:true}).catch(()=>({count:0}));
-    const{count:aboveMe}=await sb.from('clip_submissions')
-      .select('user_id',{count:'exact',head:true})
-      .eq('status','approved')
-      .neq('user_id',user.id)
-      .filter('approved_amount','gt',totalEarned)
-      .catch(()=>({count:0}));
-
-    const rankPos=(aboveMe||0)+1;
-    const rankBox=document.querySelector('.creator-rank-sub');
-    const rankLabel=document.querySelector('.creator-rank-label');
-    if(rankLabel)rankLabel.textContent='Clipency Rank';
-    if(rankBox){
-      if(totalEarned===0){
-        rankBox.textContent='Submit clips to earn your rank';
-      } else {
-        const suffix=rankPos===1?'st':rankPos===2?'nd':rankPos===3?'rd':'th';
-        rankBox.innerHTML=`<span style="font-size:1.3rem;font-weight:700;color:var(--amber);font-family:'DM Sans',sans-serif">#${rankPos}</span><br/><span style="font-size:.69rem;color:var(--ts)">of ${totalClippers||'—'} clippers</span>`;
+    try{
+      // Get total earned per user to calculate rank
+      const{data:allEarnings}=await sb.from('clip_submissions')
+        .select('user_id,approved_amount')
+        .eq('status','approved');
+      // Sum per user
+      const earningMap={};
+      (allEarnings||[]).forEach(r=>{
+        earningMap[r.user_id]=(earningMap[r.user_id]||0)+(Number(r.approved_amount)||0);
+      });
+      const myEarned=earningMap[user.id]||0;
+      const sortedEarners=Object.values(earningMap).sort((a,b)=>b-a);
+      const rankPos=sortedEarners.findIndex(v=>v<=myEarned)+1||sortedEarners.length+1;
+      const totalClippers=Object.keys(earningMap).length||1;
+      const rankBox=document.querySelector('.creator-rank-sub');
+      const rankLabel=document.querySelector('.creator-rank-label');
+      if(rankLabel)rankLabel.textContent='Clipency Rank';
+      if(rankBox){
+        if(myEarned===0){
+          rankBox.innerHTML='<span style="font-size:.75rem;color:var(--ts)">Submit clips<br/>to earn your rank</span>';
+        }else{
+          rankBox.innerHTML=`<span style="font-size:1.5rem;font-weight:700;color:var(--amber);font-family:'DM Sans',sans-serif;letter-spacing:-.02em">#${rankPos}</span><br/><span style="font-size:.68rem;color:var(--ts)">of ${totalClippers} clippers</span>`;
+        }
       }
-    }
+    }catch(rankErr){console.warn('rank:',rankErr.message);}
 
     console.log('[Profile] Loaded:',fullName,'| Earned:',totalEarned,'| Rank:#'+rankPos);
   }catch(e){console.warn('[Profile] loadProfileFromSupabase:',e.message);}
