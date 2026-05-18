@@ -3900,93 +3900,6 @@ document.getElementById('connect-modal').addEventListener('click', function(e){
   if(e.target === this){ clearCountdown(); closeConnectModal(); }
 });
 
-// Load real profile data from Supabase
-async function loadProfileFromSupabase(){
-  try{
-    const sb=window.clipencySupabase||window.supabaseClient;
-    if(!sb)return;
-    const{data:{user},error:authErr}=await sb.auth.getUser();
-    if(authErr||!user)return;
-
-    // Load profile row
-    const{data:profile}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-    if(!profile)return;
-
-    const fullName=(profile.full_name||profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||user.email?.split('@')[0]||'Clipper').trim();
-    const firstName=profile.first_name||fullName.split(' ')[0]||'';
-    const lastName=profile.last_name||fullName.split(' ').slice(1).join(' ')||'';
-    const username=profile.username||'';
-    const email=profile.email||user.email||'';
-    const displayName=profile.display_name||fullName;
-    const initials=(fullName.split(' ').map(w=>w[0]||'').join('').slice(0,2)||'C').toUpperCase();
-
-    // Update name/email wherever shown
-    document.querySelectorAll('[data-user-name],[class*="user-name"],[id*="user-name"]').forEach(el=>el.textContent=fullName);
-    document.querySelectorAll('[data-user-email],[class*="user-email"]').forEach(el=>el.textContent=email);
-    document.querySelectorAll('[data-user-initials],[class*="avatar"],[class*="initials"]').forEach(el=>{if(el.textContent.length<=2)el.textContent=initials;});
-
-    // Profile section fields
-    const setById=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-    const setValById=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
-
-    // Display name label
-    document.querySelectorAll('[data-field="display_name"],[id*="display-name"],[id*="displayname"]').forEach(el=>el.textContent=displayName);
-    // Username chip
-    document.querySelectorAll('[data-field="username"],[id*="username-val"],[id*="username-display"]').forEach(el=>el.textContent='@'+username);
-    // Email field
-    document.querySelectorAll('[data-field="email"]').forEach(el=>el.textContent=email);
-
-    // Sidebar user info
-    document.querySelectorAll('.sb-user-name,.user-display-name,[class*="sidebar"] [class*="name"]').forEach(el=>{
-      if(el.textContent.length<40)el.textContent=fullName;
-    });
-    document.querySelectorAll('.sb-user-role,.user-role').forEach(el=>el.textContent=profile.role||'Clipper');
-
-    // Sidebar avatar initials
-    document.querySelectorAll('.sb-avatar,.user-avatar,[class*="avatar-initials"]').forEach(el=>{
-      if(el.children.length===0)el.textContent=initials;
-    });
-
-    // Edit profile form fields
-    setValById('edit-first-name',firstName);
-    setValById('edit-last-name',lastName);
-    setValById('edit-display-name',displayName);
-    setValById('edit-username',username);
-    setValById('edit-email',email);
-    document.querySelectorAll('input[name="first_name"],input[placeholder*="first"]').forEach(el=>el.value=firstName);
-    document.querySelectorAll('input[name="last_name"],input[placeholder*="last"]').forEach(el=>el.value=lastName);
-    document.querySelectorAll('input[name="display_name"]').forEach(el=>el.value=displayName);
-    document.querySelectorAll('input[name="username"]').forEach(el=>el.value=username);
-
-    // Load real earnings stats from clip_submissions
-    const[{data:subs},{data:payReqs}]=await Promise.all([
-      sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
-      sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
-    ]);
-    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count)||0),0);
-    const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
-    const totalWithdrawn=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
-    const availBal=Math.max(totalEarned-totalWithdrawn,0);
-
-    const fmtNum=n=>n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toString();
-    const fmtMoney=n=>'₹'+Number(n).toLocaleString('en-IN');
-
-    // Update stats wherever they appear
-    document.querySelectorAll('[data-stat="total-views"],[id*="total-views"],[id*="totalviews"]').forEach(el=>el.textContent=fmtNum(totalViews));
-    document.querySelectorAll('[data-stat="total-earned"],[id*="total-earned"],[id*="totalearned"]').forEach(el=>el.textContent=fmtMoney(totalEarned));
-    document.querySelectorAll('[data-stat="available-balance"],[id*="available-balance"],[id*="availbal"]').forEach(el=>el.textContent=fmtMoney(availBal));
-
-    // Also set any text node that shows "0" for views/earned in performance section
-    document.querySelectorAll('.perf-val,.stat-val,[class*="perf-value"],[class*="stat-value"]').forEach(el=>{
-      const label=el.previousElementSibling?.textContent?.toLowerCase()||el.closest('[class*="stat"]')?.querySelector('[class*="label"]')?.textContent?.toLowerCase()||'';
-      if(label.includes('view'))el.textContent=fmtNum(totalViews);
-      if(label.includes('earn'))el.textContent=fmtMoney(totalEarned);
-      if(label.includes('balance'))el.textContent=fmtMoney(availBal);
-    });
-
-    console.log('[Clipency] Profile loaded:',fullName,'| Earned:',totalEarned,'| Views:',totalViews);
-  }catch(e){console.warn('loadProfileFromSupabase:',e.message);}
-}
 
 // Init platform account lists — load from Supabase
 async function loadAccountsFromSupabase(){
@@ -4018,6 +3931,111 @@ async function loadAccountsFromSupabase(){
 // Load real data from Supabase after page ready
 setTimeout(loadAccountsFromSupabase, 800);
 setTimeout(loadProfileFromSupabase, 400);
+
+async function loadProfileFromSupabase(){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:{user},error:authErr}=await sb.auth.getUser();
+    if(authErr||!user)return;
+
+    // Load profile from DB
+    const{data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!p)return;
+
+    const fullName=([p.first_name,p.last_name].filter(Boolean).join(' ')||p.display_name||p.full_name||user.email?.split('@')[0]||'Clipper').trim();
+    const displayName=p.display_name||fullName;
+    const username=p.username||'';
+    const email=p.email||user.email||'';
+    const initials=(fullName.split(' ').map(w=>w[0]||'').join('').slice(0,2)||'C').toUpperCase();
+
+    // ── Hero section ──
+    const dn=document.getElementById('profile-display-name');
+    if(dn)dn.textContent=fullName;
+    const em=document.getElementById('profile-email');
+    if(em)em.textContent=email;
+
+    // ── Performance identity rows ──
+    const piDn=document.getElementById('pi-display-name');
+    if(piDn)piDn.textContent=displayName;
+    const piUn=document.getElementById('pi-username');
+    if(piUn)piUn.textContent=username?'@'+username:'—';
+
+    // ── Sidebar avatar + name ──
+    document.querySelectorAll('[data-user-name],[class*="user-name"]').forEach(el=>{if(el.textContent.length<60)el.textContent=fullName;});
+    document.querySelectorAll('[data-staff-name],[id*="staff-name"],[class*="sb-name"]').forEach(el=>el.textContent=fullName);
+    document.querySelectorAll('[data-staff-initials],[id*="staff-initials"]').forEach(el=>{if(el.textContent.length<=3)el.textContent=initials;});
+
+    // ── Edit profile form ──
+    const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+    const setValQ=(sel,v)=>{const el=document.querySelector(sel);if(el)el.value=v;};
+    // Edit profile form — exact IDs
+    setVal('ep-first', p.first_name||'');
+    setVal('ep-last',  p.last_name||'');
+    setVal('ep-display', displayName);
+    setVal('pi-username-input', username);
+
+    // Sidebar name elements
+    setVal('sb-name', fullName);
+    const sbName=document.getElementById('sb-name');
+    if(sbName)sbName.textContent=fullName;
+    const unCamps=document.getElementById('user-name-camps');
+    if(unCamps)unCamps.textContent=fullName;
+    const uAv=document.getElementById('user-avatar');
+    if(uAv)uAv.textContent=initials;
+
+    // ── Stats: views + earned ──
+    const[{data:subs},{data:payReqs}]=await Promise.all([
+      sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
+      sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
+    ]);
+    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count||s.views||0)),0);
+    const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
+    const totalPaid=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
+
+    const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+    const fmtM=n=>'₹'+Number(n).toLocaleString('en-IN');
+
+    // Update perf rows: views (2nd row), earned (3rd row)
+    const perfRows=document.querySelectorAll('.perf-row');
+    perfRows.forEach(row=>{
+      const lbl=(row.querySelector('.perf-row-label')||{}).textContent||'';
+      const val=row.querySelector('.perf-row-val');
+      if(!val)return;
+      if(lbl.toUpperCase().includes('VIEW'))val.textContent=fmtV(totalViews);
+      if(lbl.toUpperCase().includes('EARN'))val.textContent=fmtM(totalEarned);
+    });
+
+    // ── Clipency Rank ──
+    try{
+      // Get total earned per user to calculate rank
+      const{data:allEarnings}=await sb.from('clip_submissions')
+        .select('user_id,approved_amount')
+        .eq('status','approved');
+      // Sum per user
+      const earningMap={};
+      (allEarnings||[]).forEach(r=>{
+        earningMap[r.user_id]=(earningMap[r.user_id]||0)+(Number(r.approved_amount)||0);
+      });
+      const myEarned=earningMap[user.id]||0;
+      const sortedEarners=Object.values(earningMap).sort((a,b)=>b-a);
+      const rankPos=sortedEarners.findIndex(v=>v<=myEarned)+1||sortedEarners.length+1;
+      const totalClippers=Object.keys(earningMap).length||1;
+      const rankBox=document.querySelector('.creator-rank-sub');
+      const rankLabel=document.querySelector('.creator-rank-label');
+      if(rankLabel)rankLabel.textContent='Clipency Rank';
+      if(rankBox){
+        if(myEarned===0){
+          rankBox.innerHTML='<span style="font-size:.75rem;color:var(--ts)">Submit clips<br/>to earn your rank</span>';
+        }else{
+          rankBox.innerHTML=`<span style="font-size:1.5rem;font-weight:700;color:var(--amber);font-family:'DM Sans',sans-serif;letter-spacing:-.02em">#${rankPos}</span><br/><span style="font-size:.68rem;color:var(--ts)">of ${totalClippers} clippers</span>`;
+        }
+      }
+    }catch(rankErr){console.warn('rank:',rankErr.message);}
+
+    console.log('[Profile] Loaded:',fullName,'| Earned:',totalEarned,'| Rank:#'+rankPos);
+  }catch(e){console.warn('[Profile] loadProfileFromSupabase:',e.message);}
+}
 
 
 

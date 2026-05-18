@@ -3989,7 +3989,7 @@ async function loadProfileFromSupabase(){
       sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
       sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
     ]);
-    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count)||0),0);
+    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count||s.views||0)),0);
     const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
     const totalPaid=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
 
