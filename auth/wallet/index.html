@@ -4176,6 +4176,12 @@ window.addEventListener('load',()=>{
     
     // Update availableBalance global for withdraw modal
     if(typeof window.availableBalance!=='undefined')window.availableBalance=avail;
+    // Update withdraw modal balance display
+    document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
+    // Patch getWdAmount to use real balance
+    window.__realAvailableBalance=avail;
+    const origGetWdAmount=window.getWdAmount;
+    window.availableBalance=avail;
     console.log('[Payouts patch] Balance:',fmt(avail),'Pending:',fmt(pending),'Paid:',fmt(paid));
   }catch(e){console.warn('[Payouts patch]',e.message);}
 })();
