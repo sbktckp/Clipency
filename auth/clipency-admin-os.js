@@ -714,25 +714,67 @@ async function renderUsers(){
 
 /* ══ ROUTER ════════════════════════════════════════════════════════ */
 async function renderLogs(){
-  const[{data:sessions},{data:audits}]=await Promise.all([
-    sb.from('user_session_logs').select('id,email,display_name,login_at,logout_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(100),
-    sb.from('audit_logs').select('id,created_at,action,table_name').order('created_at',{ascending:false}).limit(50)
-  ]).catch(()=>[{data:[]},{data:[]}]);
-  const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+( m%60)+'m':m+'m';};
-  const sessionRows=(sessions||[]).map(r=>`<tr>
-    <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
-    <td><span class="cx-badge ${r.status==='active'?'approved':'draft'}">${esc(r.status||'—')}</span></td>
-    <td style="font-size:11.5px;color:rgba(255,255,255,.5)">${r.login_at?new Date(r.login_at).toLocaleString('en-IN'):'—'}</td>
-    <td style="font-size:11.5px;color:rgba(255,255,255,.5)">${r.last_seen_at?new Date(r.last_seen_at).toLocaleString('en-IN'):'—'}</td>
-    <td style="font-size:11.5px">${fmtSec(r.total_seconds)}</td>
-    <td style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.entry_path||'—')}</td>
+  const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m':m>0?m+'m':'<1m';};
+  
+  // Fetch all data separately to avoid Promise.all issues
+  let sessions=[],audits=[];
+  try{const r=await sb.from('user_session_logs').select('id,email,display_name,login_at,logout_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(100);sessions=r.data||[];}catch{}
+  try{const r=await sb.from('audit_logs').select('id,actor_email,action,target_table,created_at').order('created_at',{ascending:false}).limit(100);audits=r.data||[];}catch{}
+
+  // Merge and build unified activity feed from real data
+  const allActivity=[];
+  
+  // Add submissions
+  try{const{data:subs}=await sb.from('clip_submissions').select('id,user_id,campaign_title,platform,status,created_at,profiles(email,full_name)').order('created_at',{ascending:false}).limit(50);
+    (subs||[]).forEach(s=>allActivity.push({ts:s.created_at,icon:'📎',user:s.profiles?.email||'—',action:'Clip submitted — '+( s.campaign_title||'Campaign'),status:s.status,cat:'Submission'}));
+  }catch{}
+
+  // Add payout requests
+  try{const{data:prs}=await sb.from('payout_requests').select('id,amount,status,requested_at,profiles(email)').order('requested_at',{ascending:false}).limit(30);
+    (prs||[]).forEach(p=>allActivity.push({ts:p.requested_at,icon:'💸',user:p.profiles?.email||'—',action:'Withdrawal request — ₹'+Number(p.amount).toLocaleString('en-IN'),status:p.status,cat:'Payout'}));
+  }catch{}
+
+  // Add account verifications
+  try{const{data:accts}=await sb.from('connected_accounts').select('id,platform,handle,status,created_at,profiles(email)').order('created_at',{ascending:false}).limit(30);
+    (accts||[]).forEach(a=>allActivity.push({ts:a.created_at,icon:'🔗',user:a.profiles?.email||'—',action:`Account connect — @${a.handle||'—'} (${a.platform||'—'})`,status:a.status,cat:'Account'}));
+  }catch{}
+
+  // Add audit logs
+  (audits||[]).forEach(a=>allActivity.push({ts:a.created_at,icon:'📋',user:a.actor_email||'Admin',action:a.action+(a.target_table?' on '+a.target_table:''),status:'done',cat:'Audit'}));
+
+  allActivity.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+
+  const statusColor={approved:'#6EE7B7',paid:'#6EE7B7',verified:'#6EE7B7',rejected:'#F87171',pending:'#FACC15',done:'rgba(255,255,255,.3)',draft:'rgba(255,255,255,.3)'};
+  
+  const actRows=allActivity.slice(0,150).map(r=>`<tr>
+    <td style="font-size:14px">${r.icon}</td>
+    <td style="font-size:11.5px;color:rgba(255,255,255,.55)">${esc(r.user)}</td>
+    <td style="font-size:12px;color:#F5F0EB">${esc(r.action)}</td>
+    <td><span style="font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.45)">${esc(r.cat)}</span></td>
+    <td><span style="font-size:.68rem;font-weight:600;color:${statusColor[r.status]||'rgba(255,255,255,.3)'}">${esc(r.status||'—')}</span></td>
+    <td style="font-size:11px;color:rgba(255,255,255,.35)">${r.ts?new Date(r.ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</td>
   </tr>`).join('');
-  return page({kicker:'System Logs',title:'Logs.',sub:'User sessions and activity across the platform.',
+
+  const sessionRows=sessions.slice(0,20).map(r=>`<tr>
+    <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:10.5px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
+    <td><span class="cx-badge ${r.status==='active'?'approved':'draft'}">${esc(r.status||'offline')}</span></td>
+    <td style="font-size:11px;color:rgba(255,255,255,.45)">${r.login_at?new Date(r.login_at).toLocaleString('en-IN'):'—'}</td>
+    <td style="font-size:11px;color:rgba(255,255,255,.45)">${r.last_seen_at?new Date(r.last_seen_at).toLocaleString('en-IN'):'—'}</td>
+    <td style="font-size:12px;font-weight:600;color:#C4956A">${fmtSec(r.total_seconds)}</td>
+    <td style="font-size:10.5px;color:rgba(255,255,255,.3)">${esc(r.entry_path||'—')}</td>
+  </tr>`).join('');
+
+  return page({kicker:'System Logs',title:'Activity & Logs.',sub:'Real-time platform activity — submissions, payouts, verifications, sessions.',
     body:`<div class="cx-sec">
-    <div class="cx-sh"><div><div class="cx-st">User sessions</div><div class="cx-sd">${(sessions||[]).length} recent sessions</div></div></div>
+    <div class="cx-sh" style="margin-bottom:20px"><div><div class="cx-st">Activity feed</div><div class="cx-sd">${allActivity.length} events logged</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th></th><th>User</th><th>Action</th><th>Category</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody>${actRows||'<tr><td colspan="6"><div class="cx-empty">No activity yet.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">User sessions</div><div class="cx-sd">${sessions.length} sessions tracked</div></div></div>
     <div class="cx-tw"><table class="cx-t">
-      <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Last seen</th><th>Duration</th><th>Entry path</th></tr></thead>
-      <tbody>${sessionRows||'<tr><td colspan="6"><div class="cx-empty">No sessions yet.</div></td></tr>'}</tbody>
+      <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Last seen</th><th>Duration</th><th>Entry</th></tr></thead>
+      <tbody>${sessionRows||'<tr><td colspan="6"><div class="cx-empty">No sessions.</div></td></tr>'}</tbody>
     </table></div></div>`});
 }
 
