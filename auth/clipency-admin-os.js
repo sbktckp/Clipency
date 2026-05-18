@@ -13,7 +13,7 @@ if(window.__clipencyAdminOSLoaded)return;
 window.__clipencyAdminOSLoaded=true;
 
 const PATH=window.location.pathname;
-const ADMIN_PATHS=['/admin','/admin/reviews','/admin/review','/admin/campaigns','/admin/leads',
+const ADMIN_PATHS=['/admin','/admin/reviews','/admin/review','/admin/logs','/admin/campaigns','/admin/leads',
   '/admin/payouts','/admin/users','/admin/accounts','/admin/connected-accounts','/workspace'];
 if(!ADMIN_PATHS.includes(PATH))return;
 
@@ -713,12 +713,18 @@ async function renderUsers(){
 }
 
 /* ══ ROUTER ════════════════════════════════════════════════════════ */
+async function renderLogs(){
+  return page({kicker:'System Logs',title:'Logs.',sub:'Activity and system logs.',
+    body:`<div class="cx-sec"><div class="cx-empty">No logs available yet.</div></div>`});
+}
+
 async function renderRoute(){
   if(PATH==='/admin'||PATH==='/workspace')return renderCommand();
   if(PATH==='/admin/connected-accounts'||PATH==='/admin/accounts')return renderAccounts();
   if(PATH==='/admin/campaigns')return renderCampaigns();
   if(PATH==='/admin/reviews'||PATH==='/admin/review')return renderReviews();
   if(PATH==='/admin/payouts')return renderPayouts();
+  if(PATH==='/admin/logs')return renderLogs();
   if(PATH==='/admin/users')return renderUsers();
   return renderCommand();
 }
