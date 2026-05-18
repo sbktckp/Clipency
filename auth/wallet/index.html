@@ -3333,9 +3333,9 @@ document.getElementById('btn-add-payment').addEventListener('click',()=>{
 function renderPayStep1(){
   const box=document.getElementById('pay-modal-box');
   const availTypes=[];
-  if(!hasType('upi')) availTypes.push({key:'upi',icon:'<img src="upilogo.png" alt="UPI" style="width:28px;height:28px;object-fit:contain;"/>',label:'UPI',sub:'India Payments'});
-  if(!hasType('paypal')) availTypes.push({key:'paypal',icon:'<img src="paypallogo.jpg" alt="PayPal" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'PayPal',sub:'Email-based'});
-  if(!hasType('crypto')) availTypes.push({key:'crypto',icon:'<img src="usdlogo.jpg" alt="Crypto" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"/>',label:'Crypto',sub:'USDC / SOL'});
+  if(!hasType('upi')) availTypes.push({key:'upi',icon:'<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="8" fill="#5F259F"/><text x="50%" y="55%" font-size="14" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">UPI</text></svg>',label:'UPI',sub:'India Payments'});
+  if(!hasType('paypal')) availTypes.push({key:'paypal',icon:'<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="8" fill="#003087"/><text x="50%" y="55%" font-size="11" font-weight="bold" fill="#009CDE" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">PP</text></svg>',label:'PayPal',sub:'Email-based'});
+  if(!hasType('crypto')) availTypes.push({key:'crypto',icon:'<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="8" fill="#2775CA"/><text x="50%" y="55%" font-size="11" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">₿</text></svg>',label:'Crypto',sub:'USDC / SOL'});
 
   if(availTypes.length===0){
     box.innerHTML=`
