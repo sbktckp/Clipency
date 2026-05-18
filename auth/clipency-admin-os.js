@@ -643,7 +643,13 @@ async function renderReviews(){
 /* ══ PAYOUTS ════════════════════════════════════════════════════════ */
 async function renderPayouts(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const{data:rows}=await sb.rpc('admin_get_payouts',{p_status:tab});
+  const prQ=await sb.from('payout_requests').select('id,user_id,amount,status,note,requested_at,processed_at,transaction_reference').order('requested_at',{ascending:false});
+  const prData=prQ.data||[];
+  const puids=[...new Set(prData.map(x=>x.user_id).filter(Boolean))];
+  const pprofQ=puids.length?await sb.from('profiles').select('id,email,full_name').in('id',puids):{data:[]};
+  const pprofMap=Object.fromEntries((pprofQ.data||[]).map(p=>[p.id,p]));
+  const allPR=prData.map(x=>({...x,user_email:pprofMap[x.user_id]?.email||'—',user_name:pprofMap[x.user_id]?.full_name||'',available_balance:0}));
+  const rows=tab==='all'?allPR:allPR.filter(x=>x.status===tab);
   const totalPending=(rows||[]).filter(r=>r.status==='pending').reduce((a,r)=>a+(r.amount||0),0);
   const tabs=['pending','paid','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
