@@ -399,6 +399,16 @@ window.__editCamp = async function(id){
   const{data}=await sb.from('campaigns').select('*').eq('id',id).maybeSingle();
   if(data)window.showCampaignForm(data);
 };
+window.editSub = async function(id, currentAmount, currentViews){
+  const v=prompt('Views count:',currentViews||0);
+  if(v===null)return;
+  const a=prompt('Approved amount (₹):',currentAmount||0);
+  if(a===null)return;
+  const{error}=await sb.rpc('admin_edit_submission',{p_id:id,p_amount:Number(a),p_views:Number(v)});
+  if(error){alert(error.message);return;}
+  toast('✓ Updated — reflects across all clipper pages');
+  await boot();
+};
 window.toggleCampStatus = async function(id, currentStatus){
   const newStatus = currentStatus==='active'?'paused':'active';
   await sb.from('campaigns').update({status:newStatus}).eq('id',id);
@@ -619,6 +629,8 @@ async function renderReviews(){
         ${r.status==='pending'?`
           <button class="cx-btn ok sm" data-approve-sub="${esc(r.id)}">Approve</button>
           <button class="cx-btn danger sm" data-reject-sub="${esc(r.id)}">Reject</button>
+        `:r.status==='approved'?`
+          <button class="cx-btn ghost sm" onclick="editSub('${esc(r.id)}',${r.approved_amount||0},${r.views_count||r.views||0})">Edit</button>
         `:'<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>'}
       </div></td>
     </tr>`).join('')}</tbody>
