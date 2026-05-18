@@ -714,8 +714,26 @@ async function renderUsers(){
 
 /* ══ ROUTER ════════════════════════════════════════════════════════ */
 async function renderLogs(){
-  return page({kicker:'System Logs',title:'Logs.',sub:'Activity and system logs.',
-    body:`<div class="cx-sec"><div class="cx-empty">No logs available yet.</div></div>`});
+  const[{data:sessions},{data:audits}]=await Promise.all([
+    sb.from('user_session_logs').select('id,email,display_name,login_at,logout_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(100),
+    sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(50).catch(()=>({data:[]}))
+  ]);
+  const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+( m%60)+'m':m+'m';};
+  const sessionRows=(sessions||[]).map(r=>`<tr>
+    <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
+    <td><span class="cx-badge ${r.status==='active'?'approved':'draft'}">${esc(r.status||'—')}</span></td>
+    <td style="font-size:11.5px;color:rgba(255,255,255,.5)">${r.login_at?new Date(r.login_at).toLocaleString('en-IN'):'—'}</td>
+    <td style="font-size:11.5px;color:rgba(255,255,255,.5)">${r.last_seen_at?new Date(r.last_seen_at).toLocaleString('en-IN'):'—'}</td>
+    <td style="font-size:11.5px">${fmtSec(r.total_seconds)}</td>
+    <td style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.entry_path||'—')}</td>
+  </tr>`).join('');
+  return page({kicker:'System Logs',title:'Logs.',sub:'User sessions and activity across the platform.',
+    body:`<div class="cx-sec">
+    <div class="cx-sh"><div><div class="cx-st">User sessions</div><div class="cx-sd">${(sessions||[]).length} recent sessions</div></div></div>
+    <div class="cx-tw"><table class="cx-t">
+      <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Last seen</th><th>Duration</th><th>Entry path</th></tr></thead>
+      <tbody>${sessionRows||'<tr><td colspan="6"><div class="cx-empty">No sessions yet.</div></td></tr>'}</tbody>
+    </table></div></div>`});
 }
 
 async function renderRoute(){
