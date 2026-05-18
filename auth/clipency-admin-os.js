@@ -716,8 +716,8 @@ async function renderUsers(){
 async function renderLogs(){
   const[{data:sessions},{data:audits}]=await Promise.all([
     sb.from('user_session_logs').select('id,email,display_name,login_at,logout_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(100),
-    sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(50).catch(()=>({data:[]}))
-  ]);
+    sb.from('audit_logs').select('id,created_at,action,table_name').order('created_at',{ascending:false}).limit(50)
+  ]).catch(()=>[{data:[]},{data:[]}]);
   const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+( m%60)+'m':m+'m';};
   const sessionRows=(sessions||[]).map(r=>`<tr>
     <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
