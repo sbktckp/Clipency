@@ -4,19 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency | Admin</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0A0908;color:#F5F0EB;font-family:'DM Sans',system-ui,sans-serif;font-size:14px}
-#app{display:flex;height:100vh}
-.loader{position:fixed;inset:0;background:#0A0908;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px}
-.spinner{width:26px;height:26px;border:2px solid rgba(196,149,106,.2);border-top-color:#C4956A;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 </head>
-<body>
-<div class="loader" id="loader"><div class="spinner"></div><div style="font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:#6A6158;font-family:'Space Mono',monospace">Clipency Admin</div></div>
-<div id="app" style="display:none"></div>
+<body style="margin:0;background:#0A0908">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
 <script src="/supabaseClient.js"></script>
 <script src="/clipency-admin-os.js"></script>
