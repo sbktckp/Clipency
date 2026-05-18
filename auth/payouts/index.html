@@ -4103,5 +4103,79 @@ window.addEventListener('load',()=>{
   });
 })();
 </script>
+
+<script>
+// Payouts live data patch
+(async function patchPayouts(){
+  await new Promise(r=>setTimeout(r,1200));
+  const sb=window.clipencySupabase||window.supabaseClient;
+  if(!sb)return;
+  try{
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)return;
+    const{data:bal}=await sb.rpc('get_clipper_balance',{p_user_id:user.id});
+    if(!bal)return;
+    
+    const avail=Number(bal.available_balance)||0;
+    const pending=Number(bal.pending_withdrawal)||0;
+    const paid=Number(bal.total_withdrawn)||0;
+    const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
+    
+    // Update balance cards
+    ['bal-available','#bal-available'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(avail);
+    });
+    ['bal-pending','#bal-pending'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(pending);
+    });
+    ['bal-paid','#bal-paid'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(paid);
+    });
+    
+    // Load transactions
+    const[{data:subs},{data:reqs}]=await Promise.all([
+      sb.from('clip_submissions').select('campaign_title,platform,approved_amount,reviewed_at,created_at').eq('user_id',user.id).eq('status','approved').order('reviewed_at',{ascending:false}),
+      sb.from('payout_requests').select('*').eq('user_id',user.id).order('requested_at',{ascending:false})
+    ]);
+    
+    const txItems=[];
+    (subs||[]).forEach(s=>txItems.push({
+      icon:'📎',desc:(s.campaign_title||'Campaign')+' · '+(s.platform||''),
+      date:new Date(s.reviewed_at||s.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'}),
+      amount:Number(s.approved_amount)||0,neg:false,status:'Paid',
+      ts:new Date(s.reviewed_at||s.created_at).getTime()
+    }));
+    (reqs||[]).forEach(p=>txItems.push({
+      icon:'💸',desc:'Withdrawal request',
+      date:new Date(p.requested_at||p.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'}),
+      amount:Number(p.amount)||0,neg:true,
+      status:p.status==='paid'?'Sent':p.status==='pending'?'Processing':'Pending',
+      ts:new Date(p.requested_at||p.created_at).getTime()
+    }));
+    txItems.sort((a,b)=>b.ts-a.ts);
+    
+    const list=document.getElementById('tx-list');
+    if(list){
+      if(!txItems.length){
+        list.innerHTML='<div style="padding:28px;text-align:center;color:rgba(255,255,255,.35)">No transactions yet.</div>';
+      } else {
+        list.innerHTML=txItems.map(t=>`<div class="tx-item">
+          <div class="tx-icon">${t.icon}</div>
+          <div style="flex:1"><div class="tx-desc">${t.desc}</div><div class="tx-date">${t.date}</div></div>
+          <div><div class="tx-amount" style="${t.neg?'color:#F87171':''}">${t.neg?'-':''}${fmt(t.amount)}</div>
+          <div class="tx-status">${t.status}</div></div>
+        </div>`).join('');
+      }
+    }
+    
+    // Update availableBalance global for withdraw modal
+    if(typeof window.availableBalance!=='undefined')window.availableBalance=avail;
+    console.log('[Payouts patch] Balance:',fmt(avail),'Pending:',fmt(pending),'Paid:',fmt(paid));
+  }catch(e){console.warn('[Payouts patch]',e.message);}
+})();
+</script>
 </body>
 </html>
