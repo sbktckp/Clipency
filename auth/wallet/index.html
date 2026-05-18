@@ -4183,21 +4183,56 @@ window.addEventListener('load',()=>{
     // Override openWithdrawModal to use real balance
     const _origOpenWd = window.openWithdrawModal;
     window.openWithdrawModal = function(){
-      if(window.__realAvailableBalance !== undefined){
-        // Patch the closure variable via the bal-available element trick
-        const origText = document.getElementById('bal-available')?.textContent;
-        if(document.getElementById('bal-available'))
-          document.getElementById('bal-available').textContent = fmt(window.__realAvailableBalance);
-      }
       if(_origOpenWd) _origOpenWd();
-      // After modal opens, patch displayed balance
       setTimeout(()=>{
-        const hint = document.querySelector('.wd-balance-hint strong, [class*="wd-balance"] strong');
-        if(hint && window.__realAvailableBalance !== undefined)
-          hint.textContent = '₹'+Number(window.__realAvailableBalance).toLocaleString('en-IN');
-        // Also patch the max amount check
-        window.availableBalance = window.__realAvailableBalance || 0;
-      }, 50);
+        const bal = window.__realAvailableBalance || 0;
+        // Fix balance hint
+        const hint = document.querySelector('.wd-balance-hint strong');
+        if(hint) hint.textContent = '₹'+Number(bal).toLocaleString('en-IN');
+        // Make input directly editable
+        const inp = document.querySelector('.wd-input, #wd-amount-display, [class*="wd-amount"]');
+        if(inp && inp.tagName!=='INPUT'){
+          // Replace display div with real input
+          const realInp = document.createElement('input');
+          realInp.type = 'number';
+          realInp.min = 1;
+          realInp.max = bal;
+          realInp.step = 1;
+          realInp.value = '';
+          realInp.placeholder = '0';
+          realInp.id = 'wd-real-input';
+          realInp.style.cssText = inp.style.cssText + ';width:100%;background:transparent;border:none;outline:none;color:inherit;font-size:inherit;font-family:inherit;text-align:center';
+          inp.parentNode.replaceChild(realInp, inp);
+          realInp.focus();
+        }
+        // Fix confirm button — use real balance
+        const confirmBtn = document.querySelector('[onclick*="confirmWithdraw"], #wd-confirm-btn, .wd-btn-confirm');
+        if(confirmBtn){
+          confirmBtn.disabled = false;
+          confirmBtn.onclick = async function(){
+            const realInput = document.getElementById('wd-real-input');
+            const amt = realInput ? Number(realInput.value) : 0;
+            if(!amt || amt <= 0){ alert('Enter a valid amount'); return; }
+            if(amt > bal){ alert('Amount exceeds available balance ₹'+bal); return; }
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Submitting…';
+            try{
+              const sb = window.clipencySupabase||window.supabaseClient;
+              const{data:{user}} = await sb.auth.getUser();
+              const{error} = await sb.rpc('clipper_request_payout',{p_amount:amt,p_note:null});
+              if(error) throw error;
+              window.__realAvailableBalance = Math.max(bal - amt, 0);
+              document.getElementById('bal-available').textContent = '₹'+window.__realAvailableBalance.toLocaleString('en-IN');
+              const wc = document.getElementById('wd-content');
+              if(wc) wc.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:2rem">✓</div><h2 style="margin:12px 0 8px;font-family:Instrument Serif,serif">Request Submitted</h2><p style="color:var(--tm,#6A6158);font-size:.85rem">₹'+amt.toLocaleString('en-IN')+' withdrawal requested. Expected in 5–7 days.</p><button onclick="closeWithdrawModal()" style="margin-top:18px;padding:10px 24px;background:#C4956A;color:#0A0908;border:none;border-radius:8px;cursor:pointer;font-weight:600">Close</button></div>';
+            }catch(e){
+              alert('Error: '+e.message);
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = 'Confirm Withdrawal';
+            }
+          };
+        }
+      }, 100);
     };
     const origGetWdAmount=window.getWdAmount;
     window.availableBalance=avail;
