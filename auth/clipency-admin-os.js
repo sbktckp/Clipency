@@ -10,7 +10,7 @@ if(window.__clipencyAdminOSLoaded)return;
 window.__clipencyAdminOSLoaded=true;
 
 const PATH=window.location.pathname;
-const ADMIN_PATHS=['/admin','/admin/reviews','/admin/campaigns','/admin/leads',
+const ADMIN_PATHS=['/admin','/admin/reviews','/admin/review','/admin/campaigns','/admin/leads',
   '/admin/payouts','/admin/users','/admin/accounts','/admin/connected-accounts','/workspace'];
 if(!ADMIN_PATHS.includes(PATH))return;
 
@@ -696,7 +696,7 @@ async function renderRoute(){
   if(PATH==='/admin'||PATH==='/workspace')return renderCommand();
   if(PATH==='/admin/connected-accounts'||PATH==='/admin/accounts')return renderAccounts();
   if(PATH==='/admin/campaigns')return renderCampaigns();
-  if(PATH==='/admin/reviews')return renderReviews();
+  if(PATH==='/admin/reviews'||PATH==='/admin/review')return renderReviews();
   if(PATH==='/admin/payouts')return renderPayouts();
   if(PATH==='/admin/users')return renderUsers();
   return renderCommand();
