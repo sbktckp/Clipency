@@ -3,6 +3,9 @@ window.__clipencyAdminLaunchBlocked = true;
 window.reviews = ()=>{};
 window.accounts = ()=>{};
 window.campaigns_legacy = ()=>{};
+window.payouts = ()=>{};
+window.submissions = ()=>{};
+window.leads = ()=>{};
 
 (function(){
 'use strict';
