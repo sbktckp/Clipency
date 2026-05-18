@@ -4180,12 +4180,50 @@ window.addEventListener('load',()=>{
     document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
     // Patch getWdAmount to use real balance
     window.__realAvailableBalance=avail;
+    // Override openWithdrawModal to use real balance
+    const _origOpenWd = window.openWithdrawModal;
+    window.openWithdrawModal = function(){
+      if(window.__realAvailableBalance !== undefined){
+        // Patch the closure variable via the bal-available element trick
+        const origText = document.getElementById('bal-available')?.textContent;
+        if(document.getElementById('bal-available'))
+          document.getElementById('bal-available').textContent = fmt(window.__realAvailableBalance);
+      }
+      if(_origOpenWd) _origOpenWd();
+      // After modal opens, patch displayed balance
+      setTimeout(()=>{
+        const hint = document.querySelector('.wd-balance-hint strong, [class*="wd-balance"] strong');
+        if(hint && window.__realAvailableBalance !== undefined)
+          hint.textContent = '₹'+Number(window.__realAvailableBalance).toLocaleString('en-IN');
+        // Also patch the max amount check
+        window.availableBalance = window.__realAvailableBalance || 0;
+      }, 50);
+    };
     const origGetWdAmount=window.getWdAmount;
     window.availableBalance=avail;
     // Update withdraw modal balance display
     document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
     // Patch getWdAmount to use real balance
     window.__realAvailableBalance=avail;
+    // Override openWithdrawModal to use real balance
+    const _origOpenWd = window.openWithdrawModal;
+    window.openWithdrawModal = function(){
+      if(window.__realAvailableBalance !== undefined){
+        // Patch the closure variable via the bal-available element trick
+        const origText = document.getElementById('bal-available')?.textContent;
+        if(document.getElementById('bal-available'))
+          document.getElementById('bal-available').textContent = fmt(window.__realAvailableBalance);
+      }
+      if(_origOpenWd) _origOpenWd();
+      // After modal opens, patch displayed balance
+      setTimeout(()=>{
+        const hint = document.querySelector('.wd-balance-hint strong, [class*="wd-balance"] strong');
+        if(hint && window.__realAvailableBalance !== undefined)
+          hint.textContent = '₹'+Number(window.__realAvailableBalance).toLocaleString('en-IN');
+        // Also patch the max amount check
+        window.availableBalance = window.__realAvailableBalance || 0;
+      }, 50);
+    };
     const origGetWdAmount=window.getWdAmount;
     window.availableBalance=avail;
     console.log('[Payouts patch] Balance:',fmt(avail),'Pending:',fmt(pending),'Paid:',fmt(paid));
