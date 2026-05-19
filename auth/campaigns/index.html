@@ -2225,7 +2225,7 @@ function renderCampaigns(genre='All'){
   `}).join('');
 }
 
-function showCampDetail(id){ setTimeout(()=>loadRealPerformers(id),200);
+function showCampDetail(id){
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
@@ -2367,7 +2367,8 @@ function showCampDetail(id){ setTimeout(()=>loadRealPerformers(id),200);
       `).join('')}
     </div>
   `;
-  // draw chart after DOM is updated
+    setTimeout(()=>loadRealPerformers(id),50);
+// draw chart after DOM is updated
   setTimeout(()=>{
     _detailPeriod='7d';
     drawDetailChart(c.sparkData, color);
