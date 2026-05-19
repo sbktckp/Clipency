@@ -8,7 +8,40 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+async function loadRealPerformers(campaignId){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:subs}=await sb.from('clip_submissions')
+      .select('user_id,views_count,approved_amount,profiles(full_name,username,email)')
+      .eq('campaign_id',String(campaignId)).eq('status','approved');
+    const el=document.querySelector('[data-real-performers]');
+    if(!el)return;
+    if(!subs||!subs.length){
+      el.innerHTML='<div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">No approved clips yet for this campaign.</div>';
+      return;
+    }
+    const byUser={};
+    (subs||[]).forEach(s=>{
+      const uid=s.user_id;
+      if(!byUser[uid]){byUser[uid]={name:s.profiles?.full_name||s.profiles?.email?.split('@')[0]||'Clipper',handle:'@'+(s.profiles?.username||uid.slice(0,8)),views:0,earn:0};}
+      byUser[uid].views+=Number(s.views_count||0);
+      byUser[uid].earn+=Number(s.approved_amount||0);
+    });
+    const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+    const rankColors=['#F0C040','#B0B8C0','#CD7F32','rgba(255,255,255,.5)','rgba(255,255,255,.35)'];
+    const top=Object.values(byUser).sort((a,b)=>b.views-a.views).slice(0,5);
+    el.innerHTML=top.map((p,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bsoft)">
+      <span style="font-size:.72rem;font-weight:700;color:${rankColors[i]||rankColors[3]};min-width:22px">#${i+1}</span>
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--adim);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--amber);flex-shrink:0">${(p.name[0]||'C').toUpperCase()}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:.83rem;font-weight:600;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div><div style="font-size:.7rem;color:var(--tm)">${p.handle}</div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:.83rem;font-weight:600;color:var(--tp)">${fmtV(p.views)}</div><div style="font-size:.7rem;color:var(--green)">₹${p.earn.toLocaleString('en-IN')}</div></div>
+    </div>`).join('');
+  }catch(e){console.warn('performers:',e.message);}
+}
+
+</script>
 <script src="/supabaseClient.js"></script>
 <style>
 :root{
@@ -2192,7 +2225,7 @@ function renderCampaigns(genre='All'){
   `}).join('');
 }
 
-function showCampDetail(id){
+function showCampDetail(id){ setTimeout(()=>loadRealPerformers(id),200);
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
@@ -2323,7 +2356,8 @@ function showCampDetail(id){
     <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${PERFORMERS.map((p,i)=>`
+      <div data-real-performers><div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">Loading…</div></div>
+      ${[].map((p,i)=>`
         <div class="perf-item">
           <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
           <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
