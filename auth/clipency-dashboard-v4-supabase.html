@@ -3824,21 +3824,24 @@ async function submitForReview(platformName, platformKey, username){
     }
 
     // Check if already exists then insert or update
+    // Check if this exact handle is already verified on this platform
     const{data:existingAcct}=await sb.from('connected_accounts')
       .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
     let error;
+    if(existingAcct?.status==='verified'){
+      showToast('✓ @'+handle+' is already verified on '+platformName+'!');
+      closeConnectModal();
+      return;
+    }
     if(existingAcct){
-      if(existingAcct.status==='verified'){
-        showToast('✓ This account is already verified!');
-        closeConnectModal();
-        return;
-      }
+      // Retry pending verification
       ({error}=await sb.from('connected_accounts').update({
         verification_code:FIXED_CODE,status:'pending',is_verified:false,
         expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
         updated_at:new Date().toISOString()
       }).eq('id',existingAcct.id));
     }else{
+      // Add new account (multiple accounts per platform allowed)
       ({error}=await sb.from('connected_accounts').insert({
         user_id:user.id,platform:platformKey,handle:handle,username:handle,
         verification_code:FIXED_CODE,status:'pending',is_verified:false,
