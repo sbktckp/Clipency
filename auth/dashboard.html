@@ -8,7 +8,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+async function loadTopClippers(campaignId){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:subs}=await sb.from('clip_submissions').select('user_id,views_count,approved_amount,profiles(full_name,username,email)').eq('campaign_id',String(campaignId)).eq('status','approved');
+    if(!subs||!subs.length){PERFORMERS=[];return;}
+    const byUser={};
+    subs.forEach(s=>{
+      if(!byUser[s.user_id]){byUser[s.user_id]={name:s.profiles?.full_name||s.profiles?.email?.split('@')[0]||'Clipper',handle:'@'+(s.profiles?.username||'clipper'),views:0,earn:0,earnUsd:0};}
+      byUser[s.user_id].views+=Number(s.views_count||0);
+      byUser[s.user_id].earn+=Number(s.approved_amount||0);
+      byUser[s.user_id].earnUsd+=Number(s.approved_amount||0);
+    });
+    const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+    PERFORMERS=Object.values(byUser).sort((a,b)=>b.views-a.views).slice(0,5).map(u=>({...u,views:fmtV(u.views),earn:'₹'+u.earnUsd.toLocaleString('en-IN')}));
+  }catch(e){PERFORMERS=[];}
+}
+</script>
 <script src="/supabaseClient.js"></script>
 <style>
 :root{
@@ -2004,13 +2022,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 // ── DATA ──
 let CAMPAIGNS = [];
 
-const PERFORMERS = [
-  {name:"Alex Rivera", handle:"@alexriv",  views:"4.2M", earn:"$420", earnUsd:420},
-  {name:"Mia Chen",    handle:"@miachen",  views:"3.8M", earn:"$380", earnUsd:380},
-  {name:"Jake Storm",  handle:"@jakestorm",views:"2.9M", earn:"$290", earnUsd:290},
-  {name:"Priya Singh", handle:"@priyasg",  views:"2.4M", earn:"$240", earnUsd:240},
-  {name:"Leo Martinez",handle:"@leomart",  views:"1.9M", earn:"$190", earnUsd:190},
-];
+let PERFORMERS = [];
 
 const TRANSACTIONS = [];
 
@@ -2192,7 +2204,7 @@ function renderCampaigns(genre='All'){
   `}).join('');
 }
 
-function showCampDetail(id){
+async function showCampDetail(id){ await loadTopClippers(id);
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
@@ -2323,7 +2335,7 @@ function showCampDetail(id){
     <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${PERFORMERS.map((p,i)=>`
+      ${PERFORMERS.length?PERFORMERS.map((p,i)=>`
         <div class="perf-item">
           <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
           <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
@@ -2544,7 +2556,7 @@ function renderModalStep(){
             <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:${pi.bg};border:1px solid ${pi.border};margin-bottom:4px;transition:transform .3s var(--ease-spring);">${pi.icon}</div>
             <span class="p-name">${p}</span>
           </div>`;
-        }).join('')}
+        }).join(''):'<div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">Loading top clippers…</div>'}
       </div>
       <div class="modal-nav">
         <button class="modal-btn-next" ${!s.platform?'disabled':''} onclick="if(_submitState.platform){_submitState.step=2;renderModalStep();}">
@@ -4179,66 +4191,6 @@ window.addEventListener('load',()=>{
     
     // Update availableBalance global for withdraw modal
     if(typeof window.availableBalance!=='undefined')window.availableBalance=avail;
-    // Update withdraw modal balance display
-    document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
-    // Patch getWdAmount to use real balance
-    window.__realAvailableBalance=avail;
-    // Override openWithdrawModal to use real balance
-    const _origOpenWd = window.openWithdrawModal;
-    window.openWithdrawModal = function(){
-      if(_origOpenWd) _origOpenWd();
-      setTimeout(()=>{
-        const bal = window.__realAvailableBalance || 0;
-        // Fix balance hint
-        const hint = document.querySelector('.wd-balance-hint strong');
-        if(hint) hint.textContent = '₹'+Number(bal).toLocaleString('en-IN');
-        // Make input directly editable
-        const inp = document.querySelector('.wd-input, #wd-amount-display, [class*="wd-amount"]');
-        if(inp && inp.tagName!=='INPUT'){
-          // Replace display div with real input
-          const realInp = document.createElement('input');
-          realInp.type = 'number';
-          realInp.min = 1;
-          realInp.max = bal;
-          realInp.step = 1;
-          realInp.value = '';
-          realInp.placeholder = '0';
-          realInp.id = 'wd-real-input';
-          realInp.style.cssText = inp.style.cssText + ';width:100%;background:transparent;border:none;outline:none;color:inherit;font-size:inherit;font-family:inherit;text-align:center';
-          inp.parentNode.replaceChild(realInp, inp);
-          realInp.focus();
-        }
-        // Fix confirm button — use real balance
-        const confirmBtn = document.querySelector('[onclick*="confirmWithdraw"], #wd-confirm-btn, .wd-btn-confirm');
-        if(confirmBtn){
-          confirmBtn.disabled = false;
-          confirmBtn.onclick = async function(){
-            const realInput = document.getElementById('wd-real-input');
-            const amt = realInput ? Number(realInput.value) : 0;
-            if(!amt || amt <= 0){ alert('Enter a valid amount'); return; }
-            if(amt > bal){ alert('Amount exceeds available balance ₹'+bal); return; }
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Submitting…';
-            try{
-              const sb = window.clipencySupabase||window.supabaseClient;
-              const{data:{user}} = await sb.auth.getUser();
-              const{error} = await sb.rpc('clipper_request_payout',{p_amount:amt,p_note:null});
-              if(error) throw error;
-              window.__realAvailableBalance = Math.max(bal - amt, 0);
-              document.getElementById('bal-available').textContent = '₹'+window.__realAvailableBalance.toLocaleString('en-IN');
-              const wc = document.getElementById('wd-content');
-              if(wc) wc.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:2rem">✓</div><h2 style="margin:12px 0 8px;font-family:Instrument Serif,serif">Request Submitted</h2><p style="color:var(--tm,#6A6158);font-size:.85rem">₹'+amt.toLocaleString('en-IN')+' withdrawal requested. Expected in 5–7 days.</p><button onclick="closeWithdrawModal()" style="margin-top:18px;padding:10px 24px;background:#C4956A;color:#0A0908;border:none;border-radius:8px;cursor:pointer;font-weight:600">Close</button></div>';
-            }catch(e){
-              alert('Error: '+e.message);
-              confirmBtn.disabled = false;
-              confirmBtn.textContent = 'Confirm Withdrawal';
-            }
-          };
-        }
-      }, 100);
-    };
-    const origGetWdAmount=window.getWdAmount;
-    window.availableBalance=avail;
     // Update withdraw modal balance display
     document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
     // Patch getWdAmount to use real balance
