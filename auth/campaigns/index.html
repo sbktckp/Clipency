@@ -26,6 +26,27 @@ async function loadTopClippers(campaignId){
     PERFORMERS=Object.values(byUser).sort((a,b)=>b.views-a.views).slice(0,5).map(u=>({...u,views:fmtV(u.views),earn:'₹'+u.earnUsd.toLocaleString('en-IN')}));
   }catch(e){PERFORMERS=[];}
 }
+
+// After campaign detail renders, load real performers
+async function reloadPerformers(id){
+  await loadTopClippers(id);
+  // Find and update the performers section
+  const perf = document.querySelector('[data-performers]');
+  if(!perf) return;
+  const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+  const rankColors=['#F0C040','#B0B8C0','#CD7F32','rgba(255,255,255,.5)','rgba(255,255,255,.35)'];
+  if(!PERFORMERS.length){
+    perf.innerHTML='<div style="text-align:center;padding:20px;color:var(--tm);font-size:.82rem">No approved clips yet.</div>';
+    return;
+  }
+  perf.innerHTML=PERFORMERS.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bsoft)">
+      <span class="perf-rank${i===0?' gold':i===1?' silver':i===2?' bronze':''}" style="color:${rankColors[i]}">#${i+1}</span>
+      <div class="perf-av" style="width:30px;height:30px;border-radius:50%;background:var(--adim);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--amber);flex-shrink:0">${(p.name||'C')[0]}</div>
+      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:var(--tp)">${p.name}</div><div style="font-size:.7rem;color:var(--tm)">${p.handle}</div></div>
+      <div style="text-align:right"><div style="font-size:.82rem;font-weight:600">${typeof p.views==='string'?p.views:fmtV(p.views)}</div><div style="font-size:.7rem;color:var(--green)">${p.earn}</div></div>
+    </div>`).join('');
+}
 </script>
 <script src="/supabaseClient.js"></script>
 <style>
@@ -2204,7 +2225,7 @@ function renderCampaigns(genre='All'){
   `}).join('');
 }
 
-async function showCampDetail(id){ await loadTopClippers(id);
+async async async function showCampDetail(id){ setTimeout(()=>reloadPerformers(id),300);
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
   const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
@@ -2334,8 +2355,8 @@ async function showCampDetail(id){ await loadTopClippers(id);
 
     <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
-      <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${PERFORMERS.length?PERFORMERS.map((p,i)=>`
+      <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p><div data-performers style="min-height:40px"><div style="text-align:center;padding:16px;color:var(--tm);font-size:.82rem">Loading…</div></div><span style="display:none">
+      ${[].map((p,i)=>`
         <div class="perf-item">
           <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
           <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
