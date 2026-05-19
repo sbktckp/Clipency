@@ -907,20 +907,7 @@ function bindEvents(){
       });
     });
   });
-  // Approve submission
-  document.querySelectorAll('[data-approve-sub]').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      await showModal({title:'Approve Submission',desc:'Set the earnings amount for this clip. It will be added to the clipper\'s available balance immediately.',
-        fields:[{key:'amount',label:'Approved amount (₹)',type:'number',placeholder:'e.g. 250',min:'0',step:'0.01',required:true}],
-        confirmLabel:'Approve & Pay',confirmClass:'ok',
-        onConfirm:async({amount})=>{
-          const{error}=await sb.rpc('admin_approve_submission',{p_id:btn.dataset.approveSub,p_amount:amount});
-          if(error)throw error;
-          await boot();
-        }
-      });
-    });
-  });
+  // Approve/reject handled via openReviewModal onclick
   // Reject submission
   document.querySelectorAll('[data-reject-sub]').forEach(btn=>{
     btn.addEventListener('click',async()=>{
