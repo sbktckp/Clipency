@@ -608,40 +608,118 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
 
 async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
-  const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,status,rejection_reason,approved_amount,created_at').order('created_at',{ascending:false});
-  const srData=srQ.data||[];
-  const uids=[...new Set(srData.map(x=>x.user_id).filter(Boolean))];
-  const profQ=uids.length?await sb.from('profiles').select('id,email,full_name').in('id',uids):{data:[]};
-  const profMap=Object.fromEntries((profQ.data||[]).map(p=>[p.id,p]));
+  let srData=[],profMap={};
+  try{
+    const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,views,status,rejection_reason,approved_amount,earning_amount,created_at,reviewed_at').order('created_at',{ascending:false});
+    srData=srQ.data||[];
+    const uids=[...new Set(srData.map(x=>x.user_id).filter(Boolean))];
+    if(uids.length){const{data:profs}=await sb.from('profiles').select('id,email,full_name').in('id',uids);profMap=Object.fromEntries((profs||[]).map(p=>[p.id,p]));}
+  }catch(e){console.warn(e);}
   const srAll=srData.map(x=>({...x,user_email:profMap[x.user_id]?.email||'—',user_name:profMap[x.user_id]?.full_name||''}));
   const rows=tab==='all'?srAll:srAll.filter(x=>x.status===tab);
-  const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
-  const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
-    <thead><tr><th>Clipper</th><th>Campaign</th><th>Platform / Handle</th><th>Clip</th><th>Views</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead>
-    <tbody>${(rows||[]).map(r=>`<tr>
-      <td><div style="font-size:12px">${esc(r.user_email||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.user_name||'')}</div></td>
-      <td style="max-width:140px"><div style="font-size:12.5px;font-weight:600">${esc(r.campaign_title||r.campaign_id||'—')}</div></td>
-      <td><div style="font-size:12px">${esc(r.platform||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">@${esc(r.handle||'—')}</div></td>
-      <td>${r.clip_url?`<a href="${esc(r.clip_url)}" target="_blank" style="color:#a5b4fc;font-size:12px;text-decoration:none" title="${esc(r.clip_url)}">🔗 Open clip</a>`:'—'}</td>
-      <td style="font-size:12.5px">${r.views_count?fmt(r.views_count):'—'}</td>
-      <td><span class="cx-badge ${r.status}">${esc(r.status||'—')}</span></td>
-      <td style="font-size:13px;font-weight:600">${r.approved_amount?fmtMoney(r.approved_amount):'—'}
-        ${r.rejection_reason?`<div style="font-size:10.5px;color:#f87171;margin-top:2px">${esc(r.rejection_reason.slice(0,40))}${r.rejection_reason.length>40?'…':''}</div>`:''}
-      </td>
-      <td><div class="cx-btns">
-        ${r.status==='pending'?`
-          <button class="cx-btn ok sm" data-approve-sub="${esc(r.id)}">Approve</button>
-          <button class="cx-btn danger sm" data-reject-sub="${esc(r.id)}">Reject</button>
-        `:r.status==='approved'?`
-          <button class="cx-btn ghost sm" onclick="editSub('${esc(r.id)}',${r.approved_amount||0},${r.views_count||r.views||0})">Edit</button>
-        `:'<span style="font-size:11px;color:rgba(255,255,255,.3)">—</span>'}
+  const counts={pending:srAll.filter(x=>x.status==='pending').length,approved:srAll.filter(x=>x.status==='approved').length,rejected:srAll.filter(x=>x.status==='rejected').length,all:srAll.length};
+  const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t[0].toUpperCase()+t.slice(1)} <span style="opacity:.5;font-size:.75em">${counts[t]||0}</span></button>`).join('');
+  const fmtViews=n=>{n=Number(n||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(n||0);};
+  const rowsHtml=rows.length?`<div class="cx-tw"><table class="cx-t" style="table-layout:auto">
+    <thead><tr><th>Clipper</th><th>Campaign</th><th>Platform</th><th>Clip</th><th>Views</th><th>Earnings</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const views=Number(r.views_count||r.views||0);
+      const amt=Number(r.approved_amount||r.earning_amount||0);
+      return`<tr>
+      <td><div style="font-weight:600;font-size:12.5px;white-space:nowrap">${esc(r.user_name||r.user_email||'—')}</div><div style="font-size:10.5px;color:rgba(255,255,255,.35)">${esc(r.user_email||'')}</div></td>
+      <td style="font-size:12px;max-width:130px"><div style="font-weight:600">${esc(r.campaign_title||'—')}</div></td>
+      <td><div style="font-size:11.5px">${esc(r.platform||'—')}</div><div style="font-size:10.5px;color:rgba(196,149,106,.7);font-family:'Space Mono',monospace">@${esc(r.handle||'—')}</div></td>
+      <td>${r.clip_url?`<a href="${esc(r.clip_url)}" target="_blank" style="color:#C4956A;font-size:12px;text-decoration:none;white-space:nowrap">🔗 Open ↗</a>`:'—'}</td>
+      <td style="font-size:13px;font-weight:600;color:${views>0?'#F5F0EB':'rgba(255,255,255,.3)'}">${fmtViews(views)}</td>
+      <td style="font-size:13px;font-weight:700;color:${amt>0?'#6EE7B7':'rgba(255,255,255,.3)'}">${amt>0?'₹'+amt.toLocaleString('en-IN'):'—'}</td>
+      <td><span class="cx-badge ${r.status}">${r.status||'—'}</span>${r.rejection_reason?`<div style="font-size:10px;color:#F87171;margin-top:2px">${esc(r.rejection_reason.slice(0,30))}…</div>`:''}</td>
+      <td><div class="cx-btns" style="flex-direction:column;gap:5px">
+        <button class="cx-btn ok sm" style="width:100%;justify-content:center" onclick="openReviewModal('${esc(r.id)}','${esc(r.user_name||r.user_email||'')}','${esc(r.campaign_title||'')}','${esc(r.platform||'')}','${esc(r.handle||'')}','${esc(r.clip_url||'')}',${views},${amt},'${r.status}')">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
+        ${r.status==='pending'?`<button class="cx-btn danger sm" style="width:100%;justify-content:center" onclick="quickReject('${esc(r.id)}')">✗ Reject</button>`:''}
       </div></td>
-    </tr>`).join('')}</tbody>
+    </tr>`;}).join('')}</tbody>
   </table></div>`:`<div class="cx-empty">No ${tab} submissions.</div>`;
-  return page({kicker:'Review Control',title:'Clip submissions.',sub:'Review submitted clips. Approve with an amount that gets added to the clipper\'s balance instantly.',
-    body:`<div class="cx-sec"><div class="cx-sh"><div><div class="cx-st">Submissions</div><div class="cx-sd">${(rows||[]).length} in ${tab}</div></div></div>
+  return page({kicker:'Review Control',title:'Clip submissions.',sub:'Review submitted clips. Enter views and earnings to approve. Edit approved clips anytime.',
+    body:`<div class="cx-sec">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+      ${['pending','approved','rejected','all'].map(t=>`<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;text-align:center"><div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:6px">${t}</div><div style="font-size:1.6rem;font-weight:800;color:${t==='pending'?'#FACC15':t==='approved'?'#6EE7B7':t==='rejected'?'#F87171':'#F5F0EB'}">${counts[t]||0}</div></div>`).join('')}
+    </div>
+    <div class="cx-sh"><div><div class="cx-st">Submissions</div><div class="cx-sd">${rows.length} in "${tab}"</div></div></div>
     <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
 }
+
+window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status){
+  const panel=document.createElement('div');
+  panel.className='cx-panel';
+  panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
+  panel.innerHTML=`<div style="background:#181410;border:1px solid rgba(196,149,106,.2);border-radius:18px;width:100%;max-width:520px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.7)">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:#C4956A;margin-bottom:5px">${status==='approved'?'Edit Submission':'Review Submission'}</div>
+        <h3 style="font-family:'Instrument Serif',serif;font-size:1.4rem;color:#F5F0EB;font-weight:400">${esc(name)}</h3>
+        <div style="font-size:.78rem;color:#6A6158;margin-top:2px">${esc(camp)} · ${esc(platform)} · @${esc(handle)}</div>
+      </div>
+      <button onclick="this.closest('.cx-panel').remove()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#B8AFA8;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+    </div>
+    ${clipUrl?`<a href="${esc(clipUrl)}" target="_blank" style="display:flex;align-items:center;gap:8px;background:rgba(196,149,106,.07);border:1px solid rgba(196,149,106,.15);border-radius:9px;padding:10px 14px;text-decoration:none;color:#C4956A;font-size:.82rem;margin-bottom:18px;font-weight:600">🔗 Open clip proof ↗</a>`:''}
+    <div id="rm-err" style="margin-bottom:8px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Views Count *</label>
+        <input id="rm-views" class="cx-input" type="number" min="0" value="${views||''}" placeholder="e.g. 250000" style="width:100%"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Earnings Amount (₹) *</label>
+        <input id="rm-amt" class="cx-input" type="number" min="0" step="0.01" value="${amt||''}" placeholder="e.g. 500" style="width:100%"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:9px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
+      <button id="rm-approve" class="cx-btn ok" style="flex:1;justify-content:center">${status==='approved'?'✓ Save Changes':'✓ Approve & Save'}</button>
+      ${status==='pending'?`<button id="rm-reject" class="cx-btn danger" style="flex:1;justify-content:center">✗ Reject</button>`:''}
+      <button onclick="this.closest('.cx-panel').remove()" class="cx-btn ghost">Cancel</button>
+    </div>
+  </div>`;
+  (document.getElementById('cxos')||document.body).appendChild(panel);
+
+  panel.querySelector('#rm-approve').onclick=async()=>{
+    const v=Number(panel.querySelector('#rm-views').value)||0;
+    const a=parseFloat(panel.querySelector('#rm-amt').value)||0;
+    const errEl=panel.querySelector('#rm-err');
+    if(!a||a<=0){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px">⚠ Enter earnings amount</div>`;return;}
+    const btn=panel.querySelector('#rm-approve');btn.disabled=true;btn.textContent='Saving…';
+    try{
+      const{error}=await sb.rpc('admin_approve_submission',{p_id:id,p_amount:a,p_views:v});
+      if(error)throw error;
+      panel.remove();
+      await boot();
+    }catch(e){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px">${esc(e.message)}</div>`;btn.disabled=false;btn.textContent='✓ Approve & Save';}
+  };
+
+  const rBtn=panel.querySelector('#rm-reject');
+  if(rBtn)rBtn.onclick=async()=>{
+    const reason=prompt('Rejection reason (shown to clipper):','');
+    if(reason===null)return;
+    if(!reason.trim()){alert('Enter a rejection reason');return;}
+    rBtn.disabled=true;rBtn.textContent='Rejecting…';
+    try{
+      const{error}=await sb.rpc('admin_reject_submission',{p_id:id,p_reason:reason});
+      if(error)throw error;
+      panel.remove();await boot();
+    }catch(e){alert(e.message);rBtn.disabled=false;rBtn.textContent='✗ Reject';}
+  };
+};
+
+window.quickReject=async function(id){
+  const reason=prompt('Rejection reason (shown to clipper):','');
+  if(reason===null)return;
+  if(!reason.trim()){alert('Enter a rejection reason');return;}
+  try{
+    const{error}=await sb.rpc('admin_reject_submission',{p_id:id,p_reason:reason});
+    if(error)throw error;
+    await boot();
+  }catch(e){alert(e.message);}
+};
+
 
 /* ══ PAYOUTS ════════════════════════════════════════════════════════ */
 async function renderPayouts(){
