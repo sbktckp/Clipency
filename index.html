@@ -1,10 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Clipency — The Viral Content Network</title>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <!-- ============================================================
+       CLIPENCY — PRODUCTION SEO HEAD
+       Platform: Vercel · Target: Global English audience
+       https://www.clipency.in
+  ============================================================ -->
+
+  <!-- 1. CHARSET & VIEWPORT — always first -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- 2. TITLE & PRIMARY META -->
+  <title>Clipency - The Viral Content Network | clipency.in</title>
+  <meta name="description" content="Clipency connects brands with professional clippers for pay-per-view viral content distribution across TikTok, Instagram Reels &amp; YouTube Shorts. Start free — go live in 72 hours." />
+  <meta name="keywords" content="get clippers, clipency, content distribution, viral content, pay per view content, find clippers, clipping platform, get paid to clip, short form content, brand distribution, TikTok distribution, YouTube Shorts, Instagram Reels" />
+  <meta name="author" content="Clipency" />
+
+  <!-- 3. ROBOTS — full crawl, rich snippets enabled -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="bingbot" content="index, follow" />
+
+  <!-- 4. CANONICAL + HREFLANG — global English, no geo lock -->
+  <link rel="canonical" href="https://www.clipency.in/" />
+  <link rel="alternate" hreflang="en"        href="https://www.clipency.in/" />
+  <link rel="alternate" hreflang="x-default" href="https://www.clipency.in/" />
+
+  <!-- 5. SITEMAP reference (crawlers pick this up too) -->
+  <link rel="sitemap" type="application/xml" href="https://www.clipency.in/sitemap.xml" />
+
+  <!-- 6. THEME + BROWSER UI -->
+  <meta name="theme-color" content="#0E0C0B" />
+  <meta name="msapplication-TileColor" content="#0E0C0B" />
+  <meta name="msapplication-TileImage" content="https://www.clipency.in/mascotlogo.png" />
+  <meta name="color-scheme" content="dark" />
+
+  <!-- 7. FAVICONS & APP ICONS -->
+  <link rel="icon"             type="image/png"  href="/mascotlogo.png" />
+  <link rel="shortcut icon"    type="image/png"  href="/mascotlogo.png" />
+  <link rel="apple-touch-icon"                   href="/mascotlogo.png" />
+
+  <!-- 8. OPEN GRAPH — Facebook, LinkedIn, WhatsApp, Telegram -->
+  <meta property="og:type"              content="website" />
+  <meta property="og:site_name"         content="Clipency" />
+  <meta property="og:title"            content="Clipency - The Viral Content Network" />
+  <meta property="og:description"      content="Pay-per-view viral content distribution. Connect with 700+ clippers across TikTok, Reels &amp; YouTube Shorts. Go live in 72 hours." />
+  <meta property="og:url"              content="https://www.clipency.in/" />
+  <meta property="og:image"            content="https://www.clipency.in/og-cover.png" />
+  <meta property="og:image:secure_url" content="https://www.clipency.in/og-cover.png" />
+  <meta property="og:image:type"       content="image/png" />
+  <meta property="og:image:width"      content="1200" />
+  <meta property="og:image:height"     content="630" />
+  <meta property="og:image:alt"        content="Clipency – Viral Content Distribution Platform" />
+  <meta property="og:locale"           content="en_US" />
+  <meta property="og:locale:alternate" content="en_GB" />
+  <meta property="og:locale:alternate" content="en_AU" />
+  <meta property="og:locale:alternate" content="en_CA" />
+  <meta property="og:locale:alternate" content="en_IN" />
+  <meta property="og:locale:alternate" content="en_SG" />
+  <meta property="og:locale:alternate" content="en_AE" />
+
+  <!-- 9. TWITTER / X CARD -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:site"        content="@clipency" />
+  <meta name="twitter:creator"     content="@clipency" />
+  <meta name="twitter:title"      content="Clipency – Hire Clippers &amp; Distribute Viral Content" />
+  <meta name="twitter:description" content="Pay-per-view viral content distribution. 700+ clippers. TikTok, Reels, Shorts. Go live in 72 hours." />
+  <meta name="twitter:image"       content="https://www.clipency.in/og-cover.png" />
+  <meta name="twitter:image:alt"   content="Clipency – Viral Content Platform" />
+
+  <!-- 10. STRUCTURED DATA — JSON-LD (Google's preferred format) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://www.clipency.in/#website",
+        "url": "https://www.clipency.in/",
+        "name": "Clipency",
+        "alternateName": "Clipency – Viral Content Distribution",
+        "description": "Performance-based content distribution platform connecting clippers with brands",
+        "publisher": { "@id": "https://www.clipency.in/#organization" },
+        "inLanguage": "en",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://www.clipency.in/?s={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://www.clipency.in/#organization",
+        "name": "Clipency",
+        "url": "https://www.clipency.in/",
+        "logo": {
+          "@type": "ImageObject",
+          "@id": "https://www.clipency.in/#logo",
+          "url": "https://www.clipency.in/mascotlogo.png",
+          "contentUrl": "https://www.clipency.in/mascotlogo.png",
+          "caption": "Clipency",
+          "width": 512,
+          "height": 512
+        },
+        "image": { "@id": "https://www.clipency.in/#logo" },
+        "description": "Clipency is a performance-based viral content distribution platform that connects brands, influencers, and professional clippers worldwide.",
+        "foundingDate": "2024",
+        "areaServed": "Worldwide",
+        "sameAs": [
+          "https://www.instagram.com/clipency.in",
+          "https://www.linkedin.com/company/clipency",
+          "https://www.youtube.com/@clipency",
+          "https://twitter.com/clipency"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "availableLanguage": ["English"],
+          "url": "https://www.clipency.in/#contact"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.clipency.in/#webpage",
+        "url": "https://www.clipency.in/",
+        "name": "Clipency – Hire Clippers &amp; Distribute Viral Content",
+        "description": "Clipency connects brands with professional clippers for viral content distribution. Pay per view, not per post. Go live in 72 hours.",
+        "isPartOf": { "@id": "https://www.clipency.in/#website" },
+        "about": { "@id": "https://www.clipency.in/#organization" },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": "https://www.clipency.in/og-cover.png"
+        },
+        "inLanguage": "en",
+        "potentialAction": {
+          "@type": "ReadAction",
+          "target": ["https://www.clipency.in/"]
+        }
+      },
+      {
+        "@type": "Service",
+        "@id": "https://www.clipency.in/#service",
+        "serviceType": "Viral Content Distribution",
+        "name": "Clipency – Pay-Per-View Content Distribution",
+        "description": "Connect with 700+ professional clippers to distribute brand content across TikTok, YouTube Shorts, and Instagram Reels. Pay per verified view — not per post.",
+        "provider": { "@id": "https://www.clipency.in/#organization" },
+        "areaServed": "Worldwide",
+        "url": "https://www.clipency.in/",
+        "availableChannel": {
+          "@type": "ServiceChannel",
+          "serviceUrl": "https://www.clipency.in/#contact",
+          "serviceType": "Online"
+        },
+        "offers": {
+          "@type": "Offer",
+          "description": "Performance-based content distribution – brands pay only per verified view",
+          "priceCurrency": "USD",
+          "eligibleRegion": {
+            "@type": "Place",
+            "name": "Worldwide"
+          }
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://www.clipency.in/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do clippers get paid on Clipency?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Clippers earn a per-view rate for every verified view their clips generate across all platforms. Payments are processed within 30 days after campaign completion directly to your wallet. No minimum payout threshold for your first withdrawal."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How quickly can a brand go live on Clipency?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most brand campaigns go live within 72 hours of onboarding. Our team handles clipper briefing, content guidelines, and platform setup."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which platforms does Clipency distribute to?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We distribute across TikTok, Instagram Reels, and YouTube Shorts. Our network of clippers publishes natively on each platform, so your content reaches audiences where they already spend time."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need an existing audience to be a clipper?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Many of our highest earners started with zero followers. The algorithm rewards well-edited, engaging clips — not follower count."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- 11. PERFORMANCE — preconnect & dns-prefetch (Core Web Vitals) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+  <!-- 12. FONT LOAD — display=swap prevents invisible text flash -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  </noscript>
+
 <style>
 :root {
   --bg:        #0E0C0B;
