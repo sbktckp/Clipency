@@ -4243,5 +4243,190 @@ window.addEventListener('load',()=>{
   }catch(e){console.warn('[Payouts patch]',e.message);}
 })();
 </script>
+
+<script>
+/* ═══ PROFILE: Avatar Upload + Clipency Rank ═══ */
+(function(){
+  const getSb = () => window.clipencySupabase || window.supabaseClient || window.supabase;
+
+  /* ── 1. AVATAR UPLOAD ─────────────────────────────────── */
+  async function initAvatarUpload(){
+    const sb = getSb(); if(!sb) return;
+    const {data:{user}} = await sb.auth.getUser(); if(!user) return;
+
+    // Load existing avatar
+    const {data:profile} = await sb.from('profiles').select('avatar_url').eq('id',user.id).single();
+    if(profile?.avatar_url) setAvatarImg(profile.avatar_url);
+
+    // Wire the edit pencil button to trigger file input
+    const editBtn = document.querySelector('[onclick*="editAvatar"], .avatar-edit, .avatar-pencil, .edit-avatar-btn')
+                 || document.querySelector('.profile-avatar-wrap .edit-btn')
+                 || document.querySelector('[class*="avatar"] button')
+                 || document.querySelector('[class*="avatar"] [class*="edit"]');
+
+    // Create hidden file input
+    let inp = document.getElementById('_avatar-inp');
+    if(!inp){
+      inp = document.createElement('input');
+      inp.id = '_avatar-inp';
+      inp.type = 'file';
+      inp.accept = 'image/jpeg,image/png,image/webp';
+      inp.style.cssText = 'display:none;position:absolute;width:0;height:0';
+      document.body.appendChild(inp);
+    }
+
+    // Click pencil → open file picker
+    if(editBtn){
+      editBtn.style.cursor = 'pointer';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); inp.click(); });
+    }
+
+    // Also make avatar itself clickable
+    const avatarEl = document.getElementById('profile-avatar-img')
+                  || document.querySelector('.profile-avatar img')
+                  || document.querySelector('[class*="avatar-img"]')
+                  || document.querySelector('.creator-avatar');
+    if(avatarEl) avatarEl.addEventListener('click', () => inp.click());
+
+    inp.addEventListener('change', async () => {
+      const file = inp.files[0]; if(!file) return;
+      if(file.size > 5*1024*1024){ alert('Image must be under 5MB'); return; }
+
+      // Show loading state on avatar
+      const avatarWrap = document.querySelector('[class*="profile-avatar"], [class*="creator-avatar-wrap"], .avatar-container');
+      if(avatarWrap) avatarWrap.style.opacity = '0.5';
+
+      try{
+        // Upload to Supabase Storage
+        const ext   = file.name.split('.').pop().toLowerCase();
+        const path  = `avatars/${user.id}.${ext}`;
+        const {error: upErr} = await sb.storage.from('avatars').upload(path, file, {upsert:true, contentType:file.type});
+        if(upErr) throw upErr;
+
+        // Get public URL
+        const {data:{publicUrl}} = sb.storage.from('avatars').getPublicUrl(path);
+
+        // Save to profiles
+        await sb.from('profiles').update({avatar_url: publicUrl}).eq('id', user.id);
+
+        // Show new photo
+        setAvatarImg(publicUrl);
+        if(typeof showToast==='function') showToast('✓ Profile photo updated');
+        else { const t=document.createElement('div'); t.textContent='✓ Photo saved'; t.style.cssText='position:fixed;bottom:24px;right:24px;background:#1a1612;color:#C4956A;border:1px solid rgba(196,149,106,.2);padding:12px 18px;border-radius:10px;font-size:.82rem;z-index:9999'; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+
+      }catch(e){
+        console.error('Avatar upload:', e.message);
+        alert('Upload failed: ' + e.message);
+      } finally {
+        if(avatarWrap) avatarWrap.style.opacity = '1';
+        inp.value = '';
+      }
+    });
+  }
+
+  function setAvatarImg(url){
+    // Find all avatar elements and set src or background
+    const selectors = [
+      '#profile-avatar-img','#user-avatar-img',
+      '.creator-avatar img','.profile-avatar img',
+      '[class*="avatar-img"]','[id*="avatar-img"]'
+    ];
+    let found = false;
+    selectors.forEach(sel => {
+      const el = document.querySelector(sel);
+      if(el && el.tagName === 'IMG'){ el.src = url; found = true; }
+    });
+
+    // If no img found, try background or replace letter avatar
+    if(!found){
+      const letterAvatar = document.querySelector('.creator-avatar, [class*="avatar-initials"], [class*="avatar-letter"]');
+      if(letterAvatar){
+        letterAvatar.style.backgroundImage = `url(${url})`;
+        letterAvatar.style.backgroundSize = 'cover';
+        letterAvatar.style.backgroundPosition = 'center';
+        letterAvatar.textContent = ''; // remove the letter
+      }
+    }
+
+    // Also update sidebar avatar if exists
+    const sbAv = document.querySelector('#user-avatar, .sidebar-avatar, [class*="sidebar"][class*="avatar"]');
+    if(sbAv){
+      if(sbAv.tagName === 'IMG') sbAv.src = url;
+      else { sbAv.style.backgroundImage=`url(${url})`; sbAv.style.backgroundSize='cover'; sbAv.style.backgroundPosition='center'; sbAv.textContent=''; }
+    }
+  }
+
+  /* ── 2. CLIPENCY RANK ─────────────────────────────────── */
+  const RANKS = [
+    { name:'Diamond',  minViews:10_000_000, color:'#67E8F9', icon:'💎' },
+    { name:'Platinum', minViews:1_000_000,  color:'#E879F9', icon:'🔮' },
+    { name:'Gold',     minViews:100_000,    color:'#FACC15', icon:'🏆' },
+    { name:'Silver',   minViews:10_000,     color:'#94A3B8', icon:'🥈' },
+    { name:'Bronze',   minViews:1,          color:'#CD7F32', icon:'🥉' },
+    { name:'Unranked', minViews:0,          color:'#6A6158', icon:'—'  },
+  ];
+
+  function getRank(totalViews){
+    return RANKS.find(r => totalViews >= r.minViews) || RANKS[RANKS.length-1];
+  }
+
+  async function updateRank(){
+    const sb = getSb(); if(!sb) return;
+    const {data:{user}} = await sb.auth.getUser(); if(!user) return;
+
+    // Get total views for this user
+    const {data:subs} = await sb.from('submissions')
+      .select('views, status')
+      .eq('user_id', user.id)
+      .in('status',['approved','paid']);
+
+    const totalViews = (subs||[]).reduce((a,s) => a+(Number(s.views)||0), 0);
+
+    // Calculate rank position among all clippers
+    const {data:allSubs} = await sb.from('submissions')
+      .select('user_id, views')
+      .in('status',['approved','paid']);
+
+    const viewsByUser = {};
+    (allSubs||[]).forEach(s => { viewsByUser[s.user_id] = (viewsByUser[s.user_id]||0)+(Number(s.views)||0); });
+    const myViews = viewsByUser[user.id] || 0;
+    const sorted = Object.values(viewsByUser).sort((a,b)=>b-a);
+    const rankPos = sorted.findIndex(v=>v<=myViews)+1 || 1;
+    const total = Object.keys(viewsByUser).length || 1;
+
+    const rank = getRank(myViews);
+
+    // Update rank box
+    const rankBox = document.querySelector('.creator-rank-sub, [class*="rank-sub"], [class*="rank-value"]');
+    const rankLabel = document.querySelector('.creator-rank-label, [class*="rank-label"]');
+
+    if(rankLabel) rankLabel.textContent = 'Clipency Rank';
+
+    if(rankBox){
+      if(myViews === 0){
+        rankBox.innerHTML = `<span style="font-size:.72rem;color:var(--ts);line-height:1.5">Submit clips<br>to earn your rank</span>`;
+      } else {
+        rankBox.innerHTML = `
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;margin-bottom:2px">${rank.icon}</div>
+            <div style="font-size:1rem;font-weight:700;color:${rank.color};font-family:'DM Sans',sans-serif">${rank.name}</div>
+            <div style="font-size:.68rem;color:var(--ts);margin-top:2px">#${rankPos} of ${total} clippers</div>
+          </div>`;
+      }
+    }
+  }
+
+  /* ── 3. INIT ─────────────────────────────────────────── */
+  async function init(){
+    await initAvatarUpload();
+    await updateRank();
+  }
+
+  if(document.readyState==='complete') init();
+  else window.addEventListener('load', init);
+  setTimeout(init, 1000);
+})();
+</script>
+
 </body>
 </html>
