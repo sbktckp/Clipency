@@ -2,110 +2,32 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    {
-      "source": "/login",
-      "destination": "/auth/login"
-    },
-    {
-      "source": "/signup",
-      "destination": "/auth/signup"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/campaigns",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/profile",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/stats",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/payouts",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/wallet",
-      "destination": "/auth/profile"
-    },
-    {
-      "source": "/workspace",
-      "destination": "/auth/workspace"
-    },
-    {
-      "source": "/accounts",
-      "destination": "/auth/accounts"
-    },
-    {
-      "source": "/admin",
-      "destination": "/auth/admin"
-    },
-    {
-      "source": "/admin/:file+",
-      "destination": "/auth/admin/:file+"
-    },
-    {
-      "source": "/review",
-      "destination": "/auth/review"
-    },
-    {
-      "source": "/clipency-admin-os.js",
-      "destination": "/auth/clipency-admin-os.js"
-    },
-    {
-      "source": "/clipency-profile-supabase.js",
-      "destination": "/auth/clipency-profile-supabase.js"
-    },
-    {
-      "source": "/clipency-account-connect.js",
-      "destination": "/auth/clipency-account-connect.js"
-    },
-    {
-      "source": "/clipency-clip-submit.js",
-      "destination": "/auth/clipency-clip-submit.js"
-    },
-    {
-      "source": "/clipency-wallet.js",
-      "destination": "/auth/clipency-wallet.js"
-    },
-    {
-      "source": "/clipency-:rest*",
-      "destination": "/auth/clipency-:rest*"
-    },
-    {
-      "source": "/supabaseClient.js",
-      "destination": "/auth/supabaseClient.js"
-    },
-    {
-      "source": "/access-control.js",
-      "destination": "/auth/access-control.js"
-    },
-    {
-      "source": "/role-router.js",
-      "destination": "/auth/role-router.js"
-    },
-    {
-      "source": "/experience.js",
-      "destination": "/auth/experience.js"
-    },
-    {
-      "source": "/app.js",
-      "destination": "/auth/app.js"
-    },
-    {
-      "source": "/styles.css",
-      "destination": "/auth/styles.css"
-    },
-    {
-      "source": "/assets/:file*",
-      "destination": "/auth/assets/:file*"
-    }
+    { "source": "/login",      "destination": "/auth/login" },
+    { "source": "/signup",     "destination": "/auth/signup" },
+    { "source": "/dashboard",  "destination": "/auth/profile" },
+    { "source": "/campaigns",  "destination": "/auth/profile" },
+    { "source": "/profile",    "destination": "/auth/profile" },
+    { "source": "/stats",      "destination": "/auth/profile" },
+    { "source": "/payouts",    "destination": "/auth/profile" },
+    { "source": "/wallet",     "destination": "/auth/profile" },
+    { "source": "/workspace",  "destination": "/auth/workspace" },
+    { "source": "/accounts",   "destination": "/auth/accounts" },
+    { "source": "/admin",      "destination": "/auth/admin" },
+    { "source": "/admin/:file+",                  "destination": "/auth/admin/:file+" },
+    { "source": "/review",                        "destination": "/auth/review" },
+    { "source": "/clipency-admin-os.js",          "destination": "/auth/clipency-admin-os.js" },
+    { "source": "/clipency-profile-supabase.js",  "destination": "/auth/clipency-profile-supabase.js" },
+    { "source": "/clipency-account-connect.js",   "destination": "/auth/clipency-account-connect.js" },
+    { "source": "/clipency-clip-submit.js",       "destination": "/auth/clipency-clip-submit.js" },
+    { "source": "/clipency-wallet.js",            "destination": "/auth/clipency-wallet.js" },
+    { "source": "/clipency-:rest*",               "destination": "/auth/clipency-:rest*" },
+    { "source": "/supabaseClient.js",             "destination": "/auth/supabaseClient.js" },
+    { "source": "/access-control.js",             "destination": "/auth/access-control.js" },
+    { "source": "/role-router.js",                "destination": "/auth/role-router.js" },
+    { "source": "/experience.js",                 "destination": "/auth/experience.js" },
+    { "source": "/app.js",                        "destination": "/auth/app.js" },
+    { "source": "/styles.css",                    "destination": "/auth/styles.css" },
+    { "source": "/assets/:file*",                 "destination": "/auth/assets/:file*" }
   ],
   "headers": [
     {
@@ -129,15 +51,27 @@
         },
         {
           "key": "Strict-Transport-Security",
-          "value": "max-age=31536000; includeSubDomains"
+          "value": "max-age=63072000; includeSubDomains; preload"
         },
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
         },
         {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=()"
         },
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -150,7 +84,7 @@
       ]
     },
     {
-      "source": "/(.*).(png|jpg|jpeg|webp|svg|ico|woff|woff2)",
+      "source": "/(.*)\\.(png|jpg|jpeg|webp|svg|ico|woff|woff2)",
       "headers": [
         {
           "key": "Cache-Control",
