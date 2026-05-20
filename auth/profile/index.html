@@ -4252,13 +4252,52 @@ window.addEventListener('load',()=>{
 
 
 
+
 <script>
-/* ═══ PROFILE: Avatar + Rank + Stats ═══ */
+/* ═══ CLIPENCY — Stats + Profile ═══ */
 (function(){
   const getSb=()=>window.clipencySupabase||window.supabaseClient||window.supabase;
   const fv=n=>!n?'0':n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?Math.round(n/1e3)+'K':String(n);
 
-  /* AVATAR */
+  /* ── STATS (called by navigate handler as loadStatsFromSupabase) ── */
+  async function loadStatsFromSupabase(){
+    const sb=getSb(); if(!sb) return;
+    const {data:{user}} = await sb.auth.getUser(); if(!user) return;
+
+    const {data, error} = await sb
+      .from('submissions')
+      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
+      .eq('user_id', user.id)
+      .order('submitted_at', {ascending:false});
+
+    if(error){ console.warn('[stats]', error.message); return; }
+    console.log('[stats] loaded', data.length, 'rows');
+
+    window.ALL_SUBMISSIONS = (data||[]).map(r=>({
+      id:r.id, camp:r.campaign_title||'—', platform:r.platform||'—',
+      views:fv(r.views),
+      earnUsd:(r.status==='approved'||r.status==='paid') ? Number(r.earnings)||0 : null,
+      status:r.status ? r.status.charAt(0).toUpperCase()+r.status.slice(1) : 'Pending',
+      url:r.video_url||'', reason:r.rejection_reason||'', appealed:r.appealed??false,
+    }));
+    try{ ALL_SUBMISSIONS = window.ALL_SUBMISSIONS; }catch(_){}
+
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const fmtM=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toFixed(2);
+    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
+    const pending=data.filter(s=>s.status==='pending');
+    const reviewed=data.length-pending.length;
+    set('stat-total-views', fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
+    set('stat-total-earned', fmtM(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
+    set('stat-approval-rate', reviewed ? Math.round((approved.length/reviewed)*100)+'%' : '—');
+    set('stat-pending-count', pending.length);
+
+    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
+    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
+  }
+  window.loadStatsFromSupabase = loadStatsFromSupabase;
+
+  /* ── AVATAR ── */
   async function initAvatar(){
     const sb=getSb(); if(!sb) return;
     const {data:{user}}=await sb.auth.getUser(); if(!user) return;
@@ -4276,8 +4315,8 @@ window.addEventListener('load',()=>{
       try{
         const ext=file.name.split('.').pop()||'jpg';
         const path=`${user.id}/avatar.${ext}`;
-        const {error:upErr}=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
-        if(upErr) throw upErr;
+        const {error:e}=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+        if(e) throw e;
         const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path);
         await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',user.id);
         applyAvatar(publicUrl);
@@ -4288,14 +4327,14 @@ window.addEventListener('load',()=>{
   }
   function applyAvatar(url){
     const u=url+'?t='+Date.now();
-    ['#profile-avatar-img','#user-avatar-img','.creator-avatar img','.profile-avatar img','[class*=avatar-img]'].forEach(s=>{
+    ['#profile-avatar-img','#user-avatar-img','.creator-avatar img','.profile-avatar img'].forEach(s=>{
       const el=document.querySelector(s);if(el&&el.tagName==='IMG')el.src=u;
     });
     const av=document.querySelector('.creator-avatar,[class*=avatar-letter],[class*=avatar-initials]');
     if(av){const img=document.createElement('img');img.src=u;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;position:absolute;top:0;left:0';av.style.position='relative';av.style.overflow='hidden';av.querySelectorAll('img').forEach(i=>i.remove());av.appendChild(img);}
   }
 
-  /* RANK */
+  /* ── RANK ── */
   const TIERS=[
     {name:'Diamond',min:10000000,color:'#67E8F9',icon:'💎'},
     {name:'Platinum',min:1000000,color:'#E879F9',icon:'🔮'},
@@ -4307,48 +4346,19 @@ window.addEventListener('load',()=>{
     const sb=getSb(); if(!sb) return;
     const {data:{user}}=await sb.auth.getUser(); if(!user) return;
     const {data:row}=await sb.from('clipper_rank').select('*').eq('user_id',user.id).single();
-    const rankBox=document.querySelector('.creator-rank-sub,[class*=rank-sub],[class*=rank-value]');
-    const rankLabel=document.querySelector('.creator-rank-label,[class*=rank-label]');
-    if(rankLabel) rankLabel.textContent='Clipency Rank';
-    if(!rankBox) return;
-    const views=Number(row?.total_views)||0, pos=Number(row?.rank_position)||0, total=Number(row?.total_clippers)||0;
-    if(views===0){rankBox.innerHTML='<span style="font-size:.72rem;color:var(--ts);line-height:1.6">Submit clips<br>to earn your rank</span>';return;}
-    const tier=TIERS.find(t=>views>=t.min)||{name:'Unranked',color:'#6A6158',icon:'—'};
-    rankBox.innerHTML=`<div style="text-align:center;line-height:1.3"><div style="font-size:1.5rem">${tier.icon}</div><div style="font-size:.95rem;font-weight:700;color:${tier.color};margin:2px 0">${tier.name}</div><div style="font-size:.67rem;color:var(--ts)">#${pos} of ${total}</div></div>`;
+    const box=document.querySelector('.creator-rank-sub,[class*=rank-sub],[class*=rank-value]');
+    const lbl=document.querySelector('.creator-rank-label,[class*=rank-label]');
+    if(lbl) lbl.textContent='Clipency Rank';
+    if(!box) return;
+    const views=Number(row?.total_views)||0,pos=Number(row?.rank_position)||0,total=Number(row?.total_clippers)||0;
+    if(!views){box.innerHTML='<span style="font-size:.72rem;color:var(--ts);line-height:1.6">Submit clips<br>to earn your rank</span>';return;}
+    const t=TIERS.find(t=>views>=t.min)||{name:'Unranked',color:'#6A6158',icon:'—'};
+    box.innerHTML=`<div style="text-align:center;line-height:1.3"><div style="font-size:1.5rem">${t.icon}</div><div style="font-size:.95rem;font-weight:700;color:${t.color};margin:2px 0">${t.name}</div><div style="font-size:.67rem;color:var(--ts)">#${pos} of ${total}</div></div>`;
   }
 
-  /* STATS LOADER (profile page also has stats section) */
-  async function loadStats(){
-    const sb=getSb(); if(!sb) return;
-    const {data:{user}}=await sb.auth.getUser(); if(!user) return;
-    const {data,error}=await sb.from('submissions')
-      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
-      .eq('user_id',user.id).order('submitted_at',{ascending:false});
-    if(error||!data) return;
-    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
-      id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',views:fv(r.views),
-      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
-      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
-      url:r.video_url||'',reason:r.rejection_reason||'',appealed:r.appealed??false,
-    }));
-    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    const fmt=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toFixed(2);
-    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
-    const pending=data.filter(s=>s.status==='pending');
-    const reviewed=data.length-pending.length;
-    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
-    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
-    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
-    set('stat-pending-count',pending.length);
-    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
-    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
-  }
-  window.reloadStats=loadStats;
-
-  async function init(){ await Promise.all([initAvatar(),updateRank(),loadStats()]); }
-  if(document.readyState==='complete') init(); else window.addEventListener('load',init);
-  setTimeout(init,800);
+  async function init(){ await Promise.all([initAvatar(), updateRank(), loadStatsFromSupabase()]); }
+  if(document.readyState==='complete') init(); else window.addEventListener('load', init);
+  setTimeout(init, 600);
 })();
 </script>
 </body>
