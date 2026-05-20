@@ -28,7 +28,7 @@
     },
     {
       "source": "/payouts",
-      "destination": "/auth/profile"
+      "destination": "/auth/payouts"
     },
     {
       "source": "/wallet",
