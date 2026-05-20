@@ -4000,7 +4000,7 @@ async function loadProfileFromSupabase(){
     const totalPaid=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
 
     const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
-    const fmtM=n=>'₹'+Number(n).toLocaleString('en-IN');
+    const fmtM=n=>window.fmt?window.fmt(n):'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
     // Update perf rows: views (2nd row), earned (3rd row)
     const perfRows=document.querySelectorAll('.perf-row');
@@ -4125,7 +4125,7 @@ window.addEventListener('load',()=>{
     const avail=Number(bal.available_balance)||0;
     const pending=Number(bal.pending_withdrawal)||0;
     const paid=Number(bal.total_withdrawn)||0;
-    const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
+    const fmt=n=>window.fmt?window.fmt(n):'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     
     // Update balance cards
     ['bal-available','#bal-available'].forEach(id=>{
@@ -4261,14 +4261,19 @@ window.addEventListener('load',()=>{
   const fv=n=>!n?'0':n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?Math.round(n/1e3)+'K':String(n);
 
   function wireLogout(){
-    document.querySelectorAll('[onclick*="signOut"],[onclick*="logout"],[data-action="logout"],[id*="logout"],[class*="logout"]').forEach(el=>{
-      el.onclick=async(e)=>{e.preventDefault();e.stopPropagation();const sb=getSb();if(!sb)return;await sb.auth.signOut();window.location.href='/login';};
+    const doLogout=async(e)=>{
+      if(e){e.preventDefault();e.stopPropagation();}
+      const sb=getSb();if(!sb)return;
+      await sb.auth.signOut();
+      window.location.href='/login';
+    };
+    // Target the exact button
+    ['btn-signout','sb-signout','logout-btn','sign-out-btn'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.onclick=doLogout;el.style.cursor='pointer';}
     });
-    document.querySelectorAll('button,a').forEach(el=>{
-      const t=(el.textContent||'').trim().toLowerCase();
-      if(t==='sign out'||t==='logout'||t==='log out'){
-        el.onclick=async(e)=>{e.preventDefault();e.stopPropagation();const sb=getSb();if(!sb)return;await sb.auth.signOut();window.location.href='/login';};
-      }
+    document.querySelectorAll('.sb-signout,[id="btn-signout"]').forEach(el=>{
+      el.onclick=doLogout;el.style.cursor='pointer';
     });
   }
 
