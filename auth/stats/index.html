@@ -4279,132 +4279,49 @@ window.addEventListener('load',()=>{
 
 
 
+
+
 <script>
-/* ═══ CLIPENCY STATS — FINAL (correct schema) ═══ */
+/* ═══ CLIPENCY STATS LOADER ═══ */
 (function(){
-  const log=(...a)=>console.log('[stats]',...a);
   const fv=n=>!n?'0':n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?Math.round(n/1e3)+'K':String(n);
-  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  async function getSb(){
-    for(let i=0;i<40;i++){
-      const sb=window.clipencySupabase||window.supabaseClient||window.supabase;
-      if(sb?.auth) return sb;
-      await new Promise(r=>setTimeout(r,200));
-    }
-    return null;
-  }
-
-  function badge(status){
-    const k=(status||'pending').toLowerCase();
-    const m={approved:'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',paid:'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',pending:'background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);color:#FACC15',rejected:'background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#F87171'};
-    return `<span style="padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:600;${m[k]||m.pending}">${k.charAt(0).toUpperCase()+k.slice(1)}</span>`;
-  }
-
-  function renderTables(subs){
-    const TH=h=>`<th style="text-align:left;padding:10px 14px;font-size:.69rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);font-weight:500;white-space:nowrap">${h}</th>`;
-    const TD=(v,e='')=>`<td style="padding:12px 14px;font-size:.82rem;border-bottom:1px solid var(--bsoft,rgba(242,237,232,.065));${e}">${v}</td>`;
-    const myEl=document.getElementById('my-submissions-table');
-    const rejEl=document.getElementById('rejected-submissions-table');
-    const fmt=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toLocaleString();
-
-    if(myEl){
-      if(!subs.length){
-        myEl.innerHTML='<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No submissions yet. Submit a clip from Campaigns.</div>';
-      } else {
-        const rows=subs.map(s=>`<tr>
-          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(s.campaign_title||'—')}</span>`)}
-          ${TD(esc(s.platform||'—'),'color:var(--ts)')}
-          ${TD(fv(s.views),"font-family:'Space Mono',monospace;color:var(--ts)")}
-          ${TD((s.status==='approved'||s.status==='paid')?`<span style="font-family:'Space Mono',monospace">${fmt(s.earnings)}</span>`:'<span style="color:var(--tm)">—</span>')}
-          ${TD(badge(s.status))}
-          ${TD(s.video_url?`<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>`:'<span style="color:var(--tm)">—</span>')}
-        </tr>`).join('');
-        myEl.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Earned','Status','Link'].map(TH).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-      }
-    }
-
-    if(rejEl){
-      const rej=subs.filter(s=>s.status==='rejected');
-      if(!rej.length){
-        rejEl.innerHTML='<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No rejected submissions 🎉</div>';
-      } else {
-        const rows=rej.map(s=>`<tr>
-          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(s.campaign_title||'—')}</span>`)}
-          ${TD(esc(s.platform||'—'),'color:var(--ts)')}
-          ${TD(fv(s.views),"font-family:'Space Mono',monospace;color:var(--ts)")}
-          ${TD(badge('rejected'))}
-          ${TD(s.video_url?`<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>`:'<span style="color:var(--tm)">—</span>')}
-          ${TD(`<span style="color:var(--ts);font-size:.78rem">${esc(s.rejection_reason||'No reason provided')}</span>`)}
-        </tr>`).join('');
-        rejEl.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Status','Link','Reason'].map(TH).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-      }
-    }
-    log('tables rendered — total:',subs.length,'rejected:',subs.filter(s=>s.status==='rejected').length);
-  }
-
-  function updateKpis(subs){
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    const fmt=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toLocaleString();
-    const totalViews=subs.reduce((a,s)=>a+(Number(s.views)||0),0);
-    const approved=subs.filter(s=>s.status==='approved'||s.status==='paid');
-    const pending=subs.filter(s=>s.status==='pending');
-    const reviewed=subs.length-pending.length;
-    const earnings=approved.reduce((a,s)=>a+(Number(s.earnings)||0),0);
-    set('stat-total-views',fv(totalViews));
-    set('stat-total-earned',fmt(earnings));
-    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
-    set('stat-pending-count',pending.length);
-  }
-
-  async function loadAll(){
-    const sb=await getSb();
-    if(!sb){log('no supabase');return;}
+  async function loadStats(){
+    const sb=window.clipencySupabase||window.supabaseClient||window.supabase;
+    if(!sb) return;
     const {data:{user}}=await sb.auth.getUser();
-    if(!user){log('no user');return;}
-
-    /* CORRECT QUERY — no join, uses actual column names */
+    if(!user) return;
     const {data,error}=await sb
       .from('submissions')
       .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
       .eq('user_id',user.id)
       .order('submitted_at',{ascending:false});
-
-    if(error){log('ERR:',error.message);return;}
-    log('fetched',data.length,'rows');
-
-    /* Sync with existing ALL_SUBMISSIONS global */
+    if(error){console.warn('[stats]',error.message);return;}
+    console.log('[stats] rows:',data.length);
     window.ALL_SUBMISSIONS=(data||[]).map(r=>({
       id:r.id, camp:r.campaign_title||'—', platform:r.platform||'—',
-      views:fv(r.views), earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
+      views:fv(r.views),
+      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
       status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
-      url:r.video_url, reason:r.rejection_reason, appealed:r.appealed??false,
-      ...r
+      url:r.video_url||'', reason:r.rejection_reason||'', appealed:r.appealed??false,
     }));
     try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
-
-    updateKpis(data);
-    renderTables(data);
-
-    /* Also call existing renderers if they exist */
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const fmt=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toFixed(2);
+    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
+    const pending=data.filter(s=>s.status==='pending');
+    const reviewed=data.length-pending.length;
+    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
+    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
+    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
+    set('stat-pending-count',pending.length);
     if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
     if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
   }
-
-  window.reloadStats=loadAll;
-
-  /* Run on load + retry */
-  const kick=()=>{loadAll();setTimeout(loadAll,1500);};
-  if(document.readyState==='complete') kick();
-  else window.addEventListener('load',kick);
-
-  /* Re-run when stats nav clicked */
-  document.addEventListener('click',e=>{
-    const t=e.target.closest('[data-section="stats"],[onclick*="stats"],[href*="stats"]');
-    if(t) setTimeout(loadAll,200);
-  });
+  window.reloadStats=loadStats;
+  if(document.readyState==='complete') loadStats();
+  else window.addEventListener('load',loadStats);
+  setTimeout(loadStats,800);
 })();
 </script>
-
 </body>
 </html>
