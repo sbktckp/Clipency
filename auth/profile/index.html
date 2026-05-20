@@ -1554,7 +1554,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
           <span>Campaigns</span>
           <span class="nav-active-dot"></span>
         </button>
-        <button class="nav-item" data-section="stats" id="nav-stats">
+        <button class="nav-item" data-section="stats" onclick="location.href='/stats'" id="nav-stats">
           <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
           <span>Stats</span>
           <span class="nav-active-dot"></span>
@@ -1640,74 +1640,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
     </section>
 
     <!-- STATS -->
-    <section class="section" id="section-stats">
-      <div class="pg-head">
-        <div>
-          <p class="pg-eyebrow">Clipency</p>
-          <h1 class="pg-title">Your Stats</h1>
-        </div>
-      </div>
-
-      <!-- 4 KPI stat cards -->
-      <div class="stats-row" style="margin-bottom:18px;">
-        <div class="stat-card">
-          <p class="stat-label">Total Views</p>
-          <h2 class="stat-value">2.4M</h2>
-          <span class="stat-delta">across all submissions</span>
-        </div>
-        <div class="stat-card">
-          <p class="stat-label">Total Earned</p>
-          <h2 class="stat-value amber" id="stat-total-earned">$3,280</h2>
-          <span class="stat-delta">from approved clips</span>
-        </div>
-        <div class="stat-card">
-          <p class="stat-label">Approval Rate</p>
-          <h2 class="stat-value green">83%</h2>
-          <span class="stat-delta">Approved submissions ratio</span>
-        </div>
-        <div class="stat-card">
-          <p class="stat-label">Pending Review</p>
-          <h2 class="stat-value yellow">2</h2>
-          <span class="stat-delta">Waiting for verification</span>
-        </div>
-      </div>
-
-      <!-- Multi-metric Line Chart -->
-      <div class="card chart-card-main" style="margin-bottom:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-          <div style="display:flex;gap:6px;">
-            <button class="chart-metric-btn active" id="cmet-earnings" onclick="switchChartMetric('earnings')">Earnings</button>
-            <button class="chart-metric-btn" id="cmet-views" onclick="switchChartMetric('views')">Views</button>
-            <button class="chart-metric-btn" id="cmet-submissions" onclick="switchChartMetric('submissions')">Submissions</button>
-          </div>
-          <div style="display:flex;gap:5px;">
-            <button class="chart-period-btn active" id="cper-7d" onclick="switchChartPeriod('7d')">7D</button>
-            <button class="chart-period-btn" id="cper-30d" onclick="switchChartPeriod('30d')">30D</button>
-            <button class="chart-period-btn" id="cper-90d" onclick="switchChartPeriod('90d')">90D</button>
-          </div>
-        </div>
-        <div style="position:relative;">
-          <canvas id="stats-line-chart" style="display:block;width:100%;"></canvas>
-          <div id="chart-tooltip" class="chart-tooltip"></div>
-        </div>
-        <div id="chart-x-labels" style="display:flex;justify-content:space-between;padding:8px 40px 0 48px;"></div>
-      </div>
-
-      <!-- Tabbed submissions -->
-      <div class="card" style="padding-bottom:28px;">
-        <div class="stats-tabs">
-          <button class="stats-tab-btn active" id="tab-my" onclick="switchStatsTab('my')">My Submissions</button>
-          <div class="stats-tab-divider"></div>
-          <button class="stats-tab-btn" id="tab-rejected" onclick="switchStatsTab('rejected')">Rejected Submissions</button>
-        </div>
-        <div class="stats-tab-panel active" id="panel-my">
-          <div class="sub-table-wrap"><div id="my-submissions-table"></div></div>
-        </div>
-        <div class="stats-tab-panel" id="panel-rejected">
-          <div class="sub-table-wrap"><div id="rejected-submissions-table"></div></div>
-        </div>
-      </div>
-    </section>
+    <section class="section" id="section-stats"><div style="display:none"></div></section>
 
     <!-- Rejection reason modal -->
     <div class="reject-modal-overlay hidden" id="reject-modal">
