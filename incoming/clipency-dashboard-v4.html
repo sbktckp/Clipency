@@ -3937,5 +3937,572 @@ window.addEventListener('load',()=>{
 <script defer src="/clipency-force-leads-submit.js?v=force-leads-submit-1"></script>
 <script defer src="/clipency-leads-direct-rest.js?v=direct-rest-leads-1"></script>
 <script defer src="/clipency-payout-targeted-live.js?v=payout-targeted-20260510043002"></script>
+/* ═══════════════════════════════════════════════════════════════
+   CLIPENCY — Stats Section  (section-stats)
+   Drop this block into clipency-dashboard-v4.html just before </body>
+   Assumes: sb (supabase client), currentUserId, fmt(), currentCurrency,
+            animateChart(), initChartHover(), drawLineChart() already present.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── STATE ────────────────────────────────────────────────────── */
+let ALL_SUBMISSIONS  = [];
+let _myPage          = 1;
+let _chartMetric     = 'earnings';
+let _chartPeriod     = '7d';
+let _kpiPeriod       = '7D';
+let _openAppealIdx   = -1;
+let _statsChannel    = null;
+const PAGE_SIZE      = 5;
+
+/* Populated by loadChartData() — consumed by existing drawLineChart() */
+let CHART_DATA = {
+  earnings:    { '7d': {}, '30d': {}, '90d': {} },
+  views:       { '7d': {}, '30d': {}, '90d': {} },
+  submissions: { '7d': {}, '30d': {}, '90d': {} },
+};
+
+/* ── HELPERS ──────────────────────────────────────────────────── */
+function _fmtViews(n) {
+  if (!n || n === 0) return '—';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(n);
+}
+
+function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+function _esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _statusStyle(status) {
+  const map = {
+    Approved: 'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
+    Paid:     'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
+    Pending:  'background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);color:#FACC15',
+    Rejected: 'background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#F87171',
+  };
+  return map[status] || map.Pending;
+}
+
+/* ── SUPABASE: KPI CARDS ──────────────────────────────────────── */
+async function loadKpiCards() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  /* Try user_stats view first */
+  const { data: vw } = await sb.from('user_stats').select('*')
+    .eq('user_id', currentUserId).single();
+
+  if (vw) {
+    set('stat-total-views',   _fmtViews(vw.total_views ?? 0));
+    set('stat-total-earned',  fmt(vw.total_earnings ?? 0));
+    set('stat-approval-rate', vw.approval_rate != null ? Math.round(vw.approval_rate) + '%' : '—');
+    set('stat-pending-count', vw.pending_count ?? 0);
+    return;
+  }
+
+  /* Fallback: compute from ALL_SUBMISSIONS (already loaded) */
+  if (!ALL_SUBMISSIONS.length) return;
+  const approved  = ALL_SUBMISSIONS.filter(s => s.status === 'Approved' || s.status === 'Paid');
+  const pending   = ALL_SUBMISSIONS.filter(s => s.status === 'Pending');
+  const total     = ALL_SUBMISSIONS.length;
+  const totalViews    = ALL_SUBMISSIONS.reduce((a, s) => a + (s._rawViews    || 0), 0);
+  const totalEarnings = approved.reduce((a, s) => a + (s._rawEarnings || 0), 0);
+  set('stat-total-views',   _fmtViews(totalViews));
+  set('stat-total-earned',  fmt(totalEarnings));
+  set('stat-approval-rate', total ? Math.round((approved.length / total) * 100) + '%' : '—');
+  set('stat-pending-count', pending.length);
+}
+
+/* ── SUPABASE: SUBMISSIONS ────────────────────────────────────── */
+async function loadSubmissions() {
+  const { data, error } = await sb
+    .from('submissions')
+    .select(`
+      id, video_url, platform, status, views, earnings,
+      submitted_at, account_handle, rejection_note,
+      appealed, appeal_note, campaign_id,
+      campaigns ( name )
+    `)
+    .eq('user_id', currentUserId)
+    .order('submitted_at', { ascending: false });
+
+  if (error) throw error;
+
+  ALL_SUBMISSIONS = (data || []).map(row => ({
+    id:           row.id,
+    camp:         row.campaigns?.name || '—',
+    platform:     row.platform        || '—',
+    views:        _fmtViews(row.views),
+    earnUsd:      (row.status === 'approved' || row.status === 'paid') ? row.earnings : null,
+    status:       _cap(row.status),
+    url:          row.video_url,
+    reason:       row.rejection_note,
+    appealed:     row.appealed    ?? false,
+    appealNote:   row.appeal_note || '',
+    /* raw values for fallback KPI calc */
+    _rawViews:    row.views    || 0,
+    _rawEarnings: row.earnings || 0,
+  }));
+}
+
+/* ── SUPABASE: CHART DATA ─────────────────────────────────────── */
+async function loadChartData() {
+  const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+
+  const { data, error } = await sb
+    .from('submissions')
+    .select('submitted_at, earnings, views')
+    .eq('user_id', currentUserId)
+    .in('status', ['approved', 'paid'])
+    .gte('submitted_at', since)
+    .order('submitted_at', { ascending: true });
+
+  if (error || !data) return;
+
+  /* Day-keyed map  {YYYY-MM-DD: {earnings, views, submissions}} */
+  const byDay = {};
+  data.forEach(row => {
+    const d = row.submitted_at?.slice(0, 10);
+    if (!d) return;
+    if (!byDay[d]) byDay[d] = { earnings: 0, views: 0, submissions: 0 };
+    byDay[d].earnings    += row.earnings || 0;
+    byDay[d].views       += row.views    || 0;
+    byDay[d].submissions += 1;
+  });
+
+  const now  = new Date();
+  const zero = () => ({ earnings: 0, views: 0, submissions: 0 });
+
+  /* 7D — individual days */
+  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now); d.setDate(d.getDate() - (6 - i));
+    return { label: DAY_NAMES[d.getDay()], ...(byDay[d.toISOString().slice(0, 10)] || zero()) };
+  });
+
+  /* 30D — 5 weekly buckets (oldest → newest) */
+  const weeks = Array.from({ length: 5 }, zero);
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const w = weeks[4 - Math.floor(i / 7)];
+    if (byDay[key]) {
+      w.earnings    += byDay[key].earnings;
+      w.views       += byDay[key].views;
+      w.submissions += byDay[key].submissions;
+    }
+  }
+
+  /* 90D — 3 monthly buckets */
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (2 - i), 1);
+    return { label: MONTH_NAMES[d.getMonth()], monthKey: `${d.getFullYear()}-${d.getMonth()}`, ...zero() };
+  });
+  data.forEach(row => {
+    const d = new Date(row.submitted_at);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const bucket = months.find(m => m.monthKey === key);
+    if (bucket) {
+      bucket.earnings    += row.earnings || 0;
+      bucket.views       += row.views    || 0;
+      bucket.submissions += 1;
+    }
+  });
+
+  CHART_DATA = {
+    earnings: {
+      '7d':  { labels: d7.map(x => x.label),      values: d7.map(x => x.earnings),     prefix: '$' },
+      '30d': { labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5'], values: weeks.map(x => x.earnings),  prefix: '$' },
+      '90d': { labels: months.map(x => x.label),  values: months.map(x => x.earnings), prefix: '$' },
+    },
+    views: {
+      '7d':  { labels: d7.map(x => x.label),      values: d7.map(x => Math.round(x.views / 1000)),     suffix: 'K' },
+      '30d': { labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5'], values: weeks.map(x => Math.round(x.views / 1000)), suffix: 'K' },
+      '90d': { labels: months.map(x => x.label),  values: months.map(x => Math.round(x.views / 1000)), suffix: 'K' },
+    },
+    submissions: {
+      '7d':  { labels: d7.map(x => x.label),     values: d7.map(x => x.submissions) },
+      '30d': { labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5'], values: weeks.map(x => x.submissions) },
+      '90d': { labels: months.map(x => x.label), values: months.map(x => x.submissions) },
+    },
+  };
+}
+
+/* ── KPI SPARKLINES ───────────────────────────────────────────── */
+function drawKpiSpark(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth  || canvas.width;
+  const H = canvas.offsetHeight || canvas.height;
+  canvas.width  = W;
+  canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+  if (!data || data.length < 2) return;
+
+  const max   = Math.max(...data, 1);
+  const min   = Math.min(...data, 0);
+  const range = max - min || 1;
+  const pad   = H * 0.1;
+
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * W,
+    y: H - pad - ((v - min) / range) * (H - pad * 2),
+  }));
+
+  /* Gradient fill under line */
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(196,149,106,.18)');
+  grad.addColorStop(1, 'rgba(196,149,106,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, H);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  /* Line */
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 1.5;
+  ctx.lineJoin    = 'round';
+  ctx.stroke();
+}
+
+function renderKpiSparks() {
+  const p = _kpiPeriod.toLowerCase();
+  const cd = CHART_DATA;
+  if (!cd.earnings[p]?.values) return;
+
+  drawKpiSpark('kpi-spark-views',       cd.views[p].values,       '#C4956A');
+  drawKpiSpark('kpi-spark-earnings',    cd.earnings[p].values,    '#C4956A');
+  drawKpiSpark('kpi-spark-submissions', cd.submissions[p].values, '#C4956A');
+  /* Approval rate sparkline uses submission counts as a proxy trend */
+  drawKpiSpark('kpi-spark-approval',    cd.submissions[p].values, '#C4956A');
+}
+
+function switchKpiPeriod(p) {
+  _kpiPeriod = p;
+  document.querySelectorAll('[data-kpi-period]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.kpiPeriod === p)
+  );
+  renderKpiSparks();
+}
+
+/* ── CHART CONTROLS ───────────────────────────────────────────── */
+function switchChartMetric(m) {
+  _chartMetric = m;
+  ['earnings','views','submissions'].forEach(k => {
+    document.getElementById('cmet-' + k)?.classList.toggle('active', k === m);
+  });
+  if (typeof animateChart === 'function') animateChart();
+}
+
+function switchChartPeriod(p) {
+  _chartPeriod = p;
+  ['7d','30d','90d'].forEach(k => {
+    document.getElementById('cper-' + k)?.classList.toggle('active', k === p);
+  });
+  if (typeof animateChart === 'function') animateChart();
+}
+
+/* ── MY SUBMISSIONS TABLE ─────────────────────────────────────── */
+function gotoMyPage(p) { _myPage = p; renderMySubmissions(); }
+
+function renderMySubmissions() {
+  const el = document.getElementById('my-submissions-table');
+  if (!el) return;
+
+  const total      = ALL_SUBMISSIONS.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  _myPage          = Math.min(_myPage, totalPages);
+  const page       = ALL_SUBMISSIONS.slice((_myPage - 1) * PAGE_SIZE, _myPage * PAGE_SIZE);
+
+  if (!total) {
+    el.innerHTML = `<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No submissions yet. Submit a clip to get started.</div>`;
+    return;
+  }
+
+  const TH = h => `<th style="text-align:left;padding:10px 14px;font-size:.69rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);font-weight:500;font-family:'Space Mono',monospace;white-space:nowrap">${h}</th>`;
+  const TD = (v, extra='') => `<td style="padding:12px 14px;font-size:.82rem;${extra}">${v}</td>`;
+
+  const rows = page.map(s => `<tr class="_srow">
+    ${TD(`<span style="color:var(--tp);font-weight:500">${_esc(s.camp)}</span>`)}
+    ${TD(_esc(s.platform), 'color:var(--ts)')}
+    ${TD(s.views, "font-family:'Space Mono',monospace;color:var(--ts)")}
+    ${TD(s.earnUsd != null ? `<span style="font-family:'Space Mono',monospace">${fmt(s.earnUsd)}</span>` : '<span style="color:var(--tm)">—</span>')}
+    ${TD(`<span style="padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:600;${_statusStyle(s.status)}">${_esc(s.status)}</span>`)}
+    ${TD(s.url ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>` : '<span style="color:var(--tm)">—</span>')}
+  </tr>`).join('');
+
+  const pages = totalPages > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:12px 16px;border-top:1px solid var(--bsoft)">
+      ${Array.from({length: totalPages}, (_,i) => i+1).map(p => `
+        <button onclick="gotoMyPage(${p})" style="width:28px;height:28px;border-radius:6px;border:1px solid ${p===_myPage?'var(--amber)':'var(--border)'};background:${p===_myPage?'var(--adim)':'transparent'};color:${p===_myPage?'var(--amber)':'var(--ts)'};font-size:.72rem;cursor:pointer;font-family:inherit;transition:all .15s">${p}</button>
+      `).join('')}
+    </div>` : '';
+
+  el.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:560px">
+        <thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Earned','Status','Link'].map(TH).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>${pages}`;
+
+  el.querySelectorAll('._srow').forEach(tr => {
+    tr.style.cssText = 'border-bottom:1px solid var(--bsoft);transition:background .15s';
+    tr.addEventListener('mouseenter', () => tr.style.background = 'var(--adim)');
+    tr.addEventListener('mouseleave', () => tr.style.background = '');
+  });
+}
+
+/* ── REJECTED SUBMISSIONS TABLE ───────────────────────────────── */
+function renderRejectedSubmissions() {
+  const el = document.getElementById('rejected-submissions-table');
+  if (!el) return;
+
+  const rejected = ALL_SUBMISSIONS
+    .map((s, i) => ({ ...s, _gi: i }))
+    .filter(s => s.status === 'Rejected');
+
+  if (!rejected.length) {
+    el.innerHTML = `<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No rejected submissions — great work! 🎉</div>`;
+    return;
+  }
+
+  const TH = h => `<th style="text-align:left;padding:10px 14px;font-size:.69rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);font-weight:500;font-family:'Space Mono',monospace;white-space:nowrap">${h}</th>`;
+  const TD = (v, extra='') => `<td style="padding:12px 14px;font-size:.82rem;${extra}">${v}</td>`;
+
+  const rows = rejected.map(s => `<tr class="_rrow">
+    ${TD(`<span style="color:var(--tp);font-weight:500">${_esc(s.camp)}</span>`)}
+    ${TD(_esc(s.platform), 'color:var(--ts)')}
+    ${TD(s.views, "font-family:'Space Mono',monospace;color:var(--ts)")}
+    ${TD(`<span style="padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:600;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#F87171">Rejected</span>`)}
+    ${TD(s.url ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>` : '<span style="color:var(--tm)">—</span>')}
+    ${TD(`<button onclick="openRejectModal(${s._gi})"
+      style="padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.75rem;transition:all .15s;
+        border:1px solid ${s.appealed?'rgba(110,231,183,.35)':'var(--border)'};
+        background:${s.appealed?'rgba(110,231,183,.08)':'transparent'};
+        color:${s.appealed?'#6EE7B7':'var(--ts)'}"
+    >${s.appealed ? '✓ Appealed' : '📋 Note'}</button>`)}
+  </tr>`).join('');
+
+  el.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:560px">
+        <thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Status','Link','Reason'].map(TH).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+  el.querySelectorAll('._rrow').forEach(tr => {
+    tr.style.cssText = 'border-bottom:1px solid var(--bsoft);transition:background .15s';
+    tr.addEventListener('mouseenter', () => tr.style.background = 'var(--adim)');
+    tr.addEventListener('mouseleave', () => tr.style.background = '');
+  });
+}
+
+/* ── REJECTION MODAL ──────────────────────────────────────────── */
+function openRejectModal(globalIdx) {
+  _openAppealIdx = globalIdx;
+  const s = ALL_SUBMISSIONS[globalIdx];
+  if (!s) return;
+
+  const modal    = document.getElementById('reject-modal');
+  const title    = document.getElementById('reject-modal-title');
+  const reason   = document.getElementById('reject-modal-reason');
+  const textarea = document.getElementById('appeal-textarea');
+  const sentMsg  = document.getElementById('appeal-sent-msg');
+  const sendBtn  = document.getElementById('appeal-send-btn');
+
+  if (title)   title.textContent  = s.camp;
+  if (reason)  reason.textContent = s.reason || 'No reason provided by admin.';
+  if (sentMsg) sentMsg.style.display = 'none';
+
+  if (textarea && sendBtn) {
+    if (s.appealed) {
+      textarea.value    = s.appealNote || 'Appeal already submitted.';
+      textarea.disabled = true;
+      sendBtn.disabled  = true;
+      sendBtn.textContent = '✓ Sent';
+      if (sentMsg) sentMsg.style.display = 'block';
+    } else {
+      textarea.value      = '';
+      textarea.disabled   = false;
+      sendBtn.disabled    = false;
+      sendBtn.textContent = 'Send Appeal';
+    }
+  }
+
+  if (modal) {
+    modal.style.cssText += ';display:flex;opacity:0;transition:opacity .2s';
+    requestAnimationFrame(() => modal.style.opacity = '1');
+  }
+}
+
+function closeRejectModal() {
+  const modal = document.getElementById('reject-modal');
+  if (!modal) return;
+  modal.style.opacity = '0';
+  setTimeout(() => { modal.style.display = 'none'; }, 200);
+  _openAppealIdx = -1;
+}
+
+async function sendAppeal() {
+  if (_openAppealIdx < 0) return;
+  const s = ALL_SUBMISSIONS[_openAppealIdx];
+  if (!s || s.appealed) return;
+
+  const textarea = document.getElementById('appeal-textarea');
+  const sendBtn  = document.getElementById('appeal-send-btn');
+  const sentMsg  = document.getElementById('appeal-sent-msg');
+  const note     = textarea?.value?.trim();
+
+  if (!note) { textarea?.focus(); return; }
+
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; }
+
+  try {
+    const { error } = await sb
+      .from('submissions')
+      .update({
+        appealed:    true,
+        appeal_note: note,
+        appealed_at: new Date().toISOString(),
+      })
+      .eq('id', s.id);
+
+    if (error) throw error;
+
+    ALL_SUBMISSIONS[_openAppealIdx].appealed   = true;
+    ALL_SUBMISSIONS[_openAppealIdx].appealNote = note;
+
+    if (textarea) textarea.disabled = true;
+    if (sentMsg)  sentMsg.style.display = 'block';
+    if (sendBtn)  sendBtn.textContent = '✓ Sent';
+
+    renderRejectedSubmissions();
+
+    if (typeof showToast === 'function') showToast('✓ Appeal sent to admin for review!');
+    else _statsToast('✓ Appeal sent to admin for review!');
+
+    setTimeout(closeRejectModal, 1500);
+
+  } catch (e) {
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send Appeal'; }
+    if (typeof showToast === 'function') showToast(e.message, 'error');
+    else _statsToast(e.message, 'error');
+  }
+}
+
+/* ── REAL-TIME ────────────────────────────────────────────────── */
+function _initStatsRealtime() {
+  if (_statsChannel) { try { sb.removeChannel(_statsChannel); } catch (_) {} }
+
+  _statsChannel = sb
+    .channel('clipency-stats-' + currentUserId)
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'submissions',
+      filter: `user_id=eq.${currentUserId}`,
+    }, ({ new: row }) => {
+      const idx = ALL_SUBMISSIONS.findIndex(s => s.id === row.id);
+      if (idx > -1) {
+        const a = ALL_SUBMISSIONS[idx];
+        a.status      = _cap(row.status);
+        a.earnUsd     = (row.status === 'approved' || row.status === 'paid') ? row.earnings : null;
+        a.views       = _fmtViews(row.views);
+        a.reason      = row.rejection_note;
+        a.appealed    = row.appealed ?? false;
+        a._rawViews   = row.views    || 0;
+        a._rawEarnings= row.earnings || 0;
+      }
+      renderMySubmissions();
+      renderRejectedSubmissions();
+      loadKpiCards();
+    })
+    .subscribe();
+}
+
+/* ── MAIN ENTRY: renderStats() ────────────────────────────────── */
+async function renderStats() {
+  document.title = 'Clipency | Stats';
+
+  /* Skeleton */
+  ['stat-total-views','stat-total-earned','stat-approval-rate','stat-pending-count']
+    .forEach(id => { const e = document.getElementById(id); if (e) e.textContent = '—'; });
+
+  try {
+    await loadSubmissions();    // populates ALL_SUBMISSIONS
+    await loadKpiCards();       // uses user_stats view or fallback
+    await loadChartData();      // populates CHART_DATA
+  } catch (e) {
+    _statsErr('Failed to load stats: ' + e.message);
+    return;
+  }
+
+  renderKpiSparks();
+
+  if (typeof animateChart === 'function')  setTimeout(animateChart, 50);
+  if (typeof initChartHover === 'function') setTimeout(initChartHover, 100);
+
+  renderMySubmissions();
+  renderRejectedSubmissions();
+  _initStatsRealtime();
+}
+
+/* Re-render money values when currency switches */
+function onStatsCurrencySwitch() {
+  loadKpiCards();
+  renderMySubmissions();
+}
+
+/* ── INTERNAL UTILS ───────────────────────────────────────────── */
+function _statsToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `
+    position:fixed;bottom:24px;right:24px;z-index:9999;
+    padding:12px 18px;border-radius:10px;
+    background:${type === 'error' ? 'rgba(239,68,68,.12)' : '#1a1612'};
+    color:${type === 'error' ? '#F87171' : 'var(--amber)'};
+    border:1px solid ${type === 'error' ? 'rgba(239,68,68,.25)' : 'var(--border)'};
+    font-size:.82rem;box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:_sfIn .2s ease;pointer-events:none`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function _statsErr(msg) {
+  const s = document.getElementById('section-stats');
+  if (!s) return;
+  const b = document.createElement('div');
+  b.style.cssText = 'padding:12px 16px;border-radius:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#F87171;font-size:.82rem;margin-bottom:16px';
+  b.textContent = '⚠ ' + msg;
+  s.prepend(b);
+  setTimeout(() => b.remove(), 6000);
+}
+
+/* Keyframe for toast */
+if (!document.getElementById('_stats-anim')) {
+  const sty = document.createElement('style');
+  sty.id = '_stats-anim';
+  sty.textContent = '@keyframes _sfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}';
+  document.head.appendChild(sty);
+}
+
+/* Close modal on overlay click or ESC */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRejectModal(); });
+document.getElementById('reject-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) closeRejectModal();
+});
 </body>
 </html>
