@@ -4253,54 +4253,94 @@ window.addEventListener('load',()=>{
 
 
 
+
 <script>
-/* ═══ CLIPENCY — Stats + Profile ═══ */
+/* ═══ CLIPENCY — Stats + Profile + Logout + Currency ═══ */
 (function(){
   const getSb=()=>window.clipencySupabase||window.supabaseClient||window.supabase;
   const fv=n=>!n?'0':n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?Math.round(n/1e3)+'K':String(n);
 
-  /* ── STATS (called by navigate handler as loadStatsFromSupabase) ── */
+  function wireLogout(){
+    document.querySelectorAll('[onclick*="signOut"],[onclick*="logout"],[data-action="logout"],[id*="logout"],[class*="logout"]').forEach(el=>{
+      el.onclick=async(e)=>{e.preventDefault();e.stopPropagation();const sb=getSb();if(!sb)return;await sb.auth.signOut();window.location.href='/login';};
+    });
+    document.querySelectorAll('button,a').forEach(el=>{
+      const t=(el.textContent||'').trim().toLowerCase();
+      if(t==='sign out'||t==='logout'||t==='log out'){
+        el.onclick=async(e)=>{e.preventDefault();e.stopPropagation();const sb=getSb();if(!sb)return;await sb.auth.signOut();window.location.href='/login';};
+      }
+    });
+  }
+
+  function fixLogo(){
+    document.querySelectorAll('img[alt="Clipency"],[class*="logo"] img').forEach(img=>{
+      if(img.complete&&img.naturalWidth===0){img.src='/Clipencylogo.png';}
+      img.onerror=function(){this.src='/Clipencylogo.png';};
+    });
+  }
+
+  function patchCurrency(){
+    if(typeof window.fmt==='function') return;
+    window.fmt=function(usd){const n=Number(usd)||0;return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  }
+
+  async function savePaymentMethod(type,data){
+    const sb=getSb();if(!sb)return;
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
+    await sb.from('user_payment_methods').delete().eq('user_id',user.id).eq('method_type',type);
+    const {error}=await sb.from('user_payment_methods').insert([{user_id:user.id,method_type:type,is_primary:false,...data}]);
+    if(error)throw error;
+  }
+
+  function wirePaymentForms(){
+    const _origAdd=window.addPaymentMethod;
+    window.addPaymentMethod=async function(type,details){
+      try{
+        if(type==='upi') await savePaymentMethod('upi',{upi_id:details?.upi_id||details,account_name:details?.upi_id||details});
+        else if(type==='paypal') await savePaymentMethod('paypal',{paypal_email:details?.email||details,account_name:details?.email||details});
+        else if(type==='crypto') await savePaymentMethod('crypto',{bank_account:details?.address||details,extra_details:details?.token||'usdc',account_name:details?.address||details});
+      }catch(e){console.warn('pay method save:',e.message);}
+      if(typeof _origAdd==='function') return _origAdd.apply(this,arguments);
+    };
+    const _origConfirm=window.confirmAddMethod||window.savePaymentMethod;
+    if(_origConfirm) window.savePaymentMethod=async function(type,details){
+      try{await savePaymentMethod(type,details);}catch(e){console.warn(e);}
+      return _origConfirm.apply(this,arguments);
+    };
+  }
+
   async function loadStatsFromSupabase(){
-    const sb=getSb(); if(!sb) return;
-    const {data:{user}} = await sb.auth.getUser(); if(!user) return;
-
-    const {data, error} = await sb
-      .from('submissions')
+    const sb=getSb();if(!sb)return;
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
+    const {data,error}=await sb.from('submissions')
       .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
-      .eq('user_id', user.id)
-      .order('submitted_at', {ascending:false});
-
-    if(error){ console.warn('[stats]', error.message); return; }
-    console.log('[stats] loaded', data.length, 'rows');
-
-    window.ALL_SUBMISSIONS = (data||[]).map(r=>({
-      id:r.id, camp:r.campaign_title||'—', platform:r.platform||'—',
-      views:fv(r.views),
-      earnUsd:(r.status==='approved'||r.status==='paid') ? Number(r.earnings)||0 : null,
-      status:r.status ? r.status.charAt(0).toUpperCase()+r.status.slice(1) : 'Pending',
-      url:r.video_url||'', reason:r.rejection_reason||'', appealed:r.appealed??false,
+      .eq('user_id',user.id).order('submitted_at',{ascending:false});
+    if(error){console.warn('[stats]',error.message);return;}
+    console.log('[stats] loaded',data.length,'rows');
+    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
+      id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',views:fv(r.views),
+      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
+      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
+      url:r.video_url||'',reason:r.rejection_reason||'',appealed:r.appealed??false,
     }));
-    try{ ALL_SUBMISSIONS = window.ALL_SUBMISSIONS; }catch(_){}
-
+    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    const fmtM=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toFixed(2);
+    const fmt=window.fmt||(v=>'$'+(Number(v)||0).toFixed(2));
     const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
     const pending=data.filter(s=>s.status==='pending');
     const reviewed=data.length-pending.length;
-    set('stat-total-views', fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
-    set('stat-total-earned', fmtM(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
-    set('stat-approval-rate', reviewed ? Math.round((approved.length/reviewed)*100)+'%' : '—');
-    set('stat-pending-count', pending.length);
-
+    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
+    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
+    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
+    set('stat-pending-count',pending.length);
     if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
     if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
   }
-  window.loadStatsFromSupabase = loadStatsFromSupabase;
+  window.loadStatsFromSupabase=loadStatsFromSupabase;
 
-  /* ── AVATAR ── */
   async function initAvatar(){
-    const sb=getSb(); if(!sb) return;
-    const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+    const sb=getSb();if(!sb)return;
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
     const {data:p}=await sb.from('profiles').select('avatar_url').eq('id',user.id).single();
     if(p?.avatar_url) applyAvatar(p.avatar_url);
     let inp=document.getElementById('_av-inp');
@@ -4308,57 +4348,47 @@ window.addEventListener('load',()=>{
     document.querySelectorAll('[class*="avatar"] [class*="edit"],[class*="avatar"] button,.avatar-edit').forEach(el=>{el.style.cursor='pointer';el.addEventListener('click',e=>{e.stopPropagation();inp.click();});});
     document.querySelectorAll('[class*="creator-avatar"],[class*="profile-avatar"]').forEach(el=>{el.style.cursor='pointer';el.addEventListener('click',()=>inp.click());});
     inp.addEventListener('change',async()=>{
-      const file=inp.files[0]; if(!file) return;
+      const file=inp.files[0];if(!file)return;
       if(file.size>5*1024*1024){alert('Max 5MB');return;}
       const wrap=document.querySelector('[class*="creator-avatar"],[class*="profile-avatar"]');
       if(wrap) wrap.style.opacity='0.5';
       try{
         const ext=file.name.split('.').pop()||'jpg';
-        const path=`${user.id}/avatar.${ext}`;
-        const {error:e}=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
-        if(e) throw e;
-        const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path);
+        const {error:e}=await sb.storage.from('avatars').upload(`${user.id}/avatar.${ext}`,file,{upsert:true,contentType:file.type});
+        if(e)throw e;
+        const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(`${user.id}/avatar.${ext}`);
         await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',user.id);
         applyAvatar(publicUrl);
-        if(typeof showToast==='function') showToast('✓ Photo updated');
+        if(typeof showToast==='function')showToast('✓ Photo updated');
       }catch(e){alert('Upload failed: '+e.message);}
       finally{if(wrap)wrap.style.opacity='1';inp.value='';}
     });
   }
   function applyAvatar(url){
     const u=url+'?t='+Date.now();
-    ['#profile-avatar-img','#user-avatar-img','.creator-avatar img','.profile-avatar img'].forEach(s=>{
-      const el=document.querySelector(s);if(el&&el.tagName==='IMG')el.src=u;
-    });
+    ['#profile-avatar-img','#user-avatar-img','.creator-avatar img','.profile-avatar img'].forEach(s=>{const el=document.querySelector(s);if(el&&el.tagName==='IMG')el.src=u;});
     const av=document.querySelector('.creator-avatar,[class*=avatar-letter],[class*=avatar-initials]');
     if(av){const img=document.createElement('img');img.src=u;img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;position:absolute;top:0;left:0';av.style.position='relative';av.style.overflow='hidden';av.querySelectorAll('img').forEach(i=>i.remove());av.appendChild(img);}
   }
 
-  /* ── RANK ── */
-  const TIERS=[
-    {name:'Diamond',min:10000000,color:'#67E8F9',icon:'💎'},
-    {name:'Platinum',min:1000000,color:'#E879F9',icon:'🔮'},
-    {name:'Gold',min:100000,color:'#FACC15',icon:'🏅'},
-    {name:'Silver',min:10000,color:'#94A3B8',icon:'🥈'},
-    {name:'Bronze',min:1,color:'#CD7F32',icon:'🥉'},
-  ];
+  const TIERS=[{name:'Diamond',min:10000000,color:'#67E8F9',icon:'💎'},{name:'Platinum',min:1000000,color:'#E879F9',icon:'🔮'},{name:'Gold',min:100000,color:'#FACC15',icon:'🏅'},{name:'Silver',min:10000,color:'#94A3B8',icon:'🥈'},{name:'Bronze',min:1,color:'#CD7F32',icon:'🥉'}];
   async function updateRank(){
-    const sb=getSb(); if(!sb) return;
-    const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+    const sb=getSb();if(!sb)return;
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
     const {data:row}=await sb.from('clipper_rank').select('*').eq('user_id',user.id).single();
     const box=document.querySelector('.creator-rank-sub,[class*=rank-sub],[class*=rank-value]');
     const lbl=document.querySelector('.creator-rank-label,[class*=rank-label]');
-    if(lbl) lbl.textContent='Clipency Rank';
-    if(!box) return;
+    if(lbl)lbl.textContent='Clipency Rank';
+    if(!box)return;
     const views=Number(row?.total_views)||0,pos=Number(row?.rank_position)||0,total=Number(row?.total_clippers)||0;
     if(!views){box.innerHTML='<span style="font-size:.72rem;color:var(--ts);line-height:1.6">Submit clips<br>to earn your rank</span>';return;}
     const t=TIERS.find(t=>views>=t.min)||{name:'Unranked',color:'#6A6158',icon:'—'};
     box.innerHTML=`<div style="text-align:center;line-height:1.3"><div style="font-size:1.5rem">${t.icon}</div><div style="font-size:.95rem;font-weight:700;color:${t.color};margin:2px 0">${t.name}</div><div style="font-size:.67rem;color:var(--ts)">#${pos} of ${total}</div></div>`;
   }
 
-  async function init(){ await Promise.all([initAvatar(), updateRank(), loadStatsFromSupabase()]); }
-  if(document.readyState==='complete') init(); else window.addEventListener('load', init);
-  setTimeout(init, 600);
+  async function init(){patchCurrency();wireLogout();fixLogo();wirePaymentForms();await Promise.all([initAvatar(),updateRank(),loadStatsFromSupabase()]);}
+  if(document.readyState==='complete')init();else window.addEventListener('load',init);
+  setTimeout(init,600);
 })();
 </script>
 </body>
