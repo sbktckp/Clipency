@@ -254,7 +254,7 @@ async function load(){
     rv:Number(r.views_count||r.views||0),re:Number(r.approved_amount||r.earning_amount||0),
     status:r.status||'pending',url:r.clip_url||'',
     reason:r.rejection_reason||'',appeal:r.appeal_note||'',
-    appealed:!!r.appeal_note,date:r.created_at,
+    appealed:!!r.appeal_note,date:r.created_at,likes:Number(r.likes||0),comments:Number(r.comments||0),eng:Number(r.engagement_rate||0),
   }));
   updateKpis();drawChart();renderMy();renderRej();
 }
@@ -379,6 +379,7 @@ function renderMy(){
     <td style="text-align:right;font-family:'Space Mono',monospace">${fv(s.rv)}</td>
     <td style="text-align:right;font-family:'Space Mono',monospace;color:var(--green)">${s.status==='approved'||s.status==='paid'?fm(s.re):'<span style="color:var(--tm)">—</span>'}</td>
     <td>${badge(s.status)}</td>
+    <td style="font-family:'Space Mono',monospace;font-size:.78rem;color:${s.eng>5?'var(--green)':s.eng>0?'var(--amber)':'var(--tm)'}">${s.eng>0?s.eng.toFixed(2)+'%':'—'}</td>
     <td>${s.url?`<a class="slink" href="${esc(s.url)}" target="_blank" rel="noopener">↗ Open</a>`:'<span style="color:var(--tm)">—</span>'}</td>
   </tr>`).join('');
   const pag=document.getElementById('my-pag');

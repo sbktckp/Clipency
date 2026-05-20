@@ -634,7 +634,7 @@ async function renderReviews(){
       <td style="font-size:13px;font-weight:700;color:${amt>0?'#6EE7B7':'rgba(255,255,255,.3)'}">${amt>0?'₹'+amt.toLocaleString('en-IN'):'—'}</td>
       <td><span class="cx-badge ${r.status}">${r.status||'—'}</span>${r.rejection_reason?`<div style="font-size:10px;color:#F87171;margin-top:2px">${esc(r.rejection_reason.slice(0,30))}…</div>`:''}</td>
       <td><div class="cx-btns" style="flex-direction:column;gap:5px">
-        <button class="cx-btn ok sm" style="width:100%;justify-content:center" onclick="openReviewModal('${esc(r.id)}','${esc(r.user_name||r.user_email||'')}','${esc(r.campaign_title||'')}','${esc(r.platform||'')}','${esc(r.handle||'')}','${esc(r.clip_url||'')}',${views},${amt},'${r.status}')">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
+        <button class="cx-btn ok sm" style="width:100%;justify-content:center" onclick="openReviewModal('${esc(r.id)}','${esc(r.user_name||r.user_email||'')}','${esc(r.campaign_title||'')}','${esc(r.platform||'')}','${esc(r.handle||'')}','${esc(r.clip_url||'')}',${views},${amt},'${r.status}',${Number(r.likes||0)},${Number(r.comments||0)})">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
         ${r.status==='pending'?`<button class="cx-btn danger sm" style="width:100%;justify-content:center" onclick="quickReject('${esc(r.id)}')">✗ Reject</button>`:''}
       </div></td>
     </tr>`;}).join('')}</tbody>
@@ -648,51 +648,84 @@ async function renderReviews(){
     <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
 }
 
-window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status){
+window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status,likes,comments){
+  likes=likes||0; comments=comments||0;
+  const engRate=views>0?((likes+comments)/views*100).toFixed(2):0;
   const panel=document.createElement('div');
   panel.className='cx-panel';
-  panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
-  panel.innerHTML=`<div style="background:#181410;border:1px solid rgba(196,149,106,.2);border-radius:18px;width:100%;max-width:520px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.7)">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+  panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  panel.innerHTML=`<div style="background:#181410;border:1px solid rgba(196,149,106,.2);border-radius:18px;width:100%;max-width:560px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.7);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
       <div>
-        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:#C4956A;margin-bottom:5px">${status==='approved'?'Edit Submission':'Review Submission'}</div>
-        <h3 style="font-family:'Instrument Serif',serif;font-size:1.4rem;color:#F5F0EB;font-weight:400">${esc(name)}</h3>
-        <div style="font-size:.78rem;color:#6A6158;margin-top:2px">${esc(camp)} · ${esc(platform)} · @${esc(handle)}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:#C4956A;margin-bottom:5px;">${status==='approved'?'Edit Submission':'Review Submission'}</div>
+        <h3 style="font-family:'Instrument Serif',serif;font-size:1.4rem;color:#F5F0EB;font-weight:400;">${esc(name)}</h3>
+        <div style="font-size:.78rem;color:#6A6158;margin-top:2px;">${esc(camp)} · ${esc(platform)} · @${esc(handle)}</div>
       </div>
-      <button onclick="this.closest('.cx-panel').remove()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#B8AFA8;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+      <button onclick="this.closest('.cx-panel').remove()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#B8AFA8;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>
     </div>
-    ${clipUrl?`<a href="${esc(clipUrl)}" target="_blank" style="display:flex;align-items:center;gap:8px;background:rgba(196,149,106,.07);border:1px solid rgba(196,149,106,.15);border-radius:9px;padding:10px 14px;text-decoration:none;color:#C4956A;font-size:.82rem;margin-bottom:18px;font-weight:600">🔗 Open clip proof ↗</a>`:''}
-    <div id="rm-err" style="margin-bottom:8px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+    ${clipUrl?`<a href="${esc(clipUrl)}" target="_blank" style="display:flex;align-items:center;gap:8px;background:rgba(196,149,106,.07);border:1px solid rgba(196,149,106,.15);border-radius:9px;padding:10px 14px;text-decoration:none;color:#C4956A;font-size:.82rem;margin-bottom:18px;font-weight:600;">🔗 Open clip proof ↗</a>`:''}
+    <div id="rm-err" style="margin-bottom:8px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
       <div>
-        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Views Count *</label>
-        <input id="rm-views" class="cx-input" type="number" min="0" value="${views||''}" placeholder="e.g. 250000" style="width:100%"/>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px;">Views Count *</label>
+        <input id="rm-views" class="cx-input" type="number" min="0" value="${views||''}" placeholder="e.g. 250000" style="width:100%;" oninput="calcEng()"/>
       </div>
       <div>
-        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px">Earnings Amount (₹) *</label>
-        <input id="rm-amt" class="cx-input" type="number" min="0" step="0.01" value="${amt||''}" placeholder="e.g. 500" style="width:100%"/>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px;">Earnings Amount (₹) *</label>
+        <input id="rm-amt" class="cx-input" type="number" min="0" step="0.01" value="${amt||''}" placeholder="e.g. 500" style="width:100%;"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px;">Likes</label>
+        <input id="rm-likes" class="cx-input" type="number" min="0" value="${likes||''}" placeholder="e.g. 1200" style="width:100%;" oninput="calcEng()"/>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.49rem;letter-spacing:.1em;text-transform:uppercase;color:#6A6158;margin-bottom:6px;">Comments</label>
+        <input id="rm-comments" class="cx-input" type="number" min="0" value="${comments||''}" placeholder="e.g. 84" style="width:100%;" oninput="calcEng()"/>
       </div>
     </div>
-    <div style="display:flex;gap:9px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
-      <button id="rm-approve" class="cx-btn ok" style="flex:1;justify-content:center">${status==='approved'?'✓ Save Changes':'✓ Approve & Save'}</button>
-      ${status==='pending'?`<button id="rm-reject" class="cx-btn danger" style="flex:1;justify-content:center">✗ Reject</button>`:''}
+    <div id="rm-eng-display" style="background:rgba(196,149,106,.06);border:1px solid rgba(196,149,106,.15);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:4px;">Engagement Rate</div>
+        <div id="rm-eng-val" style="font-family:'Instrument Serif',serif;font-size:1.4rem;color:#C4956A;">${engRate}%</div>
+      </div>
+      <div style="font-size:.72rem;color:#6A6158;text-align:right;max-width:180px;line-height:1.5;">((Likes + Comments)<br>÷ Views) × 100</div>
+    </div>
+    <div style="display:flex;gap:9px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);">
+      <button id="rm-approve" class="cx-btn ok" style="flex:1;justify-content:center;">${status==='approved'?'✓ Save Changes':'✓ Approve & Save'}</button>
+      ${status==='pending'?`<button id="rm-reject" class="cx-btn danger" style="flex:1;justify-content:center;">✗ Reject</button>`:''}
       <button onclick="this.closest('.cx-panel').remove()" class="cx-btn ghost">Cancel</button>
     </div>
   </div>`;
   (document.getElementById('cxos')||document.body).appendChild(panel);
 
+  /* Live engagement calc */
+  window.calcEng=function(){
+    const v=Number(document.getElementById('rm-views')?.value)||0;
+    const l=Number(document.getElementById('rm-likes')?.value)||0;
+    const c=Number(document.getElementById('rm-comments')?.value)||0;
+    const eng=v>0?((l+c)/v*100).toFixed(2):0;
+    const el=document.getElementById('rm-eng-val');
+    if(el)el.textContent=eng+'%';
+  };
+
   panel.querySelector('#rm-approve').onclick=async()=>{
     const v=Number(panel.querySelector('#rm-views').value)||0;
     const a=parseFloat(panel.querySelector('#rm-amt').value)||0;
+    const l=Number(panel.querySelector('#rm-likes').value)||0;
+    const c=Number(panel.querySelector('#rm-comments').value)||0;
+    const eng=v>0?((l+c)/v*100):0;
     const errEl=panel.querySelector('#rm-err');
-    if(!a||a<=0){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px">⚠ Enter earnings amount</div>`;return;}
+    if(!a||a<=0){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px;">⚠ Enter earnings amount</div>`;return;}
     const btn=panel.querySelector('#rm-approve');btn.disabled=true;btn.textContent='Saving…';
     try{
       const{error}=await sb.rpc('admin_approve_submission',{p_id:id,p_amount:a,p_views:v});
       if(error)throw error;
-      panel.remove();
-      await boot();
-    }catch(e){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px">${esc(e.message)}</div>`;btn.disabled=false;btn.textContent='✓ Approve & Save';}
+      /* Update engagement metrics directly */
+      await sb.from('clip_submissions').update({
+        likes:l, comments:c, engagement_rate:parseFloat(eng.toFixed(4)), views_count:v
+      }).eq('id',id);
+      panel.remove();await boot();
+    }catch(e){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px;">${esc(e.message)}</div>`;btn.disabled=false;btn.textContent='✓ Approve & Save';}
   };
 
   const rBtn=panel.querySelector('#rm-reject');
@@ -707,7 +740,7 @@ window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,s
       panel.remove();await boot();
     }catch(e){alert(e.message);rBtn.disabled=false;rBtn.textContent='✗ Reject';}
   };
-};
+};;
 
 window.quickReject=async function(id){
   const reason=prompt('Rejection reason (shown to clipper):','');
