@@ -856,6 +856,44 @@ async function renderLogs(){
     </table></div></div>`});
 }
 
+
+async function renderLeads(){
+  const tab=new URLSearchParams(location.search).get('tab')||'new';
+  const{data:rows,error}=await sb.from('leads').select('*').order('created_at',{ascending:false});
+  if(error){return page({kicker:'Leads',title:'Leads.',sub:'Brand inquiries.',body:`<div class="cx-empty">Error: ${esc(error.message)}</div>`});}
+  const all=rows||[];
+  const filtered=tab==='all'?all:all.filter(r=>r.status===tab);
+  const counts={new:all.filter(r=>r.status==='new').length,contacted:all.filter(r=>r.status==='contacted').length,qualified:all.filter(r=>r.status==='qualified').length,closed:all.filter(r=>r.status==='closed').length,all:all.length};
+  const tabs=['new','contacted','qualified','closed','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t[0].toUpperCase()+t.slice(1)} <span style="opacity:.5;font-size:.75em">${counts[t]||0}</span></button>`).join('');
+  const sc={new:'#fbbf24',contacted:'#a5b4fc',qualified:'#4ade80',closed:'rgba(255,255,255,.3)'};
+  const rowsHtml=filtered.length?`<div class="cx-tw"><table class="cx-t">
+    <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Type</th><th>Budget</th><th>Message</th><th>Status</th><th>Date</th><th>Update</th></tr></thead>
+    <tbody>${filtered.map(r=>`<tr>
+      <td style="font-weight:600;white-space:nowrap">${esc(r.full_name||'—')}</td>
+      <td style="font-size:12px"><a href="mailto:${esc(r.email||'')}" style="color:#a5b4fc;text-decoration:none">${esc(r.email||'—')}</a>${r.phone?`<div style="font-size:10.5px;color:rgba(255,255,255,.35)">${esc(r.phone)}</div>`:''}</td>
+      <td style="font-size:12px">${esc(r.company||r.brand_name||'—')}</td>
+      <td><span style="font-size:11px;background:rgba(99,102,241,.12);color:#a5b4fc;padding:2px 8px;border-radius:10px">${esc(r.campaign_type||'—')}</span></td>
+      <td style="font-size:12px;font-weight:600;color:#4ade80">${esc(r.budget||'—')}</td>
+      <td style="font-size:11.5px;color:rgba(255,255,255,.5);max-width:180px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="${esc(r.message||'')}">${esc((r.message||'—').slice(0,60))}${(r.message||'').length>60?'…':''}</div></td>
+      <td><span class="cx-badge" style="color:${sc[r.status]||sc.new};background:${sc[r.status]||sc.new}22">${esc(r.status||'new')}</span></td>
+      <td style="font-size:11px;color:rgba(255,255,255,.35)">${fmtDate(r.created_at)}</td>
+      <td><select style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#f5f5f7;font-size:11.5px;padding:4px 8px;cursor:pointer;font-family:inherit" onchange="updateLeadStatus('${esc(r.id)}',this.value)">
+        ${['new','contacted','qualified','closed'].map(s=>`<option value="${s}"${r.status===s?' selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}
+      </select></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`:`<div class="cx-empty">No ${tab} leads.</div>`;
+  return page({kicker:'Lead Pipeline',title:'Leads.',sub:'Brand & creator inquiries from the landing page.',
+    body:`<div class="cx-sec">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px">
+      ${['new','contacted','qualified','closed','all'].map(t=>`<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;text-align:center"><div style="font-family:monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:5px">${t}</div><div style="font-size:1.5rem;font-weight:800;color:${sc[t]||'#f5f5f7'}">${counts[t]||0}</div></div>`).join('')}
+    </div>
+    <div class="cx-sh"><div><div class="cx-st">Inquiries</div><div class="cx-sd">${filtered.length} in "${tab}"</div></div></div>
+    <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
+}
+window.updateLeadStatus=async function(id,status){
+  await sb.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id);
+};
+
 async function renderRoute(){
   if(PATH==='/admin'||PATH==='/workspace')return renderCommand();
   if(PATH==='/admin/connected-accounts'||PATH==='/admin/accounts')return renderAccounts();
@@ -863,6 +901,7 @@ async function renderRoute(){
   if(PATH==='/admin/reviews'||PATH==='/admin/review')return renderReviews();
   if(PATH==='/admin/payouts')return renderPayouts();
   if(PATH==='/admin/logs')return renderLogs();
+  if(PATH==='/admin/leads')return renderLeads();
   if(PATH==='/admin/users')return renderUsers();
   return renderCommand();
 }
