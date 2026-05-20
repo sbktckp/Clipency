@@ -4362,5 +4362,65 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+<script>
+/* ═══ CLIPENCY STATS LOADER ═══ */
+(function(){
+  const fv=n=>!n?'0':n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?Math.round(n/1e3)+'K':String(n);
+
+  async function loadStats(){
+    const sb=window.clipencySupabase||window.supabaseClient||window.supabase;
+    if(!sb) return;
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user) return;
+
+    const {data,error}=await sb
+      .from('submissions')
+      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
+      .eq('user_id',user.id)
+      .order('submitted_at',{ascending:false});
+
+    if(error){console.warn('[stats]',error.message);return;}
+    console.log('[stats] loaded',data.length,'rows');
+
+    // Map to shape renderMySubmissions() expects
+    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
+      id:r.id,
+      camp:r.campaign_title||'—',
+      platform:r.platform||'—',
+      views:fv(r.views),
+      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
+      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
+      url:r.video_url||'',
+      reason:r.rejection_reason||'',
+      appealed:r.appealed??false,
+    }));
+    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
+
+    // KPI cards
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const fmt=v=>typeof window.fmt==='function'?window.fmt(Number(v)||0):'$'+(Number(v)||0).toFixed(2);
+    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
+    const pending=data.filter(s=>s.status==='pending');
+    const reviewed=data.length-pending.length;
+    const totalViews=data.reduce((a,s)=>a+(Number(s.views)||0),0);
+    const earnings=approved.reduce((a,s)=>a+(Number(s.earnings)||0),0);
+    set('stat-total-views',fv(totalViews));
+    set('stat-total-earned',fmt(earnings));
+    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
+    set('stat-pending-count',pending.length);
+
+    // Render tables
+    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
+    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
+  }
+
+  window.reloadStats=loadStats;
+  if(document.readyState==='complete') loadStats();
+  else window.addEventListener('load',loadStats);
+  setTimeout(loadStats,800);
+})();
+</script>
+
 </body>
 </html>
