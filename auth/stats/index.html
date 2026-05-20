@@ -3031,6 +3031,39 @@ function gotoMyPage(p){
   renderMySubmissions();
 }
 
+
+/* ── loadSubmissions: fetch from Supabase into ALL_SUBMISSIONS ── */
+async function loadSubmissions(){
+  const sb = window.clipencySupabase || window.supabaseClient || window.supabase;
+  if(!sb) return;
+  const uid = (await sb.auth.getUser())?.data?.user?.id;
+  if(!uid) return;
+
+  const {data, error} = await sb
+    .from('submissions')
+    .select('id, video_url, platform, status, views, earnings, submitted_at, rejection_note, appealed, appeal_note, campaign_id, campaigns(name)')
+    .eq('user_id', uid)
+    .order('submitted_at', {ascending: false});
+
+  if(error){ console.warn('loadSubmissions:', error.message); return; }
+
+  ALL_SUBMISSIONS = (data||[]).map(row => ({
+    id:        row.id,
+    camp:      row.campaigns?.name || '—',
+    platform:  row.platform || '—',
+    views:     row.views >= 1000000 ? (row.views/1000000).toFixed(1)+'M' : row.views >= 1000 ? Math.round(row.views/1000)+'K' : (row.views||'—'),
+    earnUsd:   (row.status==='approved'||row.status==='paid') ? row.earnings : null,
+    status:    row.status ? row.status.charAt(0).toUpperCase()+row.status.slice(1) : 'Pending',
+    url:       row.video_url,
+    reason:    row.rejection_note,
+    appealed:  row.appealed ?? false,
+    appealNote:row.appeal_note || '',
+    _rawViews: row.views || 0,
+    _rawEarnings: row.earnings || 0,
+  }));
+}
+/* ── end loadSubmissions ── */
+
 function renderMySubmissions(){
   const myTbl=document.getElementById('my-submissions-table');
   if(!myTbl) return;
