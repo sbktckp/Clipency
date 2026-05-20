@@ -4428,102 +4428,124 @@ window.addEventListener('load',()=>{
   }, 100);
 })();
 </script>
+
 <script>
-/* wallet-supabase-patch-v2 */
+/* wallet-v3 */
 (function(){
   const getSb=()=>window.clipencySupabase||window.supabaseClient||window.supabase;
 
-  /* ── Load from Supabase → mutate paymentMethods IN PLACE ── */
-  async function loadWalletFromSupabase(){
-    const sb=getSb(); if(!sb) return;
-    const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+  /* ── Save to Supabase ── */
+  async function saveToDB(type, detail, token){
+    if(!type||!detail) return;
+    try{
+      const sb=getSb(); if(!sb) throw new Error('no sb');
+      const {data:{user}}=await sb.auth.getUser();
+      if(!user) throw new Error('not logged in');
 
-    const {data,error}=await sb
-      .from('user_payment_methods')
-      .select('*')
-      .eq('user_id',user.id)
-      .order('is_primary',{ascending:false});
+      // Delete existing of same type, then insert fresh
+      await sb.from('user_payment_methods').delete()
+        .eq('user_id',user.id).eq('method_type',type);
 
-    if(error){ console.warn('[wallet]',error.message); return; }
-    if(!data?.length) return;
+      const row={user_id:user.id, method_type:type, is_primary:false};
+      if(type==='upi')    { row.upi_id=detail; row.account_name=detail; }
+      if(type==='paypal') { row.paypal_email=detail; row.account_name=detail; }
+      if(type==='crypto') { row.bank_account=detail; row.extra_details=token||'usdc'; row.account_name=detail; }
 
-    const svgIcon={
-      upi:    `<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#5F259F"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">UPI</text></svg>`,
-      paypal: `<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#003087"/><text x="24" y="30" font-size="14" font-weight="bold" fill="#009CDE" text-anchor="middle" font-family="sans-serif">PP</text></svg>`,
-      crypto: `<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#2775CA"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">&#x20BF;</text></svg>`,
-    };
-    const label={upi:'UPI',paypal:'PayPal',crypto:'Crypto Wallet'};
-
-    const mapped=data.map((m,i)=>({
-      id:         m.id,
-      type:       m.method_type,
-      icon:       svgIcon[m.method_type]||svgIcon.upi,
-      name:       label[m.method_type]||m.method_type,
-      detail:     m.upi_id||m.paypal_email||m.bank_account||'—',
-      primary:    m.is_primary||i===0,
-      cryptoToken:m.extra_details||null,
-    }));
-
-    /* MUTATE the existing array in place — renderWallet() reads this same ref */
-    if(typeof paymentMethods !== 'undefined'){
-      paymentMethods.splice(0, paymentMethods.length, ...mapped);
+      const {error}=await sb.from('user_payment_methods').insert([row]);
+      if(error) throw error;
+      console.log('[wallet] saved ✅', type, detail);
+    }catch(e){
+      console.error('[wallet] SAVE FAILED:', e.message);
     }
-
-    if(typeof renderWallet==='function') renderWallet();
-    console.log('[wallet] loaded',data.length,'methods');
   }
 
-  /* ── Save on finalizeAddPay ── */
+  /* ── Load from Supabase → splice into paymentMethods ── */
+  async function loadFromDB(){
+    try{
+      const sb=getSb(); if(!sb) return;
+      const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+
+      const {data,error}=await sb
+        .from('user_payment_methods').select('*')
+        .eq('user_id',user.id).order('is_primary',{ascending:false});
+
+      if(error||!data?.length) return;
+
+      const svg={
+        upi:`<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#5F259F"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">UPI</text></svg>`,
+        paypal:`<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#003087"/><text x="24" y="30" font-size="14" font-weight="bold" fill="#009CDE" text-anchor="middle" font-family="sans-serif">PP</text></svg>`,
+        crypto:`<svg width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#2775CA"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">&#x20BF;</text></svg>`,
+      };
+
+      const mapped=data.map((m,i)=>({
+        id:m.id, type:m.method_type,
+        icon:svg[m.method_type]||svg.upi,
+        name:{upi:'UPI',paypal:'PayPal',crypto:'Crypto Wallet'}[m.method_type]||m.method_type,
+        detail:m.upi_id||m.paypal_email||m.bank_account||'—',
+        primary:m.is_primary||i===0,
+        cryptoToken:m.extra_details||null,
+      }));
+
+      /* splice IN PLACE — paymentMethods is `let`, not window property */
+      if(typeof paymentMethods!=='undefined')
+        paymentMethods.splice(0,paymentMethods.length,...mapped);
+
+      if(typeof renderWallet==='function') renderWallet();
+      console.log('[wallet] loaded',data.length,'methods');
+    }catch(e){ console.error('[wallet] load error:',e.message); }
+  }
+
+  /* ── Hook finalizeAddPay ── */
   function hookFinalize(){
-    const _orig=window.finalizeAddPay;
-    if(!_orig||_orig._v2) return;
+    if(typeof finalizeAddPay==='undefined') return false;
+    const _orig=finalizeAddPay;
+    if(_orig._v3) return true;
+
+    /* Override in global scope by redefining on window */
     window.finalizeAddPay=async function(){
+      /* Capture BEFORE _orig wipes the DOM and _addPayState */
       const detail=document.getElementById('pay-detail-input')?.value?.trim()||'';
-      const type=window._addPayState?.type||'';
-      const token=window._addPayState?.cryptoToken||null;
+      /* Access _addPayState directly (it is a let global, not window property) */
+      const type  = typeof _addPayState!=='undefined' ? _addPayState.type       : null;
+      const token = typeof _addPayState!=='undefined' ? _addPayState.cryptoToken: null;
+
+      /* Run original */
       _orig.call(this);
-      if(!type||!detail) return;
-      try{
-        const sb=getSb(); if(!sb) return;
-        const {data:{user}}=await sb.auth.getUser(); if(!user) return;
-        await sb.from('user_payment_methods').delete().eq('user_id',user.id).eq('method_type',type);
-        const row={user_id:user.id,method_type:type,is_primary:false};
-        if(type==='upi')    { row.upi_id=detail; row.account_name=detail; }
-        if(type==='paypal') { row.paypal_email=detail; row.account_name=detail; }
-        if(type==='crypto') { row.bank_account=detail; row.extra_details=token||'usdc'; row.account_name=detail; }
-        const {error}=await sb.from('user_payment_methods').insert([row]);
-        if(error) throw error;
-        console.log('[wallet] saved',type,detail);
-      }catch(e){ console.warn('[wallet] save error:',e.message); }
+
+      /* Save to DB */
+      await saveToDB(type, detail, token);
     };
-    window.finalizeAddPay._v2=true;
+    window.finalizeAddPay._v3=true;
+    return true;
   }
 
-  /* ── Hook navigate to wallet ── */
+  /* ── Hook navigate ── */
   function hookNav(){
-    const _orig=window.navigate;
-    if(!_orig||_orig._walletV2) return;
+    if(typeof navigate==='undefined') return false;
+    const _orig=navigate;
+    if(_orig._v3) return true;
     window.navigate=function(section){
       _orig.apply(this,arguments);
-      if(section==='wallet') setTimeout(loadWalletFromSupabase, 100);
+      if(section==='wallet') setTimeout(loadFromDB,150);
     };
-    window.navigate._walletV2=true;
-    window.navigate._fixed=_orig._fixed;
-    window.navigate._payoutsHooked=_orig._payoutsHooked;
+    window.navigate._v3=true;
+    // Copy other flags
+    Object.keys(_orig).forEach(k=>{ if(k!=='_v3') window.navigate[k]=_orig[k]; });
+    return true;
   }
 
-  /* ── Init with retry until functions exist ── */
+  /* ── Wait for page to define its globals, then hook ── */
   let t=0;
   const iv=setInterval(()=>{
-    if(window.paymentMethods!==undefined && window.renderWallet && window.navigate){
-      hookFinalize(); hookNav();
-      // Load immediately if on wallet section
-      const active=document.querySelector('.nav-item.active,[data-section].active');
-      if(window.location.pathname.includes('wallet')||(active?.dataset?.section==='wallet'))
-        loadWalletFromSupabase();
+    const finalized = hookFinalize();
+    const navved    = hookNav();
+    if(finalized && navved){
       clearInterval(iv);
+      /* If wallet section already active, load now */
+      if(typeof currentSection!=='undefined' && currentSection==='wallet')
+        loadFromDB();
     }
-    if(++t>50) clearInterval(iv);
+    if(++t>80) clearInterval(iv);
   },100);
 })();
 </script>
