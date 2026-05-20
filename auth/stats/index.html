@@ -4270,198 +4270,138 @@ window.addEventListener('load',()=>{
 
 
 
+
+
+
 <script>
-/* ═══════════════════════════════════════════
-   CLIPENCY STATS — full dynamic loader
-   Self-contained. Updates KPIs, chart, tables.
-   ═══════════════════════════════════════════ */
+/* ═══ CLIPENCY STATS — dynamic loader (v2: campaigns.title) ═══ */
 (function(){
   const log = (...a) => console.log('[stats]', ...a);
+  const fv = n => !n ? '0' : n >= 1e6 ? (n/1e6).toFixed(1).replace(/\.0$/,'')+'M' : n >= 1e3 ? Math.round(n/1e3)+'K' : String(n);
+  const fm = v => typeof window.fmt==='function' ? window.fmt(Number(v)||0) : '$'+(Number(v)||0).toLocaleString();
+  const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   async function getSb(){
     for(let i=0;i<30;i++){
       const sb = window.clipencySupabase || window.supabaseClient || window.supabase;
       if(sb?.auth) return sb;
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r=>setTimeout(r,200));
     }
-    throw new Error('Supabase not ready');
   }
 
-  async function getUid(sb){
-    const {data} = await sb.auth.getUser();
-    return data?.user?.id;
-  }
+  function setText(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
 
-  function fmtViews(n){
-    if(!n) return '0';
-    if(n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';
-    if(n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'K';
-    return String(n);
-  }
-
-  function fmtMoney(v){
-    if(typeof window.fmt === 'function') return window.fmt(v||0);
-    return '$' + (Number(v)||0).toLocaleString();
-  }
-
-  function setText(id, txt){
-    const el = document.getElementById(id);
-    if(el) el.textContent = txt;
-  }
-
-  /* ── 1. KPI CARDS ────────────────────────── */
-  function updateKpis(subs){
-    const totalViews = subs.reduce((a,s) => a+(s.views||0), 0);
-    const approved   = subs.filter(s => s.status==='approved'||s.status==='paid');
-    const pending    = subs.filter(s => s.status==='pending');
-    const rejected   = subs.filter(s => s.status==='rejected');
-    const reviewed   = subs.length - pending.length;
-    const earnings   = approved.reduce((a,s) => a+(Number(s.earnings)||0), 0);
-    const approvalRate = reviewed > 0 ? Math.round((approved.length/reviewed)*100) : 0;
-
-    setText('stat-total-views',   fmtViews(totalViews));
-    setText('stat-total-earned',  fmtMoney(earnings));
-    setText('stat-approval-rate', reviewed ? approvalRate+'%' : '—');
-    setText('stat-pending-count', pending.length);
-    log('KPIs updated:', {totalViews, earnings, approvalRate, pending: pending.length});
-  }
-
-  /* ── 2. SUBMISSIONS TABLES ───────────────── */
-  function renderTables(subs){
-    const myEl  = document.getElementById('my-submissions-table');
-    const rejEl = document.getElementById('rejected-submissions-table');
-
-    const statusBadge = s => {
-      const styles = {
-        approved: 'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
-        paid:     'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
-        pending:  'background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);color:#FACC15',
-        rejected: 'background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#F87171',
-      };
-      const k = (s||'pending').toLowerCase();
-      const label = k.charAt(0).toUpperCase()+k.slice(1);
-      return `<span style="padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:600;${styles[k]||styles.pending}">${label}</span>`;
+  function badge(status){
+    const k=(status||'pending').toLowerCase();
+    const styles={
+      approved:'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
+      paid:'background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7',
+      pending:'background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);color:#FACC15',
+      rejected:'background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#F87171',
     };
+    return `<span style="padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:600;${styles[k]||styles.pending}">${k.charAt(0).toUpperCase()+k.slice(1)}</span>`;
+  }
 
-    const TH = h => `<th style="text-align:left;padding:10px 14px;font-size:.69rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);font-weight:500;font-family:'Space Mono',monospace;white-space:nowrap">${h}</th>`;
-    const TD = (v,extra='') => `<td style="padding:12px 14px;font-size:.82rem;${extra}">${v}</td>`;
-    const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function updateKpis(subs){
+    const totalViews=subs.reduce((a,s)=>a+(Number(s.views)||0),0);
+    const approved=subs.filter(s=>s.status==='approved'||s.status==='paid');
+    const pending=subs.filter(s=>s.status==='pending');
+    const reviewed=subs.length-pending.length;
+    const earnings=approved.reduce((a,s)=>a+(Number(s.earnings)||0),0);
+    const approvalRate=reviewed>0?Math.round((approved.length/reviewed)*100):0;
+    setText('stat-total-views', fv(totalViews));
+    setText('stat-total-earned', fm(earnings));
+    setText('stat-approval-rate', reviewed?approvalRate+'%':'—');
+    setText('stat-pending-count', pending.length);
+  }
 
-    /* My Submissions */
+  function renderTables(subs){
+    const TH=h=>`<th style="text-align:left;padding:10px 14px;font-size:.69rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);font-weight:500;font-family:'Space Mono',monospace;white-space:nowrap">${h}</th>`;
+    const TD=(v,e='')=>`<td style="padding:12px 14px;font-size:.82rem;${e}">${v}</td>`;
+    const myEl=document.getElementById('my-submissions-table');
+    const rejEl=document.getElementById('rejected-submissions-table');
+    const campName=s=>s.campaigns?.title || s.campaigns?.name || '—';
+
     if(myEl){
       if(!subs.length){
-        myEl.innerHTML = `<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No submissions yet. Submit a clip from Campaigns to get started.</div>`;
+        myEl.innerHTML='<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No submissions yet. Submit a clip from Campaigns to get started.</div>';
       } else {
-        const rows = subs.map(s => `<tr style="border-bottom:1px solid var(--bsoft,rgba(242,237,232,.065))">
-          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(s.campaigns?.name || '—')}</span>`)}
-          ${TD(esc(s.platform||'—'), 'color:var(--ts)')}
-          ${TD(fmtViews(s.views), "font-family:'Space Mono',monospace;color:var(--ts)")}
-          ${TD((s.status==='approved'||s.status==='paid') ? `<span style="font-family:'Space Mono',monospace">${fmtMoney(s.earnings)}</span>` : '<span style="color:var(--tm)">—</span>')}
-          ${TD(statusBadge(s.status))}
-          ${TD(s.video_url ? `<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>` : '<span style="color:var(--tm)">—</span>')}
+        const rows=subs.map(s=>`<tr style="border-bottom:1px solid var(--bsoft,rgba(242,237,232,.065))">
+          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(campName(s))}</span>`)}
+          ${TD(esc(s.platform||'—'),'color:var(--ts)')}
+          ${TD(fv(s.views),"font-family:'Space Mono',monospace;color:var(--ts)")}
+          ${TD((s.status==='approved'||s.status==='paid')?`<span style="font-family:'Space Mono',monospace">${fm(s.earnings)}</span>`:'<span style="color:var(--tm)">—</span>')}
+          ${TD(badge(s.status))}
+          ${TD(s.video_url?`<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>`:'<span style="color:var(--tm)">—</span>')}
         </tr>`).join('');
-        myEl.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px">
-          <thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Earned','Status','Link'].map(TH).join('')}</tr></thead>
-          <tbody>${rows}</tbody></table></div>`;
+        myEl.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Earned','Status','Link'].map(TH).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
       }
     }
-
-    /* Rejected */
     if(rejEl){
-      const rej = subs.filter(s => s.status==='rejected');
+      const rej=subs.filter(s=>s.status==='rejected');
       if(!rej.length){
-        rejEl.innerHTML = `<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No rejected submissions — great work! 🎉</div>`;
+        rejEl.innerHTML='<div style="padding:48px 24px;text-align:center;color:var(--tm);font-size:.88rem">No rejected submissions — great work! 🎉</div>';
       } else {
-        const rows = rej.map(s => `<tr style="border-bottom:1px solid var(--bsoft,rgba(242,237,232,.065))">
-          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(s.campaigns?.name || '—')}</span>`)}
-          ${TD(esc(s.platform||'—'), 'color:var(--ts)')}
-          ${TD(fmtViews(s.views), "font-family:'Space Mono',monospace;color:var(--ts)")}
-          ${TD(statusBadge('rejected'))}
-          ${TD(s.video_url ? `<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>` : '<span style="color:var(--tm)">—</span>')}
-          ${TD(`<span style="color:var(--ts);font-size:.78rem">${esc(s.rejection_note || 'No reason provided')}</span>`)}
+        const rows=rej.map(s=>`<tr style="border-bottom:1px solid var(--bsoft,rgba(242,237,232,.065))">
+          ${TD(`<span style="color:var(--tp);font-weight:500">${esc(campName(s))}</span>`)}
+          ${TD(esc(s.platform||'—'),'color:var(--ts)')}
+          ${TD(fv(s.views),"font-family:'Space Mono',monospace;color:var(--ts)")}
+          ${TD(badge('rejected'))}
+          ${TD(s.video_url?`<a href="${esc(s.video_url)}" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;font-size:.8rem">↗ Open</a>`:'<span style="color:var(--tm)">—</span>')}
+          ${TD(`<span style="color:var(--ts);font-size:.78rem">${esc(s.rejection_note||'No reason provided')}</span>`)}
         </tr>`).join('');
-        rejEl.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px">
-          <thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Status','Link','Reason'].map(TH).join('')}</tr></thead>
-          <tbody>${rows}</tbody></table></div>`;
+        rejEl.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr style="border-bottom:1px solid var(--border)">${['Campaign','Platform','Views','Status','Link','Reason'].map(TH).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
       }
     }
-    log('Tables rendered:', subs.length, 'total,', subs.filter(s=>s.status==='rejected').length, 'rejected');
   }
 
-  /* ── 3. CHART DATA ───────────────────────── */
-  function updateChartData(subs){
-    if(typeof window.CHART_DATA !== 'object') return;
-
-    const now = new Date();
-    const byDay = {};
-    subs.filter(s => s.status==='approved'||s.status==='paid').forEach(s => {
-      const d = (s.submitted_at||'').slice(0,10);
+  function updateChart(subs){
+    if(typeof window.CHART_DATA!=='object') return;
+    const now=new Date(), byDay={};
+    subs.filter(s=>s.status==='approved'||s.status==='paid').forEach(s=>{
+      const d=(s.submitted_at||'').slice(0,10);
       if(!d) return;
-      if(!byDay[d]) byDay[d] = {earnings:0, views:0, submissions:0};
-      byDay[d].earnings    += Number(s.earnings)||0;
-      byDay[d].views       += Number(s.views)||0;
-      byDay[d].submissions += 1;
+      if(!byDay[d]) byDay[d]={earnings:0,views:0,submissions:0};
+      byDay[d].earnings+=Number(s.earnings)||0;
+      byDay[d].views+=Number(s.views)||0;
+      byDay[d].submissions+=1;
     });
-
-    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const d7 = Array.from({length:7}, (_,i) => {
-      const d = new Date(now); d.setDate(d.getDate()-(6-i));
-      const k = d.toISOString().slice(0,10);
-      const b = byDay[k] || {earnings:0, views:0, submissions:0};
-      return {label: DAYS[d.getDay()], ...b};
+    const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const d7=Array.from({length:7},(_,i)=>{
+      const d=new Date(now); d.setDate(d.getDate()-(6-i));
+      const b=byDay[d.toISOString().slice(0,10)]||{earnings:0,views:0,submissions:0};
+      return {label:DAYS[d.getDay()],...b};
     });
-
-    if(window.CHART_DATA.earnings){
-      window.CHART_DATA.earnings['7d'] = {labels:d7.map(x=>x.label), values:d7.map(x=>x.earnings), prefix:'$'};
-    }
-    if(window.CHART_DATA.views){
-      window.CHART_DATA.views['7d'] = {labels:d7.map(x=>x.label), values:d7.map(x=>Math.round(x.views/1000)), suffix:'K'};
-    }
-    if(window.CHART_DATA.submissions){
-      window.CHART_DATA.submissions['7d'] = {labels:d7.map(x=>x.label), values:d7.map(x=>x.submissions)};
-    }
-
-    if(typeof window.animateChart === 'function') setTimeout(window.animateChart, 100);
-    log('Chart data updated');
+    if(window.CHART_DATA.earnings) window.CHART_DATA.earnings['7d']={labels:d7.map(x=>x.label),values:d7.map(x=>x.earnings),prefix:'$'};
+    if(window.CHART_DATA.views) window.CHART_DATA.views['7d']={labels:d7.map(x=>x.label),values:d7.map(x=>Math.round(x.views/1000)),suffix:'K'};
+    if(window.CHART_DATA.submissions) window.CHART_DATA.submissions['7d']={labels:d7.map(x=>x.label),values:d7.map(x=>x.submissions)};
+    if(typeof window.animateChart==='function') setTimeout(window.animateChart,100);
   }
 
-  /* ── 4. MAIN LOADER ──────────────────────── */
   async function loadAll(){
     try{
-      const sb = await getSb();
-      const uid = await getUid(sb);
-      if(!uid){ log('no user'); return; }
-
-      const {data, error} = await sb
+      const sb=await getSb();
+      if(!sb){ log('no sb'); return; }
+      const {data:{user}}=await sb.auth.getUser();
+      if(!user){ log('no user'); return; }
+      const {data,error}=await sb
         .from('submissions')
-        .select('id, video_url, platform, status, views, earnings, submitted_at, rejection_note, campaign_id, campaigns(name)')
-        .eq('user_id', uid)
-        .order('submitted_at', {ascending: false});
-
-      if(error){ log('error:', error.message); return; }
-      const subs = data || [];
-      log('fetched', subs.length, 'submissions');
-
-      window.ALL_SUBMISSIONS_RAW = subs;
-      updateKpis(subs);
-      renderTables(subs);
-      updateChartData(subs);
-    }catch(e){
-      log('FAIL:', e.message);
-    }
+        .select('id, video_url, platform, status, views, earnings, submitted_at, rejection_note, campaign_id, campaigns(title)')
+        .eq('user_id', user.id)
+        .order('submitted_at',{ascending:false});
+      if(error){ log('ERR:',error.message); return; }
+      log('fetched',data.length,'rows');
+      window.ALL_SUBMISSIONS_RAW=data;
+      updateKpis(data);
+      renderTables(data);
+      updateChart(data);
+    }catch(e){ log('FAIL:',e.message); }
   }
 
-  /* ── 5. KICK OFF ─────────────────────────── */
-  window.reloadStats = loadAll; // for manual console call
-
-  function start(){
-    loadAll();
-    /* retry once after 2s in case panels render late */
-    setTimeout(loadAll, 2000);
-  }
-
-  if(document.readyState === 'complete') start();
-  else window.addEventListener('load', start);
+  window.reloadStats=loadAll;
+  if(document.readyState==='complete') loadAll();
+  else window.addEventListener('load',()=>setTimeout(loadAll,500));
+  setTimeout(loadAll,2500);
 })();
 </script>
 
