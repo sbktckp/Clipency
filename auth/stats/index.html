@@ -2975,6 +2975,16 @@ function switchKpiPeriod(p){
 let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
 
 function renderStats(){
+  setTimeout(async()=>{
+    try{
+      if(typeof loadSubmissions==='function'){
+        await loadSubmissions();
+        if(typeof renderMySubmissions==='function') renderMySubmissions();
+        if(typeof renderRejectedSubmissions==='function') renderRejectedSubmissions();
+      }
+    }catch(e){console.warn('renderStats supabase:',e);}
+  },300);
+
   const el=document.getElementById('stat-total-earned');
   if(el)el.textContent=fmt(TOTAL_EARNED_USD);
   animateChart();
@@ -4243,5 +4253,17 @@ window.addEventListener('load',()=>{
   }catch(e){console.warn('[Payouts patch]',e.message);}
 })();
 </script>
+
+// ── Submissions bridge: wire old loadStatsFromSupabase into new table renderers ──
+(function(){
+  var _orig = window.loadStatsFromSupabase;
+  if(typeof _orig !== 'function') return;
+  window.loadStatsFromSupabase = async function(){
+    await _orig.apply(this, arguments);
+    if(typeof renderMySubmissions==='function') renderMySubmissions();
+    if(typeof renderRejectedSubmissions==='function') renderRejectedSubmissions();
+  };
+})();
+
 </body>
 </html>
