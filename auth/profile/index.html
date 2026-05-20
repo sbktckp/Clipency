@@ -4505,5 +4505,64 @@ window.addEventListener('load',()=>{
   setTimeout(init, 800);
 })();
 </script>
+<script>
+/* payouts-retry-patch */
+(function(){
+  const getSb=()=>window.clipencySupabase||window.supabaseClient||window.supabase;
+
+  async function ensurePayoutsLoaded(attempts){
+    attempts = attempts || 0;
+    if(attempts > 15) return; // give up after ~3s
+
+    const sb = getSb();
+    if(!sb){ setTimeout(()=>ensurePayoutsLoaded(attempts+1), 200); return; }
+
+    const {data:{user}} = await sb.auth.getUser();
+    if(!user){ setTimeout(()=>ensurePayoutsLoaded(attempts+1), 200); return; }
+
+    // Check if balance cards still show $0 / loading
+    const balEl = document.getElementById('bal-available');
+    const already = balEl && balEl.textContent && balEl.textContent !== '$0' && balEl.textContent !== '$0.00' && balEl.textContent !== '—';
+    if(already) return; // already loaded
+
+    if(typeof window.loadPayoutsFromSupabase === 'function'){
+      await window.loadPayoutsFromSupabase();
+    }
+
+    // Check again - if still $0, could be genuinely $0, stop retrying
+    // but do one more attempt to make sure
+    if(attempts < 3) setTimeout(()=>ensurePayoutsLoaded(attempts+1), 400);
+  }
+
+  // Hook navigate
+  const _origNav = window.navigate;
+  if(_origNav && !_origNav._payoutsHooked){
+    window.navigate = function(section){
+      _origNav.apply(this, arguments);
+      if(section === 'payouts'){
+        // Run immediately + with delays to catch slow auth
+        ensurePayoutsLoaded(0);
+        setTimeout(()=>ensurePayoutsLoaded(0), 300);
+        setTimeout(()=>ensurePayoutsLoaded(0), 800);
+      }
+    };
+    window.navigate._payoutsHooked = true;
+    window.navigate._walletHooked  = _origNav._walletHooked;
+  }
+
+  // Also run on initial page load if payouts is the active section
+  function onLoad(){
+    const active = document.querySelector('.nav-item.active,[data-section].active');
+    const isPayouts = window.location.pathname.includes('payouts') ||
+                      (active && active.dataset?.section === 'payouts');
+    if(isPayouts) ensurePayoutsLoaded(0);
+    // Always run once on load as a safety net
+    setTimeout(()=>{ if(typeof window.loadPayoutsFromSupabase==='function') window.loadPayoutsFromSupabase(); }, 600);
+  }
+
+  if(document.readyState==='complete') onLoad();
+  else window.addEventListener('load', onLoad);
+})();
+</script>
 </body>
 </html>
