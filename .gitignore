@@ -1,23 +1,24 @@
+# OS
 .DS_Store
+Thumbs.db
+*~
 
-# Local secrets
-.env
-.env.*
-!.env.example
+# Editor
+.vscode/
+.idea/
+*.swp
 
-# Backups
+# Temp / backup
+*.bak
 *.backup
-*.backup-*
-*.before-*
+*.old
+*.tmp
+*.log
+*-backup-*/
+*-old-*/
 
-# Local secrets
-.env
-.env.*
-!.env.example
-
-# Backups
-*.backup
-*.backup-*
-*.before-*
-**/.DS_Store
-.vercel
+# Build
+node_modules/
+.cache/
+dist/
+build/

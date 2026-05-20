@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clipency | Workspace</title>
+  <link rel="stylesheet" href="/staff.css" />
+<link rel="stylesheet" href="/clipency-cursor.css" />
+<link rel="stylesheet" href="/clipency-polish.css" />
+</head>
+<body>
+  <main class="workspace-shell">
+    <section class="workspace-inner">
+      <div class="workspace-header">
+        <div class="eyebrow">CLIPENCY WORKSPACE</div>
+        <h1 id="workspace-title">Where do you want to work today?</h1>
+        <p>Jump into the part of Clipency that needs you right now — admin operations, clip reviews, finance, or the creator-side view.</p>
+      </div>
+
+      <div class="workspace-grid">
+        <a class="workspace-card" href="/admin">
+          <span>A</span>
+          <h2>Admin Command Center</h2>
+          <p>Manage campaigns, leads, access and the core operating flow of Clipency.</p>
+          <strong>Open command center →</strong>
+        </a>
+
+        <a class="workspace-card" href="/review">
+          <span>R</span>
+          <h2>Clip Review Queue</h2>
+          <p>Clear the submission queue, verify proof, update metrics and leave useful review notes.</p>
+          <strong>Clear review queue →</strong>
+        </a>
+
+        <a class="workspace-card" href="/dashboard">
+          <span>C</span>
+          <h2>Creator View</h2>
+          <p>Step into the creator-side dashboard and see exactly what clippers experience.</p>
+          <strong>Open creator view →</strong>
+        </a>
+
+        <a class="workspace-card" href="/admin/users">
+          <span>U</span>
+          <h2>Team Access</h2>
+          <p>Invite reviewers, add admins and keep platform access clean.</p>
+          <strong>Manage access →</strong>
+        </a>
+      
+        <a class="workspace-card finance-workspace-card" href="/admin/finance">
+          <span>F</span>
+          <h2>Finance OS</h2>
+          <p>Open the dedicated finance workspace for invoices, expenses, payouts, salaries, currency and accounting.</p>
+          <strong>Open finance →</strong>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabaseClient.js"></script>
+  <script src="/access-control.js"></script>
+  <script src="/staff-common.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const access = await window.ClipencyAccess.requireRole(["admin"]);
+      if (!access) return;
+
+      const name = access.profile?.full_name || access.user?.email?.split("@")[0] || "Admin";
+      document.getElementById("workspace-title").textContent = `Welcome back, ${name}.`;
+    });
+  </script>
+<script src="/clipency-cursor.js"></script>
+<script src="/clipency-polish.js"></script>
+</body>
+</html>

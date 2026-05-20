@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080610" />
+  <meta name="description" content="Clipency is a performance-first creator distribution platform helping brands turn attention into measurable campaign growth." />
+  <title>Clipency | The Distribution Layer for Modern Attention</title>
+
+  <link rel="stylesheet" href="landing.css" />
+
+
+<link rel="icon" type="image/png" href="/assets/clipency-logo.png" />
+</head>
+
+<body>
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="cursor-ring" id="cursor-ring"></div>
+  <div class="page-noise"></div>
+
+  <header class="landing-nav">
+    <a class="brand-lockup" href="/" aria-label="Clipency home"><img class="clipency-brand-logo" src="/assets/clipency-logo.png" alt="Clipency" /></a>
+
+    <nav class="nav-links">
+      <a href="#system">System</a>
+      <a href="#clients">Clients</a>
+      <a href="#proof">Proof</a>
+      <a href="#team">Team</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="auth-actions">
+      <a class="nav-login" href="/login">Login</a>
+      <a class="nav-signup" href="/signup">Sign up</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-section">
+      <div class="hero-copy">
+<div class="eyebrow">THE DISTRIBUTION LAYER FOR MODERN ATTENTION</div>
+
+        <h1>
+          Distribution for brands that need measurable attention.
+        </h1>
+
+        <p class="hero-lede">
+          Clipency helps brands activate creator-led distribution with campaign briefs, creator submissions, proof review, performance insights and payout visibility — all in one operating layer.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#contact" class="primary-btn">Start a campaign</a>
+          <a href="#system" class="secondary-btn">See the system</a>
+        </div>
+
+        <div class="hero-metrics">
+          <div>
+            <strong>Brief</strong>
+            <span>Campaign objective, platform and payout logic are defined clearly.</span>
+          </div>
+          <div>
+            <strong>Distribute</strong>
+            <span>Creators publish campaign content across attention channels.</span>
+          </div>
+          <div>
+            <strong>Verify</strong>
+            <span>Proof links, performance and submissions are reviewed centrally.</span>
+          </div>
+          <div>
+            <strong>Scale</strong>
+            <span>Approved output becomes insight, payout and repeatable growth.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-product">
+        <div class="product-window">
+          <div class="window-top">
+            <span></span><span></span><span></span>
+          </div>
+
+          <div class="campaign-command">
+            <div class="command-head">
+              <div>
+                <small>LIVE OPERATING LAYER</small>
+                <strong>Creator Distribution Engine</strong>
+              </div>
+              <div class="live-pill">Active</div>
+            </div>
+
+            <div class="campaign-brief-card">
+              <div>
+                <span>Campaign</span>
+                <strong>Brand Awareness Sprint</strong>
+              </div>
+              <div>
+                <span>Model</span>
+                <strong>Proof-led payout</strong>
+              </div>
+            </div>
+
+            <div class="flow-line">
+              <div class="flow-node active">
+                <span>Brief</span>
+              </div>
+              <div class="flow-node active">
+                <span>Creators</span>
+              </div>
+              <div class="flow-node">
+                <span>Submissions</span>
+              </div>
+              <div class="flow-node">
+                <span>Payouts</span>
+              </div>
+            </div>
+
+            <div class="mini-grid">
+              <div class="mini-card">
+                <span>Submitted clips</span>
+                <strong>128</strong>
+              </div>
+              <div class="mini-card">
+                <span>Reviewed reach</span>
+                <strong>2.4M</strong>
+              </div>
+              <div class="mini-card">
+                <span>Creator base</span>
+                <strong>Global</strong>
+              </div>
+              <div class="mini-card">
+                <span>Visibility</span>
+                <strong>End-to-end</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="floating-proof proof-a">
+          <span>For clients</span>
+          <strong>Campaign clarity</strong>
+        </div>
+
+        <div class="floating-proof proof-b">
+          <span>For creators</span>
+          <strong>Earn through output</strong>
+        </div>
+
+        <div class="floating-proof proof-c">
+          <span>For teams</span>
+          <strong>Less chaos</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="signal-strip">
+      <span>Creator Distribution</span>
+      <span>Proof-led Campaigns</span>
+      <span>Performance Review</span>
+      <span>Submission Tracking</span>
+      <span>Payout Visibility</span>
+      <span>Modern Attention</span>
+    </section>
+
+    <section class="section narrative-section" id="system">
+      <div class="narrative-copy">
+        <div class="eyebrow">WHAT CLIPENCY IS</div>
+        <h2>A campaign distribution system for brands that want movement, proof and measurable execution.</h2>
+        <p>
+          Most campaigns lose momentum between planning and distribution. Briefs sit in documents, creators are coordinated through scattered messages, proof gets lost, and performance becomes difficult to verify. Clipency turns that chaos into a controlled workflow.
+        </p>
+      </div>
+
+      <div class="narrative-stack">
+        <article>
+          <span>01</span>
+          <strong>Campaigns become structured</strong>
+          <p>Every campaign can carry its goal, platform, payout logic, submission requirements and status.</p>
+        </article>
+
+        <article>
+          <span>02</span>
+          <strong>Creators become operators</strong>
+          <p>Clippers discover campaigns, publish content, submit proof links and track their progress.</p>
+        </article>
+
+        <article>
+          <span>03</span>
+          <strong>Teams get one control layer</strong>
+          <p>Submissions, approvals, insights and payouts can live in one system instead of endless chat threads.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section operating-section">
+      <div class="section-heading center">
+        <div class="eyebrow">HOW IT WORKS</div>
+        <h2>Built like an operating system, not a landing page promise.</h2>
+      </div>
+
+      <div class="operating-grid">
+        <article class="operating-card tall">
+          <div class="card-index">01</div>
+          <h3>Launch the brief</h3>
+          <p>Define what needs to move: a song, brand, product, launch, challenge or message. Clipency gives that objective structure before distribution begins.</p>
+        </article>
+
+        <article class="operating-card">
+          <div class="card-index">02</div>
+          <h3>Activate creators</h3>
+          <p>Creators participate through campaigns designed around output, not inflated promises.</p>
+        </article>
+
+        <article class="operating-card">
+          <div class="card-index">03</div>
+          <h3>Collect proof</h3>
+          <p>Every submission can be reviewed through links, status, views and approval data.</p>
+        </article>
+
+        <article class="operating-card">
+          <div class="card-index">04</div>
+          <h3>Track performance</h3>
+          <p>Campaigns become visible through submissions, views, earnings and payouts.</p>
+        </article>
+
+        <article class="operating-card wide">
+          <div class="card-index">05</div>
+          <h3>Repeat what works</h3>
+          <p>Once performance patterns appear, brands can scale what moves attention instead of guessing what might work.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section client-section" id="clients">
+      <div class="client-copy">
+        <div class="eyebrow">FOR CLIENTS</div>
+        <h2>For brands that need distribution discipline.</h2>
+        <p>
+          Clipency is built for teams that want a cleaner way to execute creator-powered campaigns. You bring the objective. The system helps structure the campaign, collect proof and prepare performance visibility.
+        </p>
+
+        <div class="client-checks">
+          <span>Music promotion</span>
+          <span>Brand awareness</span>
+          <span>Product launch</span>
+          <span>Creator activation</span>
+          <span>Performance review</span>
+        </div>
+      </div>
+
+      <div class="client-panel">
+        <div class="panel-row muted-row">
+          <span>Without structure</span>
+          <strong>Campaigns become screenshots, DMs, manual reminders and unclear accountability.</strong>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="panel-row highlighted">
+          <span>With Clipency</span>
+          <strong>Campaigns become a workflow: brief, distribution, proof, approval and payout.</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section proof-section" id="proof">
+      <div class="section-heading">
+        <div class="eyebrow">MARKET INSIGHT</div>
+        <h2>The internet does not reward the best campaign. It rewards the campaign that travels.</h2>
+      </div>
+
+      <div class="proof-grid">
+        <article class="proof-card">
+          <span>01</span>
+          <h3>Attention is fragmented</h3>
+          <p>Modern distribution happens through clips, edits, communities, short-form content and micro attention pockets.</p>
+        </article>
+
+        <article class="proof-card">
+          <span>02</span>
+          <h3>Influence needs verification</h3>
+          <p>Brands need to know what was posted, where it moved, who submitted it and how it performed.</p>
+        </article>
+
+        <article class="proof-card">
+          <span>03</span>
+          <h3>Creators need clarity</h3>
+          <p>Creators perform better when campaign requirements, submission rules and earning logic are visible from the start.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section testimonial-section">
+      <div class="section-heading center">
+        <div class="eyebrow">TRUST SIGNAL</div>
+        <h2>Designed to feel serious from the first scroll.</h2>
+      </div>
+
+      <div class="testimonial-grid">
+        <article class="testimonial-card featured">
+          <p>“Clipency does not treat creator marketing like a guessing game. It gives campaigns an operating structure around distribution, proof and payouts.”</p>
+          <div>
+            <strong>Brand Partner</strong>
+            <span>Creator Distribution Campaign</span>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <p>“The creator journey is simple: discover a campaign, publish content, submit proof and track performance.”</p>
+          <div>
+            <strong>Clipper</strong>
+            <span>Creator Network</span>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <p>“The value is operational clarity. Fewer scattered links, cleaner review, and a better campaign rhythm.”</p>
+          <div>
+            <strong>Growth Team</strong>
+            <span>Campaign Operations</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section team-section" id="team">
+      <div class="section-heading">
+        <div class="eyebrow">TEAM</div>
+        <h2>The people building the distribution layer.</h2>
+        <p>Department-wise showcase for the team behind Clipency. Social links can be connected as the public team page expands.</p>
+      </div>
+
+      <div class="department-block">
+        <div class="department-title">Leadership</div>
+
+        <div class="team-grid leadership-grid">
+          <article class="team-card">
+            <div class="team-avatar">S</div>
+            <h3>Smit Bharat Patil</h3>
+            <p>Technology & Platform</p>
+            <div class="team-links">
+              <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+              <a href="#" target="_blank" rel="noopener">Instagram</a>
+            </div>
+          </article>
+
+          <article class="team-card muted">
+            <div class="team-avatar">+</div>
+            <h3>Leadership Member</h3>
+            <p>Strategy, partnerships and execution.</p>
+            <div class="team-links">
+              <a href="#">Profile</a>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="department-grid">
+        <div class="department-block compact">
+          <div class="department-title">Technology</div>
+          <article class="team-card muted">
+            <div class="team-avatar">T</div>
+            <h3>Technology Team</h3>
+            <p>Frontend, backend, product systems and platform reliability.</p>
+            <div class="team-links">
+              <a href="#">LinkedIn</a>
+              <a href="#">GitHub</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="department-block compact">
+          <div class="department-title">Marketing & Growth</div>
+          <article class="team-card muted">
+            <div class="team-avatar">M</div>
+            <h3>Growth Team</h3>
+            <p>Campaign strategy, creator acquisition and distribution growth.</p>
+            <div class="team-links">
+              <a href="#">LinkedIn</a>
+              <a href="#">Instagram</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="department-block compact">
+          <div class="department-title">Operations</div>
+          <article class="team-card muted">
+            <div class="team-avatar">O</div>
+            <h3>Operations Team</h3>
+            <p>Finance, legal, approvals, payouts and campaign governance.</p>
+            <div class="team-links">
+              <a href="#">LinkedIn</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact">
+      <div class="contact-copy">
+        <div class="eyebrow">START WITH CLIPENCY</div>
+        <h2>Tell us what you want to move.</h2>
+        <p>
+          Share your campaign goal, budget range and target direction. Your inquiry enters the Clipency client pipeline and will later reflect inside the admin dashboard.
+        </p>
+
+        <div class="contact-points">
+          <span>Campaign planning</span>
+          <span>Creator distribution</span>
+          <span>Proof review</span>
+          <span>Performance insight</span>
+        </div>
+      </div>
+
+      <form class="contact-form" id="landing-contact-form">
+        <div class="form-grid">
+          <label>
+            Full name
+            <input name="full_name" required placeholder="Your name" />
+          </label>
+
+          <label>
+            Work email
+            <input name="email" type="email" required placeholder="you@company.com" />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Company
+            <input name="company" placeholder="Company / Brand" />
+          </label>
+
+          <label>
+            Role
+            <input name="role" placeholder="Founder / Marketer / Manager" />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Budget range
+            <select name="budget_range">
+              <option value="">Select range</option>
+              <option>$500 - $2,000</option>
+              <option>$2,000 - $10,000</option>
+              <option>$10,000+</option>
+              <option>Not sure yet</option>
+            </select>
+          </label>
+
+          <label>
+            Campaign goal
+            <select name="campaign_goal">
+              <option value="">Select goal</option>
+              <option>Music promotion</option>
+              <option>Brand awareness</option>
+              <option>Creator distribution</option>
+              <option>Product launch</option>
+              <option>Other</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Message
+          <textarea name="message" rows="5" placeholder="Tell us about the campaign, audience, platforms and timeline."></textarea>
+        </label>
+
+        <button type="submit">Submit campaign inquiry</button>
+        <p id="contact-form-message" class="form-message"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div>
+      <a class="brand-lockup footer-brand" href="/" aria-label="Clipency home"><img class="clipency-brand-logo footer-logo" src="/assets/clipency-logo.png" alt="Clipency" /></a>
+      <p>Where attention becomes opportunity. Built for brands, creators and measurable distribution.</p>
+    </div>
+
+    <div class="footer-socials">
+      <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="#" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">X</a>
+      <a href="mailto:contact@clipency.in">Email</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="landing.js"></script>
+</body>
+</html>
