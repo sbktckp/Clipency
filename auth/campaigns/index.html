@@ -2178,7 +2178,7 @@ async function loadCampaignsFromSupabase(){
       budget:Number(c.budget)||0,
       spent:Number(c.budget_used||c.spent_usd)||0,
       platforms:(()=>{const p=c.platform||'All';return p==='All'?['YouTube','Instagram','TikTok']:p.split(',').map(x=>x.trim()).filter(Boolean);})(),
-      reqs:c.requirements?c.requirements.split('\n').filter(Boolean):[],
+      reqs:(function(r){if(!r)return[];try{var p=JSON.parse(r);if(Array.isArray(p))return p.map(function(x){return String(x).trim();}).filter(Boolean);}catch(e){}return r.split('\n').map(function(x){return x.trim();}).filter(Boolean);  })(c.requirements),
       description:c.description||'',
       sparkData:[30,50,40,70,60,80,90],
       views:'—',
