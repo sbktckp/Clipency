@@ -141,8 +141,14 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 @media(max-width:900px){.bal-row{grid-template-columns:1fr 1fr;}.main{padding:24px 20px 60px;}}
 @media(max-width:600px){.bal-row{grid-template-columns:1fr;}.main{padding:20px 16px 60px;}}
 </style>
+<style id="cx-auth-css">
+#cx-auth-overlay{position:fixed;inset:0;background:#0A0908;z-index:99999;display:flex;align-items:center;justify-content:center;}
+.cx-spin{width:24px;height:24px;border:2px solid #332B23;border-top-color:#C4956A;border-radius:50%;animation:cx-s .7s linear infinite;}
+@keyframes cx-s{to{transform:rotate(360deg);}}
+</style>
 </head>
 <body>
+<div id="cx-auth-overlay"><div class="cx-spin"></div></div>
 <div id="app">
 <aside class="sidebar">
   <div class="sb-logo"><img src="/auth/Clipencylogo.png" alt="Clipency" class="sb-logo-img" /></div>
@@ -235,28 +241,22 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
 <script src="/supabaseClient.js"></script>
 <script>
-/* AUTH GUARD */
 (function(){
-  // Show page immediately — don't block render
-  var s=document.getElementById('auth-hide');
-  if(s) s.remove();
-  document.body.style.visibility='';
-
-  // Verify session async — redirect to login only if truly unauthenticated
-  async function verify(){
-    var t=0;
-    var sb;
-    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<25)
-      await new Promise(r=>setTimeout(r,80));
-    if(!sb){ location.replace('/login'); return; }
-    try{
-      var r=await sb.auth.getUser();
-      if(!r.data?.user) location.replace('/login');
-    }catch(e){}
+  var o=document.getElementById('cx-auth-overlay');
+  function show(){if(o)o.remove();document.getElementById('cx-auth-css')?.remove();}
+  function bail(){document.body.innerHTML='';location.replace('/login');}
+  async function run(){
+    var t=0,sb;
+    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<30)
+      await new Promise(function(r){setTimeout(r,100);});
+    if(!sb){bail();return;}
+    try{var r=await sb.auth.getUser();if(r.data&&r.data.user)show();else bail();}
+    catch(e){bail();}
   }
-  verify();
+  run();
 })();
 </script>
+
 
 
 <script>
