@@ -930,16 +930,21 @@ window.updateLeadStatus=async function(id,status){
 
 function parseReqsForEdit(raw){
   if(!raw) return '';
-  try{
-    const p=JSON.parse(raw);
-    if(Array.isArray(p)) return p.join('\n');
-  }catch(e){}
-  // Already plain text
-  return raw;
+  let text=raw;
+  // Unwrap any remaining JSON
+  for(let i=0;i<10;i++){
+    try{
+      const p=JSON.parse(text);
+      if(Array.isArray(p)){text=p.join('\n');continue;}
+      if(typeof p==='string'){text=p;continue;}
+    }catch(e){break;}
+    break;
+  }
+  return text;
 }
 function saveReqsFromEdit(text){
-  const lines=text.split('\n').map(s=>s.trim()).filter(Boolean);
-  return lines.length?JSON.stringify(lines):text;
+  // Store as plain newline-separated text — no JSON encoding
+  return (text||'').split('\n').map(s=>s.trim()).filter(Boolean).join('\n');
 }
 
 async function renderRoute(){
