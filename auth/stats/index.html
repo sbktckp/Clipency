@@ -140,83 +140,8 @@ table.st tr:hover td{background:rgba(196,149,106,.03);}
 @media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr;}.main{padding:24px 20px 60px;}}
 @media(max-width:600px){.kpi-row{grid-template-columns:1fr 1fr;}:root{--sw:0px;}.sidebar{position:fixed;left:-260px;transition:left .3s;}.sidebar.open{left:0;width:260px;}.main{padding:20px 16px 60px;}}
 </style>
-<style id="cx-sk-css">
-#cx-sk-overlay{
-  position:fixed;inset:0;z-index:99999;background:#0A0908;
-  display:flex;overflow:hidden;
-}
-.sk-sidebar{
-  width:256px;flex-shrink:0;background:#111009;border-right:1px solid rgba(242,237,232,.065);
-  padding:18px 10px;display:flex;flex-direction:column;gap:8px;
-}
-.sk-logo{height:26px;width:100px;background:#221D18;border-radius:6px;margin:0 auto 20px;}
-.sk-label{height:8px;width:60px;background:#1a1510;border-radius:3px;margin:12px 0 6px 10px;}
-.sk-nav-item{height:38px;border-radius:11px;background:#181410;margin-bottom:2px;}
-.sk-nav-item.active{background:#221D18;}
-.sk-main{flex:1;padding:40px 44px;overflow:hidden;}
-.sk-eyebrow{height:10px;width:80px;background:#1a1510;border-radius:3px;margin-bottom:10px;}
-.sk-title{height:42px;width:220px;background:#221D18;border-radius:8px;margin-bottom:6px;}
-.sk-sub{height:12px;width:340px;background:#181410;border-radius:3px;margin-bottom:32px;}
-.sk-row{display:grid;gap:14px;margin-bottom:24px;}
-.sk-card{background:#181410;border:1px solid rgba(242,237,232,.065);border-radius:16px;padding:22px;}
-.sk-card-label{height:9px;width:80px;background:#221D18;border-radius:3px;margin-bottom:14px;}
-.sk-card-val{height:36px;width:100px;background:#221D18;border-radius:8px;margin-bottom:8px;}
-.sk-card-sub{height:9px;width:120px;background:#1a1510;border-radius:3px;}
-.sk-spark{height:36px;border-radius:4px;background:#221D18;margin-top:14px;}
-.sk-chart-card{background:#181410;border:1px solid rgba(242,237,232,.065);border-radius:18px;padding:24px;margin-bottom:24px;}
-.sk-chart-head{display:flex;justify-content:space-between;margin-bottom:18px;gap:12px;}
-.sk-chip{height:30px;border-radius:8px;background:#221D18;}
-.sk-chart-area{height:180px;background:#1a1510;border-radius:8px;}
-.sk-tbl-card{background:#181410;border:1px solid rgba(242,237,232,.065);border-radius:18px;overflow:hidden;}
-.sk-tbl-head{padding:14px 22px;border-bottom:1px solid rgba(242,237,232,.065);display:flex;gap:8px;}
-.sk-tbl-tab{height:16px;width:120px;background:#221D18;border-radius:3px;}
-.sk-tbl-row{display:flex;align-items:center;gap:16px;padding:13px 22px;border-bottom:1px solid rgba(242,237,232,.04);}
-.sk-tbl-cell{height:12px;border-radius:3px;background:#221D18;}
-.sk-cell-w1{width:140px;} .sk-cell-w2{width:80px;} .sk-cell-w3{width:60px;} .sk-cell-w4{width:90px;}
-.sk-p{display:flex;gap:8px;margin-bottom:8px;}
-.sk-profile-card{background:#181410;border:1px solid rgba(242,237,232,.065);border-radius:16px;padding:28px;margin-bottom:20px;display:flex;align-items:center;gap:24px;}
-.sk-avatar{width:80px;height:80px;border-radius:50%;background:#221D18;flex-shrink:0;}
-.sk-txn{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid rgba(242,237,232,.04);}
-.sk-txn-icon{width:36px;height:36px;border-radius:10px;background:#221D18;flex-shrink:0;}
-.sk-camp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.sk-camp-card{background:#181410;border:1px solid rgba(242,237,232,.065);border-radius:14px;padding:18px;}
-.sk-camp-banner{height:140px;background:#1a1510;border-radius:10px;margin:14px 0;}
-.sk-progress{height:6px;background:#1a1510;border-radius:3px;margin-top:12px;}
-.sk-progress-fill{height:100%;border-radius:3px;background:#332B23;}
-@keyframes cx-shimmer{0%{opacity:.4}50%{opacity:.7}100%{opacity:.4}}
-#cx-sk-overlay *{animation:cx-shimmer 1.8s ease-in-out infinite;}
-.sk-sidebar,.sk-main{animation:none!important;}
-</style>
 </head>
 <body>
-<div id="cx-sk-overlay">
-  <div class="sk-sidebar">
-  <div class="sk-logo"></div>
-  <div class="sk-label"></div>
-  <div class="sk-nav-item"></div><div class="sk-nav-item  active"></div><div class="sk-nav-item"></div><div class="sk-nav-item"></div>
-  <div class="sk-label"></div>
-  <div class="sk-nav-item"></div>
-</div>
-  <div class="sk-main">
-    <div class="sk-eyebrow"></div>
-    <div class="sk-title"></div>
-    <div class="sk-sub"></div>
-    <div class="sk-row" style="grid-template-columns:repeat(4,1fr);">
-      <div class="sk-card"><div class="sk-card-label"></div><div class="sk-card-val"></div><div class="sk-card-sub"></div><div class="sk-spark"></div></div><div class="sk-card"><div class="sk-card-label"></div><div class="sk-card-val"></div><div class="sk-card-sub"></div><div class="sk-spark"></div></div><div class="sk-card"><div class="sk-card-label"></div><div class="sk-card-val"></div><div class="sk-card-sub"></div><div class="sk-spark"></div></div><div class="sk-card"><div class="sk-card-label"></div><div class="sk-card-val"></div><div class="sk-card-sub"></div><div class="sk-spark"></div></div>
-    </div>
-    <div class="sk-chart-card">
-      <div class="sk-chart-head">
-        <div class="sk-p"><div class="sk-chip" style="width:90px;"></div><div class="sk-chip" style="width:70px;"></div><div class="sk-chip" style="width:110px;"></div></div>
-        <div class="sk-p"><div class="sk-chip" style="width:45px;"></div><div class="sk-chip" style="width:45px;"></div><div class="sk-chip" style="width:45px;"></div></div>
-      </div>
-      <div class="sk-chart-area"></div>
-    </div>
-    <div class="sk-tbl-card">
-      <div class="sk-tbl-head"><div class="sk-tbl-tab"></div><div class="sk-tbl-tab" style="width:160px;"></div></div>
-      <div class="sk-tbl-row"><div class="sk-tbl-cell sk-cell-w1"></div><div class="sk-tbl-cell sk-cell-w2"></div><div class="sk-tbl-cell sk-cell-w3"></div><div class="sk-tbl-cell sk-cell-w4"></div><div class="sk-tbl-cell sk-cell-w2"></div></div><div class="sk-tbl-row"><div class="sk-tbl-cell sk-cell-w1"></div><div class="sk-tbl-cell sk-cell-w2"></div><div class="sk-tbl-cell sk-cell-w3"></div><div class="sk-tbl-cell sk-cell-w4"></div><div class="sk-tbl-cell sk-cell-w2"></div></div><div class="sk-tbl-row"><div class="sk-tbl-cell sk-cell-w1"></div><div class="sk-tbl-cell sk-cell-w2"></div><div class="sk-tbl-cell sk-cell-w3"></div><div class="sk-tbl-cell sk-cell-w4"></div><div class="sk-tbl-cell sk-cell-w2"></div></div><div class="sk-tbl-row"><div class="sk-tbl-cell sk-cell-w1"></div><div class="sk-tbl-cell sk-cell-w2"></div><div class="sk-tbl-cell sk-cell-w3"></div><div class="sk-tbl-cell sk-cell-w4"></div><div class="sk-tbl-cell sk-cell-w2"></div></div>
-    </div>
-  </div>
-</div>
 <div id="app">
 <aside class="sidebar" id="sidebar">
   <div class="sb-logo"><img src="/auth/Clipencylogo.png" alt="Clipency" class="sb-logo-img" /></div>
@@ -300,22 +225,6 @@ table.st tr:hover td{background:rgba(196,149,106,.03);}
 </div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
 <script src="/supabaseClient.js"></script>
-<script>
-(function(){
-  var o=document.getElementById('cx-sk-overlay');
-  function show(){if(o)o.remove();document.getElementById('cx-sk-css')?.remove();}
-  function bail(){document.body.innerHTML='';location.replace('/login');}
-  async function run(){
-    var t=0,sb;
-    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<30)
-      await new Promise(function(r){setTimeout(r,100);});
-    if(!sb){bail();return;}
-    try{var r=await sb.auth.getUser();if(r.data&&r.data.user)show();else bail();}
-    catch(e){bail();}
-  }
-  run();
-})();
-</script>
 <script>
 /* AUTH GUARD */
 (function(){
