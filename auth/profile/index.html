@@ -1612,35 +1612,10 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   <main class="main" id="main">
 
     <!-- CAMPAIGNS -->
-    <section class="section active" id="section-campaigns">
-      <div class="pg-head">
-        <div>
-          <p class="pg-eyebrow">Clipency</p>
-          <h1 class="pg-title">Campaigns</h1>
-        </div>
-        <div class="user-chip">
-          <div class="uc-av" id="user-avatar">A</div>
-          <span id="user-name-camps">Ayush Bera</span>
-        </div>
-      </div>
-      <div class="filter-bar" id="genre-filters">
-        <button class="filter-btn active" data-genre="All">All</button>
-        <button class="filter-btn" data-genre="Music">Music</button>
-        <button class="filter-btn" data-genre="Gaming">Gaming</button>
-        <button class="filter-btn" data-genre="UGC">UGC</button>
-        <button class="filter-btn" data-genre="Sports">Sports</button>
-        <button class="filter-btn" data-genre="Clipping">Clipping</button>
-        <button class="filter-btn" data-genre="Edits">Edits</button>
-        <span class="camp-count" id="camp-count">8 campaigns</span>
-      </div>
-
-
-      <div class="camp-grid" id="camp-grid"></div>
-      <div class="hidden detail-wrap" id="camp-detail"></div>
-    </section>
+    <section class="section active" id="section-campaigns"></section>
 
     <!-- STATS -->
-    <section class="section" id="section-stats"><div style="display:none"></div></section>
+    <section class="section" id="section-stats"></section>
 
     <!-- Rejection reason modal -->
     <div class="reject-modal-overlay hidden" id="reject-modal">
@@ -1665,54 +1640,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
     </div>
 
     <!-- PAYOUTS -->
-    <section class="section" id="section-payouts">
-      <div class="pg-head">
-        <div>
-          <p class="pg-eyebrow">Clipency</p>
-          <h1 class="pg-title">Payouts</h1>
-          <p style="color:var(--ts);font-size:.84rem;margin-top:4px;max-width:520px;">Track your earnings, pending payouts, and completed payments — all in one place.</p>
-        </div>
-      </div>
-
-      <!-- 3 KPI Cards -->
-      <div class="payout-grid" id="payout-cards">
-        <!-- Available Balance -->
-        <div class="payout-kpi kpi-highlight">
-          <div class="payout-kpi-icon amber-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-          </div>
-          <p class="payout-kpi-label">Available Balance</p>
-          <div class="balance-val amber" id="bal-available">$1,240</div>
-          <button class="btn-primary" id="btn-withdraw" onclick="openWithdrawModal()">Withdraw →</button>
-        </div>
-
-        <!-- Pending Payout -->
-        <div class="payout-kpi">
-          <div class="payout-kpi-icon yellow-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <p class="payout-kpi-label">Pending Payout</p>
-          <div class="balance-val yellow" id="bal-pending">$320</div>
-          <p class="payout-kpi-sub">Expected within 5–7 days</p>
-        </div>
-
-        <!-- Paid -->
-        <div class="payout-kpi">
-          <div class="payout-kpi-icon green-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-          <p class="payout-kpi-label">Paid</p>
-          <div class="balance-val green" id="bal-paid">$1,552</div>
-          <p class="payout-kpi-sub">Already paid by Clipency</p>
-        </div>
-      </div>
-
-      <!-- Payout History -->
-      <div class="card" style="margin-bottom:14px;">
-        <h3 style="font-family:'Instrument Serif',serif;font-size:1rem;color:var(--tp);margin-bottom:16px;font-weight:400;">Payout History</h3>
-        <div id="tx-list"></div>
-      </div>
-    </section>
+    <section class="section" id="section-payouts"></section>
 
     <!-- WITHDRAW MODAL -->
     <div class="withdraw-overlay hidden" id="withdraw-modal">
