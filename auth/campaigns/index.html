@@ -1579,13 +1579,13 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 <!-- MAIN -->
 <div class="main-content" id="main-content">
   <!-- HEADER -->
-  <div class="pg-top">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:0;">
     <div>
       <p class="pg-eyebrow">Clipency</p>
       <h1 class="pg-title">Campaigns</h1>
       <p class="pg-sub">Pick a campaign, submit your clip, and earn.</p>
     </div>
-    <div class="user-chip" id="user-chip">
+    <div class="user-chip" id="user-chip" style="flex-shrink:0;margin-top:8px;">
       <div class="uc-av" id="uc-avatar">A</div>
       <div class="uc-name" id="uc-name">Loading</div>
     </div>
@@ -1905,9 +1905,9 @@ async function showCampDetail(id){
           ${c.isNew?'<span class="tag-new tag">New</span>':''}
           ${days!==null?`<span class="tag" style="color:#FACC15;border-color:rgba(250,204,21,.2);">${days}d left</span>`:''}
         </div>
-        ${submitBtnHtml.replace('submit-btn-header','').replace('submit-btn-mobile','')}
+
       </div>
-      ${submitBtnHtml.replace('onclick=','class="submit-btn submit-btn-header" onclick=')}
+      ${mySubmission?'':`<button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>`}
     </div>
 
     <div class="camp-detail-top">
