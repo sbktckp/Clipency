@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style id="auth-hide">body{visibility:hidden!important;}</style>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
@@ -10,6 +11,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabaseClient.js"></script>
+<script>
+/* ══ AUTH GUARD — runs before anything renders ══ */
+(function(){
+  function reveal(){ document.getElementById('auth-hide')?.remove(); document.body.style.visibility=''; }
+  function bail()  { document.body.innerHTML=''; location.replace('/login'); }
+
+  function getSb(){
+    return window.clipencySupabase||window.supabaseClient||window.sbClient||null;
+  }
+
+  async function check(){
+    let tries=0;
+    // Wait up to 3s for supabase client to be defined
+    while(!getSb() && tries++<30){ await new Promise(r=>setTimeout(r,100)); }
+    const sb=getSb();
+    if(!sb){ bail(); return; }
+    try{
+      const{data:{user}}=await sb.auth.getUser();
+      if(!user) bail();
+      else       reveal();
+    }catch(e){ bail(); }
+  }
+  check();
+})();
+</script>
 <style>
 :root{
   --bg:#0A0908;--s1:#111009;--s2:#181410;--s3:#221D18;--s4:#332B23;

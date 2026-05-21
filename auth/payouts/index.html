@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style id="auth-hide">body{visibility:hidden!important;}</style>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency | Payouts</title>
@@ -226,6 +227,31 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
 <script src="/supabaseClient.js"></script>
+<script>
+/* ══ AUTH GUARD — runs before anything renders ══ */
+(function(){
+  function reveal(){ document.getElementById('auth-hide')?.remove(); document.body.style.visibility=''; }
+  function bail()  { document.body.innerHTML=''; location.replace('/login'); }
+
+  function getSb(){
+    return window.clipencySupabase||window.supabaseClient||window.sbClient||null;
+  }
+
+  async function check(){
+    let tries=0;
+    // Wait up to 3s for supabase client to be defined
+    while(!getSb() && tries++<30){ await new Promise(r=>setTimeout(r,100)); }
+    const sb=getSb();
+    if(!sb){ bail(); return; }
+    try{
+      const{data:{user}}=await sb.auth.getUser();
+      if(!user) bail();
+      else       reveal();
+    }catch(e){ bail(); }
+  }
+  check();
+})();
+</script>
 <script>
 'use strict';
 let sb, user, availBal=0, paymentMethod=null;
