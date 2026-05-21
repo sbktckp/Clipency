@@ -927,6 +927,21 @@ window.updateLeadStatus=async function(id,status){
   await sb.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id);
 };
 
+
+function parseReqsForEdit(raw){
+  if(!raw) return '';
+  try{
+    const p=JSON.parse(raw);
+    if(Array.isArray(p)) return p.join('\n');
+  }catch(e){}
+  // Already plain text
+  return raw;
+}
+function saveReqsFromEdit(text){
+  const lines=text.split('\n').map(s=>s.trim()).filter(Boolean);
+  return lines.length?JSON.stringify(lines):text;
+}
+
 async function renderRoute(){
   if(PATH==='/admin'||PATH==='/workspace')return renderCommand();
   if(PATH==='/admin/connected-accounts'||PATH==='/admin/accounts')return renderAccounts();
