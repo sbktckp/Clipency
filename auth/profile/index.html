@@ -26,26 +26,6 @@
   run();
 })();
 </script>
-<script>
-(function(){
-  var overlay = document.getElementById('clipency-auth-overlay');
-  function hideOverlay(){ if(overlay) overlay.remove(); document.getElementById('cx-auth-css')?.remove(); }
-  function bail(){ document.body.innerHTML=''; location.replace('/login'); }
-
-  async function checkAuth(){
-    var tries=0, sb;
-    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient) && tries++<30)
-      await new Promise(function(r){setTimeout(r,100);});
-    if(!sb){ bail(); return; }
-    try{
-      var res = await sb.auth.getUser();
-      if(res.data && res.data.user) hideOverlay();
-      else bail();
-    }catch(e){ bail(); }
-  }
-  checkAuth();
-})();
-</script>
 <style>
 :root{
   --bg:#0A0908;--s1:#111009;--s2:#181410;--s3:#221D18;--s4:#332B23;
@@ -1566,32 +1546,13 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 }
 </style>
 <style id="cx-auth-css">
-#clipency-auth-overlay{
-  position:fixed;inset:0;background:#0A0908;z-index:99999;
-  display:flex;align-items:center;justify-content:center;
-}
-.cx-auth-spinner{
-  width:24px;height:24px;border:2px solid #332B23;
-  border-top-color:#C4956A;border-radius:50%;
-  animation:cx-spin .7s linear infinite;
-}
-@keyframes cx-spin{to{transform:rotate(360deg);}}
-</style>
-<style id="cx-auth-css">
 #cx-auth-overlay{position:fixed;inset:0;background:#0A0908;z-index:99999;display:flex;align-items:center;justify-content:center;}
 .cx-spin{width:24px;height:24px;border:2px solid #332B23;border-top-color:#C4956A;border-radius:50%;animation:cx-s .7s linear infinite;}
 @keyframes cx-s{to{transform:rotate(360deg);}}
 </style>
-<style id="cx-transition">
-body{animation:cx-fadein .18s ease-out;}
-@keyframes cx-fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-</style>
 </head>
 <body>
 <div id="cx-auth-overlay"><div class="cx-spin"></div></div>
-<div id="clipency-auth-overlay">
-  <div class="cx-auth-spinner"></div>
-</div>
 <div id="loading-overlay"><div class="spin"></div></div>
 <div class="grid-bg"></div>
 
@@ -1605,22 +1566,22 @@ body{animation:cx-fadein .18s ease-out;}
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-logo">
-      <img src="clipencylogo2.png" alt="Clipency" class="sb-logo-img" />
+      <img src="/auth/Clipencylogo.png" alt="Clipency" class="sb-logo-img" />
     </div>
     <div class="sb-nav">
       <p class="nav-label">Clipper</p>
       <nav>
-        <button class="nav-item active" data-section="campaigns" id="nav-campaigns">
+        <button class="nav-item active" data-section="campaigns" onclick="event.stopPropagation();location.href='/campaigns'" id="nav-campaigns">
           <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span>
           <span>Campaigns</span>
           <span class="nav-active-dot"></span>
         </button>
-        <button class="nav-item" data-section="stats" onclick="location.href='/stats'" id="nav-stats">
+        <button class="nav-item" data-section="stats" onclick="event.stopPropagation();location.href='/stats'" onclick="location.href='/stats'" id="nav-stats">
           <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
           <span>Stats</span>
           <span class="nav-active-dot"></span>
         </button>
-        <button class="nav-item" data-section="payouts" id="nav-payouts">
+        <button class="nav-item" data-section="payouts" onclick="event.stopPropagation();location.href='/payouts'" id="nav-payouts">
           <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span>
           <span>Payouts</span>
           <span class="nav-active-dot"></span>
@@ -1673,10 +1634,35 @@ body{animation:cx-fadein .18s ease-out;}
   <main class="main" id="main">
 
     <!-- CAMPAIGNS -->
-    <section class="section active" id="section-campaigns"></section>
+    <section class="section active" id="section-campaigns">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Campaigns</h1>
+        </div>
+        <div class="user-chip">
+          <div class="uc-av" id="user-avatar">A</div>
+          <span id="user-name-camps">Ayush Bera</span>
+        </div>
+      </div>
+      <div class="filter-bar" id="genre-filters">
+        <button class="filter-btn active" data-genre="All">All</button>
+        <button class="filter-btn" data-genre="Music">Music</button>
+        <button class="filter-btn" data-genre="Gaming">Gaming</button>
+        <button class="filter-btn" data-genre="UGC">UGC</button>
+        <button class="filter-btn" data-genre="Sports">Sports</button>
+        <button class="filter-btn" data-genre="Clipping">Clipping</button>
+        <button class="filter-btn" data-genre="Edits">Edits</button>
+        <span class="camp-count" id="camp-count">8 campaigns</span>
+      </div>
+
+
+      <div class="camp-grid" id="camp-grid"></div>
+      <div class="hidden detail-wrap" id="camp-detail"></div>
+    </section>
 
     <!-- STATS -->
-    <section class="section" id="section-stats"></section>
+    <section class="section" id="section-stats"><div style="display:none"></div></section>
 
     <!-- Rejection reason modal -->
     <div class="reject-modal-overlay hidden" id="reject-modal">
@@ -1701,7 +1687,54 @@ body{animation:cx-fadein .18s ease-out;}
     </div>
 
     <!-- PAYOUTS -->
-    <section class="section" id="section-payouts"></section>
+    <section class="section" id="section-payouts">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Payouts</h1>
+          <p style="color:var(--ts);font-size:.84rem;margin-top:4px;max-width:520px;">Track your earnings, pending payouts, and completed payments — all in one place.</p>
+        </div>
+      </div>
+
+      <!-- 3 KPI Cards -->
+      <div class="payout-grid" id="payout-cards">
+        <!-- Available Balance -->
+        <div class="payout-kpi kpi-highlight">
+          <div class="payout-kpi-icon amber-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+          <p class="payout-kpi-label">Available Balance</p>
+          <div class="balance-val amber" id="bal-available">$1,240</div>
+          <button class="btn-primary" id="btn-withdraw" onclick="openWithdrawModal()">Withdraw →</button>
+        </div>
+
+        <!-- Pending Payout -->
+        <div class="payout-kpi">
+          <div class="payout-kpi-icon yellow-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <p class="payout-kpi-label">Pending Payout</p>
+          <div class="balance-val yellow" id="bal-pending">$320</div>
+          <p class="payout-kpi-sub">Expected within 5–7 days</p>
+        </div>
+
+        <!-- Paid -->
+        <div class="payout-kpi">
+          <div class="payout-kpi-icon green-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <p class="payout-kpi-label">Paid</p>
+          <div class="balance-val green" id="bal-paid">$1,552</div>
+          <p class="payout-kpi-sub">Already paid by Clipency</p>
+        </div>
+      </div>
+
+      <!-- Payout History -->
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="font-family:'Instrument Serif',serif;font-size:1rem;color:var(--tp);margin-bottom:16px;font-weight:400;">Payout History</h3>
+        <div id="tx-list"></div>
+      </div>
+    </section>
 
     <!-- WITHDRAW MODAL -->
     <div class="withdraw-overlay hidden" id="withdraw-modal">
@@ -1941,7 +1974,7 @@ const SUBMISSIONS = [];
 const PAYMENT_METHODS = [];
 
 // ── STATE ──
-let currentSection = 'profile';
+let currentSection = 'campaigns';
 let currentCurrency = {code:'USD',symbol:'$',rate:1};
 const RATES = {USD:1,INR:83.2,EUR:0.92,GBP:0.79,JPY:149.5,AUD:1.53,CAD:1.37};
 let paymentMethods = [...PAYMENT_METHODS];
@@ -2896,7 +2929,17 @@ function switchKpiPeriod(p){
 // ── STATS RENDER ENTRY ──
 let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
 
-
+function renderStats(){
+  const el=document.getElementById('stat-total-earned');
+  if(el)el.textContent=fmt(TOTAL_EARNED_USD);
+  animateChart();
+  setTimeout(initChartHover,100);
+  _myPage=0;_rejPage=0;
+  renderMySubmissions();
+  renderRejectedSubmissions();
+  // Load real data
+  loadStatsFromSupabase();
+}
 
 // ── PAGINATION HELPERS ──
 const PAGE_SIZE=5;
@@ -3057,7 +3100,17 @@ const BASE_AVAILABLE = 0;
 const BASE_PENDING   = 0;
 const BASE_PAID      = 0;
 
-
+function renderPayouts(){
+  const balAvail=document.getElementById('bal-available');
+  const balPend=document.getElementById('bal-pending');
+  const balPaid=document.getElementById('bal-paid');
+  if(balAvail)balAvail.textContent=fmt(0);
+  if(balPend)balPend.textContent=fmt(0);
+  if(balPaid)balPaid.textContent=fmt(0);
+  const list=document.getElementById('tx-list');
+  if(list)list.innerHTML='<div style="padding:28px;text-align:center;color:var(--tm,rgba(255,255,255,.35))">Loading transactions…</div>';
+  loadPayoutsFromSupabase();
+}
 
 // ── WITHDRAW MODAL ──
 function openWithdrawModal(){
@@ -4216,7 +4269,33 @@ window.addEventListener('load',()=>{
     };
   }
 
-  
+  async function loadStatsFromSupabase(){
+    const sb=getSb();if(!sb)return;
+    const {data:{user}}=await sb.auth.getUser();if(!user)return;
+    const {data,error}=await sb.from('submissions')
+      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
+      .eq('user_id',user.id).order('submitted_at',{ascending:false});
+    if(error){console.warn('[stats]',error.message);return;}
+    console.log('[stats] loaded',data.length,'rows');
+    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
+      id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',views:fv(r.views),
+      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
+      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
+      url:r.video_url||'',reason:r.rejection_reason||'',appealed:r.appealed??false,
+    }));
+    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const fmt=window.fmt||(v=>'$'+(Number(v)||0).toFixed(2));
+    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
+    const pending=data.filter(s=>s.status==='pending');
+    const reviewed=data.length-pending.length;
+    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
+    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
+    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
+    set('stat-pending-count',pending.length);
+    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
+    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
+  }
   window.loadStatsFromSupabase=loadStatsFromSupabase;
 
   async function initAvatar(){
@@ -4393,92 +4472,16 @@ window.addEventListener('load',()=>{
 })();
 </script>
 <script>
-/* Route detection — show correct section based on URL */
 (function(){
-  function routeOnLoad(){
-    const path = window.location.pathname.replace(/\//g,'');
-    const map = {wallet:'wallet', profile:'profile'};
-    const section = map[path] || 'profile';
-    if(typeof navigate==='function') navigate(section);
-    else if(typeof window.navigate==='function') window.navigate(section);
-    else setTimeout(routeOnLoad, 200);
+  function route(){
+    var path=window.location.pathname.replace(/\//g,'');
+    var section=path==='wallet'?'wallet':'profile';
+    if(typeof navigate==='function'){navigate(section);}
+    else{setTimeout(route,200);}
   }
-  if(document.readyState==='complete') routeOnLoad();
-  else window.addEventListener('load', routeOnLoad);
-  setTimeout(routeOnLoad, 600);
-})();
-</script>
-<script id="cx-router">
-/* ═══ CLIPENCY CLIENT ROUTER — instant page transitions ═══ */
-(function(){
-  const PAGES = {
-    '/campaigns': '/campaigns',
-    '/stats':     '/stats',
-    '/payouts':   '/payouts',
-    '/wallet':    '/wallet',
-    '/profile':   '/profile',
-  };
-
-  const cache = {};
-
-  function currentPath(){ return window.location.pathname; }
-
-  /* Prefetch a page into cache */
-  function prefetch(url){
-    if(cache[url]) return;
-    fetch(url).then(r=>r.text()).then(html=>{ cache[url]=html; }).catch(()=>{});
-  }
-
-  /* Extract just the <main> or main content area from fetched HTML */
-  function extractMain(html){
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.querySelector('.main-content, main, [class*="main"]');
-  }
-
-  /* Navigate with instant swap */
-  async function go(url){
-    if(url === currentPath()) return;
-    if(!PAGES[url] && !url.startsWith('/')) return;
-
-    /* Show transition overlay */
-    let overlay = document.getElementById('cx-nav-overlay');
-    if(!overlay){
-      overlay = document.createElement('div');
-      overlay.id = 'cx-nav-overlay';
-      overlay.style.cssText = 'position:fixed;inset:0;background:#0A0908;z-index:88888;opacity:0;pointer-events:none;transition:opacity .12s';
-      document.body.appendChild(overlay);
-    }
-    overlay.style.opacity = '0.7';
-    overlay.style.pointerEvents = 'all';
-
-    /* Navigate */
-    window.location.href = url;
-  }
-
-  /* Intercept all nav clicks */
-  document.addEventListener('click', function(e){
-    const a = e.target.closest('a[href],button[onclick*="location.href"]');
-    const btn = e.target.closest('.nav-item');
-    if(!btn) return;
-    const onclick = btn.getAttribute('onclick') || '';
-    const match = onclick.match(/location\.href\s*=\s*['"]([^'"]+)['"]/);
-    if(!match) return;
-    const url = match[1];
-    if(PAGES[url]){
-      e.preventDefault();
-      e.stopPropagation();
-      go(url);
-    }
-  }, true);
-
-  /* Prefetch all pages after load */
-  window.addEventListener('load', function(){
-    setTimeout(()=>{
-      Object.keys(PAGES).forEach(url => {
-        if(url !== currentPath()) prefetch(url);
-      });
-    }, 1000);
-  });
+  if(document.readyState==='complete')route();
+  else window.addEventListener('load',route);
+  setTimeout(route,500);
 })();
 </script>
 </body>
