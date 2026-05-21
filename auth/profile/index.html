@@ -12,6 +12,22 @@
 <script src="/supabaseClient.js"></script>
 <script>
 (function(){
+  var o=document.getElementById('cx-auth-overlay');
+  function show(){if(o)o.remove();document.getElementById('cx-auth-css')?.remove();}
+  function bail(){document.body.innerHTML='';location.replace('/login');}
+  async function run(){
+    var t=0,sb;
+    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<30)
+      await new Promise(function(r){setTimeout(r,100);});
+    if(!sb){bail();return;}
+    try{var r=await sb.auth.getUser();if(r.data&&r.data.user)show();else bail();}
+    catch(e){bail();}
+  }
+  run();
+})();
+</script>
+<script>
+(function(){
   var overlay = document.getElementById('clipency-auth-overlay');
   function hideOverlay(){ if(overlay) overlay.remove(); document.getElementById('cx-auth-css')?.remove(); }
   function bail(){ document.body.innerHTML=''; location.replace('/login'); }
@@ -1561,8 +1577,14 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 }
 @keyframes cx-spin{to{transform:rotate(360deg);}}
 </style>
+<style id="cx-auth-css">
+#cx-auth-overlay{position:fixed;inset:0;background:#0A0908;z-index:99999;display:flex;align-items:center;justify-content:center;}
+.cx-spin{width:24px;height:24px;border:2px solid #332B23;border-top-color:#C4956A;border-radius:50%;animation:cx-s .7s linear infinite;}
+@keyframes cx-s{to{transform:rotate(360deg);}}
+</style>
 </head>
 <body>
+<div id="cx-auth-overlay"><div class="cx-spin"></div></div>
 <div id="clipency-auth-overlay">
   <div class="cx-auth-spinner"></div>
 </div>
@@ -1915,7 +1937,7 @@ const SUBMISSIONS = [];
 const PAYMENT_METHODS = [];
 
 // ── STATE ──
-let currentSection = 'campaigns';
+let currentSection = 'profile';
 let currentCurrency = {code:'USD',symbol:'$',rate:1};
 const RATES = {USD:1,INR:83.2,EUR:0.92,GBP:0.79,JPY:149.5,AUD:1.53,CAD:1.37};
 let paymentMethods = [...PAYMENT_METHODS];
@@ -2870,17 +2892,7 @@ function switchKpiPeriod(p){
 // ── STATS RENDER ENTRY ──
 let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
 
-function renderStats(){
-  const el=document.getElementById('stat-total-earned');
-  if(el)el.textContent=fmt(TOTAL_EARNED_USD);
-  animateChart();
-  setTimeout(initChartHover,100);
-  _myPage=0;_rejPage=0;
-  renderMySubmissions();
-  renderRejectedSubmissions();
-  // Load real data
-  loadStatsFromSupabase();
-}
+
 
 // ── PAGINATION HELPERS ──
 const PAGE_SIZE=5;
@@ -3041,17 +3053,7 @@ const BASE_AVAILABLE = 0;
 const BASE_PENDING   = 0;
 const BASE_PAID      = 0;
 
-function renderPayouts(){
-  const balAvail=document.getElementById('bal-available');
-  const balPend=document.getElementById('bal-pending');
-  const balPaid=document.getElementById('bal-paid');
-  if(balAvail)balAvail.textContent=fmt(0);
-  if(balPend)balPend.textContent=fmt(0);
-  if(balPaid)balPaid.textContent=fmt(0);
-  const list=document.getElementById('tx-list');
-  if(list)list.innerHTML='<div style="padding:28px;text-align:center;color:var(--tm,rgba(255,255,255,.35))">Loading transactions…</div>';
-  loadPayoutsFromSupabase();
-}
+
 
 // ── WITHDRAW MODAL ──
 function openWithdrawModal(){
@@ -4210,33 +4212,7 @@ window.addEventListener('load',()=>{
     };
   }
 
-  async function loadStatsFromSupabase(){
-    const sb=getSb();if(!sb)return;
-    const {data:{user}}=await sb.auth.getUser();if(!user)return;
-    const {data,error}=await sb.from('submissions')
-      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
-      .eq('user_id',user.id).order('submitted_at',{ascending:false});
-    if(error){console.warn('[stats]',error.message);return;}
-    console.log('[stats] loaded',data.length,'rows');
-    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
-      id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',views:fv(r.views),
-      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
-      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
-      url:r.video_url||'',reason:r.rejection_reason||'',appealed:r.appealed??false,
-    }));
-    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    const fmt=window.fmt||(v=>'$'+(Number(v)||0).toFixed(2));
-    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
-    const pending=data.filter(s=>s.status==='pending');
-    const reviewed=data.length-pending.length;
-    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
-    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
-    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
-    set('stat-pending-count',pending.length);
-    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
-    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
-  }
+  
   window.loadStatsFromSupabase=loadStatsFromSupabase;
 
   async function initAvatar(){
