@@ -10,6 +10,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabaseClient.js"></script>
+<script>
+(function(){
+  var overlay = document.getElementById('clipency-auth-overlay');
+  function hideOverlay(){ if(overlay) overlay.remove(); document.getElementById('cx-auth-css')?.remove(); }
+  function bail(){ document.body.innerHTML=''; location.replace('/login'); }
+
+  async function checkAuth(){
+    var tries=0, sb;
+    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient) && tries++<30)
+      await new Promise(function(r){setTimeout(r,100);});
+    if(!sb){ bail(); return; }
+    try{
+      var res = await sb.auth.getUser();
+      if(res.data && res.data.user) hideOverlay();
+      else bail();
+    }catch(e){ bail(); }
+  }
+  checkAuth();
+})();
+</script>
 <style>
 :root{
   --bg:#0A0908;--s1:#111009;--s2:#181410;--s3:#221D18;--s4:#332B23;
@@ -1529,8 +1549,23 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   .pg-eyebrow{font-size:.52rem;}
 }
 </style>
+<style id="cx-auth-css">
+#clipency-auth-overlay{
+  position:fixed;inset:0;background:#0A0908;z-index:99999;
+  display:flex;align-items:center;justify-content:center;
+}
+.cx-auth-spinner{
+  width:24px;height:24px;border:2px solid #332B23;
+  border-top-color:#C4956A;border-radius:50%;
+  animation:cx-spin .7s linear infinite;
+}
+@keyframes cx-spin{to{transform:rotate(360deg);}}
+</style>
 </head>
 <body>
+<div id="clipency-auth-overlay">
+  <div class="cx-auth-spinner"></div>
+</div>
 <div id="loading-overlay"><div class="spin"></div></div>
 <div class="grid-bg"></div>
 
