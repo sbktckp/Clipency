@@ -145,6 +145,10 @@ table.st tr:hover td{background:rgba(196,149,106,.03);}
 .cx-spin{width:24px;height:24px;border:2px solid #332B23;border-top-color:#C4956A;border-radius:50%;animation:cx-s .7s linear infinite;}
 @keyframes cx-s{to{transform:rotate(360deg);}}
 </style>
+<style id="cx-transition">
+body{animation:cx-fadein .18s ease-out;}
+@keyframes cx-fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+</style>
 </head>
 <body>
 <div id="cx-auth-overlay"><div class="cx-spin"></div></div>
@@ -479,6 +483,79 @@ document.querySelectorAll('.curr-opt').forEach(b=>b.addEventListener('click',()=
 }));
 
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+</script>
+<script id="cx-router">
+/* ═══ CLIPENCY CLIENT ROUTER — instant page transitions ═══ */
+(function(){
+  const PAGES = {
+    '/campaigns': '/campaigns',
+    '/stats':     '/stats',
+    '/payouts':   '/payouts',
+    '/wallet':    '/wallet',
+    '/profile':   '/profile',
+  };
+
+  const cache = {};
+
+  function currentPath(){ return window.location.pathname; }
+
+  /* Prefetch a page into cache */
+  function prefetch(url){
+    if(cache[url]) return;
+    fetch(url).then(r=>r.text()).then(html=>{ cache[url]=html; }).catch(()=>{});
+  }
+
+  /* Extract just the <main> or main content area from fetched HTML */
+  function extractMain(html){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.querySelector('.main-content, main, [class*="main"]');
+  }
+
+  /* Navigate with instant swap */
+  async function go(url){
+    if(url === currentPath()) return;
+    if(!PAGES[url] && !url.startsWith('/')) return;
+
+    /* Show transition overlay */
+    let overlay = document.getElementById('cx-nav-overlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'cx-nav-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#0A0908;z-index:88888;opacity:0;pointer-events:none;transition:opacity .12s';
+      document.body.appendChild(overlay);
+    }
+    overlay.style.opacity = '0.7';
+    overlay.style.pointerEvents = 'all';
+
+    /* Navigate */
+    window.location.href = url;
+  }
+
+  /* Intercept all nav clicks */
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a[href],button[onclick*="location.href"]');
+    const btn = e.target.closest('.nav-item');
+    if(!btn) return;
+    const onclick = btn.getAttribute('onclick') || '';
+    const match = onclick.match(/location\.href\s*=\s*['"]([^'"]+)['"]/);
+    if(!match) return;
+    const url = match[1];
+    if(PAGES[url]){
+      e.preventDefault();
+      e.stopPropagation();
+      go(url);
+    }
+  }, true);
+
+  /* Prefetch all pages after load */
+  window.addEventListener('load', function(){
+    setTimeout(()=>{
+      Object.keys(PAGES).forEach(url => {
+        if(url !== currentPath()) prefetch(url);
+      });
+    }, 1000);
+  });
+})();
 </script>
 </body>
 </html>
