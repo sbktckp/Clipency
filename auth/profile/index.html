@@ -1960,11 +1960,11 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 let CAMPAIGNS = [];
 
 const PERFORMERS = [
-  {name:"Alex Rivera", handle:"@alexriv",  views:"4.2M", earn:"$420", earnUsd:420},
-  {name:"Mia Chen",    handle:"@miachen",  views:"3.8M", earn:"$380", earnUsd:380},
-  {name:"Jake Storm",  handle:"@jakestorm",views:"2.9M", earn:"$290", earnUsd:290},
-  {name:"Priya Singh", handle:"@priyasg",  views:"2.4M", earn:"$240", earnUsd:240},
-  {name:"Leo Martinez",handle:"@leomart",  views:"1.9M", earn:"$190", earnUsd:190},
+// removed hardcoded demo data
+// removed hardcoded demo data
+// removed hardcoded demo data
+// removed hardcoded demo data
+// removed hardcoded demo data
 ];
 
 const TRANSACTIONS = [];
@@ -2081,71 +2081,8 @@ async function loadCampaignsFromSupabase(){
   }catch(e){console.warn('loadCampaignsFromSupabase:',e.message);}
 }
 let _lastGenre='All';
-function renderCampaigns(genre='All'){
-  _lastGenre=genre;
-  if(!CAMPAIGNS.length){
-    const grid=document.getElementById('camp-grid');
-    if(grid)grid.innerHTML='<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--tm,rgba(255,255,255,.4));font-size:14px">Loading campaigns…</div>';
-    document.getElementById('camp-count').textContent='Loading…';
-    loadCampaignsFromSupabase();
-    return;
-  }
-  const filtered = genre==='All'?CAMPAIGNS:CAMPAIGNS.filter(c=>c.genre===genre);
-  document.getElementById('camp-count').textContent=filtered.length+' campaigns';
-  const grid=document.getElementById('camp-grid');
-  grid.innerHTML=filtered.map(c=>{
-    const pct = Math.round((c.spent/c.budget)*100);
-    const clippers = c.clippers||c.creators;
-    const avLetters = ['Z','M','A','P','L','J'].slice(0,Math.min(4,clippers));
-    const avHtml = avLetters.map(l=>`<div class="cc-creator-av">${l}</div>`).join('');
-    const extraCount = clippers - avLetters.length;
-    // Banner: use c.banner (URL set by admin) or show placeholder
-    const bannerHtml = c.banner
-      ? `<img src="${c.banner}" alt="Campaign Banner"/>`
-      : `<div class="cc-banner-placeholder">
-           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="m3 15 4-4 4 4 4-6 4 6"/></svg>
-           <span>Campaign Banner</span>
-         </div>`;
-    return `
-    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${pct}%">
-      <div class="cc-header">
-        <div class="cc-icon">${c.icon}</div>
-        <div class="cc-title-wrap">
-          <div class="cc-title">${c.title}</div>
-          <div class="cc-tags">
-            <span class="tag">${c.genre}</span>
-            ${(c.tags||[]).map(t=>`<span class="tag-new tag">${t}</span>`).join('')}
-          </div>
-        </div>
-      </div>
-      <div class="cc-banner">${bannerHtml}</div>
-      <div class="cc-kpi">
-        <div class="cc-kpi-item">
-          <div class="cc-kpi-label">Rate / 1M</div>
-          <div class="cc-kpi-val amber">${fmt(c.rpmUsd)}</div>
-        </div>
-        <div class="cc-kpi-item">
-          <div class="cc-kpi-label">Clippers</div>
-          <div class="cc-kpi-val">${clippers}</div>
-        </div>
-      </div>
-      <div class="cc-progress">
-        <div class="prog-label-row">
-          <span class="prog-label">Budget Used</span>
-          <span class="prog-pct">${pct}%</span>
-        </div>
-        <div class="prog-track"><div class="prog-fill"></div></div>
-      </div>
-      <div class="cc-footer">
-        <div class="cc-creators">
-          <div class="cc-creator-avatars">${avHtml}</div>
-          ${extraCount>0?`<span class="cc-creators-label" style="margin-left:8px;">+${extraCount} clippers</span>`:''}
-        </div>
-        <div class="cc-cta">View Campaign <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
-      </div>
-    </div>
-  `}).join('');
-}
+
+
 
 function showCampDetail(id){
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
@@ -2929,17 +2866,8 @@ function switchKpiPeriod(p){
 // ── STATS RENDER ENTRY ──
 let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
 
-function renderStats(){
-  const el=document.getElementById('stat-total-earned');
-  if(el)el.textContent=fmt(TOTAL_EARNED_USD);
-  animateChart();
-  setTimeout(initChartHover,100);
-  _myPage=0;_rejPage=0;
-  renderMySubmissions();
-  renderRejectedSubmissions();
-  // Load real data
-  loadStatsFromSupabase();
-}
+
+
 
 // ── PAGINATION HELPERS ──
 const PAGE_SIZE=5;
@@ -3100,17 +3028,8 @@ const BASE_AVAILABLE = 0;
 const BASE_PENDING   = 0;
 const BASE_PAID      = 0;
 
-function renderPayouts(){
-  const balAvail=document.getElementById('bal-available');
-  const balPend=document.getElementById('bal-pending');
-  const balPaid=document.getElementById('bal-paid');
-  if(balAvail)balAvail.textContent=fmt(0);
-  if(balPend)balPend.textContent=fmt(0);
-  if(balPaid)balPaid.textContent=fmt(0);
-  const list=document.getElementById('tx-list');
-  if(list)list.innerHTML='<div style="padding:28px;text-align:center;color:var(--tm,rgba(255,255,255,.35))">Loading transactions…</div>';
-  loadPayoutsFromSupabase();
-}
+
+
 
 // ── WITHDRAW MODAL ──
 function openWithdrawModal(){
@@ -4269,33 +4188,8 @@ window.addEventListener('load',()=>{
     };
   }
 
-  async function loadStatsFromSupabase(){
-    const sb=getSb();if(!sb)return;
-    const {data:{user}}=await sb.auth.getUser();if(!user)return;
-    const {data,error}=await sb.from('submissions')
-      .select('id,video_url,platform,status,views,earnings,submitted_at,campaign_title,rejection_reason,appealed,appeal_note')
-      .eq('user_id',user.id).order('submitted_at',{ascending:false});
-    if(error){console.warn('[stats]',error.message);return;}
-    console.log('[stats] loaded',data.length,'rows');
-    window.ALL_SUBMISSIONS=(data||[]).map(r=>({
-      id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',views:fv(r.views),
-      earnUsd:(r.status==='approved'||r.status==='paid')?Number(r.earnings)||0:null,
-      status:r.status?r.status.charAt(0).toUpperCase()+r.status.slice(1):'Pending',
-      url:r.video_url||'',reason:r.rejection_reason||'',appealed:r.appealed??false,
-    }));
-    try{ALL_SUBMISSIONS=window.ALL_SUBMISSIONS;}catch(_){}
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    const fmt=window.fmt||(v=>'$'+(Number(v)||0).toFixed(2));
-    const approved=data.filter(s=>s.status==='approved'||s.status==='paid');
-    const pending=data.filter(s=>s.status==='pending');
-    const reviewed=data.length-pending.length;
-    set('stat-total-views',fv(data.reduce((a,s)=>a+(Number(s.views)||0),0)));
-    set('stat-total-earned',fmt(approved.reduce((a,s)=>a+(Number(s.earnings)||0),0)));
-    set('stat-approval-rate',reviewed?Math.round((approved.length/reviewed)*100)+'%':'—');
-    set('stat-pending-count',pending.length);
-    if(typeof window.renderMySubmissions==='function') window.renderMySubmissions();
-    if(typeof window.renderRejectedSubmissions==='function') window.renderRejectedSubmissions();
-  }
+  
+
   window.loadStatsFromSupabase=loadStatsFromSupabase;
 
   async function initAvatar(){
