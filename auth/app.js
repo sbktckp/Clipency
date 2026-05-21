@@ -163,6 +163,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
       email,
       password,
       options: {
+        emailRedirectTo: 'https://clipency.in/login',
         data: {
           first_name: firstName,
           last_name: lastName,
