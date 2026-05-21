@@ -557,5 +557,24 @@ function toast(msg){const t=document.createElement('div');t.className='toast';t.
   });
 })();
 </script>
+<script>
+/* Universal logout — runs immediately, no dependency on main init */
+(function(){
+  function wire(){
+    var btn = document.getElementById('btn-signout');
+    if(!btn) return;
+    btn.onclick = async function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var sb = window.clipencySupabase||window.supabaseClient||window.sbClient;
+      try{ if(sb) await sb.auth.signOut(); }catch(e){}
+      window.location.replace('/login');
+    };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+  setTimeout(wire, 500);
+})();
+</script>
 </body>
 </html>
