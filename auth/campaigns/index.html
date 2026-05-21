@@ -1,13 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Clipency | Campaigns</title>
-<style id="auth-hide">body{visibility:hidden!important;}</style>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<title>Clipency</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+async function loadRealPerformers(campaignId){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:subs}=await sb.from('clip_submissions')
+      .select('user_id,views_count,approved_amount,profiles(full_name,username,email)')
+      .eq('campaign_id',String(campaignId)).eq('status','approved');
+    const el=document.querySelector('[data-real-performers]');
+    if(!el)return;
+    if(!subs||!subs.length){
+      el.innerHTML='<div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">No approved clips yet for this campaign.</div>';
+      return;
+    }
+    const byUser={};
+    (subs||[]).forEach(s=>{
+      const uid=s.user_id;
+      if(!byUser[uid]){byUser[uid]={name:s.profiles?.full_name||s.profiles?.email?.split('@')[0]||'Clipper',handle:'@'+(s.profiles?.username||uid.slice(0,8)),views:0,earn:0};}
+      byUser[uid].views+=Number(s.views_count||0);
+      byUser[uid].earn+=Number(s.approved_amount||0);
+    });
+    const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+    const rankColors=['#F0C040','#B0B8C0','#CD7F32','rgba(255,255,255,.5)','rgba(255,255,255,.35)'];
+    const top=Object.values(byUser).sort((a,b)=>b.views-a.views).slice(0,5);
+    el.innerHTML=top.map((p,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bsoft)">
+      <span style="font-size:.72rem;font-weight:700;color:${rankColors[i]||rankColors[3]};min-width:22px">#${i+1}</span>
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--adim);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--amber);flex-shrink:0">${(p.name[0]||'C').toUpperCase()}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:.83rem;font-weight:600;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div><div style="font-size:.7rem;color:var(--tm)">${p.handle}</div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:.83rem;font-weight:600;color:var(--tp)">${fmtV(p.views)}</div><div style="font-size:.7rem;color:var(--green)">₹${p.earn.toLocaleString('en-IN')}</div></div>
+    </div>`).join('');
+  }catch(e){console.warn('performers:',e.message);}
+}
+
+</script>
+<script src="/supabaseClient.js"></script>
 <style>
 :root{
   --bg:#0A0908;--s1:#111009;--s2:#181410;--s3:#221D18;--s4:#332B23;
@@ -1529,261 +1564,635 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 </style>
 </head>
 <body>
+<div id="loading-overlay"><div class="spin"></div></div>
+<div class="grid-bg"></div>
+
 <div id="app">
+  <!-- Sidebar toggle (hamburger) -->
+  <button class="sb-toggle" id="sb-toggle" aria-label="Toggle sidebar">
+    <span class="hamburger-line"></span>
+  </button>
+  <div class="sb-overlay" id="sb-overlay"></div>
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-  <div class="sb-logo">
-    <img src="clipencylogo2.png" alt="Clipency" class="sb-logo-img" onerror="this.src='Clipencylogo.png'"/>
-  </div>
-  <div class="sb-nav">
-    <p class="nav-label">Clipper</p>
-    <nav>
-      <button class="nav-item active" id="nav-campaigns">
-        <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span>
-        <span>Campaigns</span><span class="nav-dot"></span>
-      </button>
-      <button class="nav-item" onclick="location.href='/stats'">
-        <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
-        <span>Stats</span><span class="nav-dot"></span>
-      </button>
-      <button class="nav-item" onclick="location.href='/payouts'">
-        <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span>
-        <span>Payouts</span><span class="nav-dot"></span>
-      </button>
-      <button class="nav-item" onclick="location.href='/wallet'">
-        <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
-        <span>Wallet</span><span class="nav-dot"></span>
-      </button>
-    </nav>
-    <p class="nav-label" style="margin-top:6px;">Account</p>
-    <nav>
-      <button class="nav-item" onclick="location.href='/profile'">
-        <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span>
-        <span>Profile</span><span class="nav-dot"></span>
-      </button>
-    </nav>
-  </div>
-  <div class="sb-profile">
-    <div class="sb-av" id="sb-avatar">A</div>
-    <div class="sb-info">
-      <div class="sb-name" id="sb-name">Loading…</div>
-      <div class="sb-role">Clipper</div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <img src="clipencylogo2.png" alt="Clipency" class="sb-logo-img" />
     </div>
-    <button class="sb-signout" id="btn-signout" title="Sign out">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
-  </div>
-</aside>
-
-<!-- MAIN -->
-<div class="main-content" id="main-content">
-  <!-- HEADER -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:0;">
-    <div>
-      <p class="pg-eyebrow">Clipency</p>
-      <h1 class="pg-title">Campaigns</h1>
-      <p class="pg-sub">Pick a campaign, submit your clip, and earn.</p>
+    <div class="sb-nav">
+      <p class="nav-label">Clipper</p>
+      <nav>
+        <button class="nav-item active" data-section="campaigns" id="nav-campaigns">
+          <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span>
+          <span>Campaigns</span>
+          <span class="nav-active-dot"></span>
+        </button>
+        <button class="nav-item" data-section="stats" id="nav-stats">
+          <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
+          <span>Stats</span>
+          <span class="nav-active-dot"></span>
+        </button>
+        <button class="nav-item" data-section="payouts" id="nav-payouts">
+          <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span>
+          <span>Payouts</span>
+          <span class="nav-active-dot"></span>
+        </button>
+        <button class="nav-item" data-section="wallet" id="nav-wallet">
+          <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
+          <span>Wallet</span>
+          <span class="nav-active-dot"></span>
+        </button>
+      </nav>
+      <p class="nav-label" style="margin-top:6px;">Account</p>
+      <nav>
+        <button class="nav-item" data-section="profile" id="nav-profile">
+          <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span>
+          <span>Profile</span>
+          <span class="nav-active-dot"></span>
+        </button>
+      </nav>
+      <p class="nav-label" style="margin-top:6px;">Currency</p>
+      <div style="position:relative;">
+        <button class="curr-toggle" id="currency-toggle">
+          <span id="currency-flag">$</span>
+          <span id="currency-code">USD</span>
+          <svg style="margin-left:auto;" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="curr-menu hidden" id="currency-menu">
+          <button class="curr-opt active" data-code="USD" data-symbol="$"><span>$</span><span>USD</span><span class="curr-rate">1.00</span></button>
+          <button class="curr-opt" data-code="INR" data-symbol="₹"><span>₹</span><span>INR</span><span class="curr-rate loading">—</span></button>
+          <button class="curr-opt" data-code="EUR" data-symbol="€"><span>€</span><span>EUR</span><span class="curr-rate loading">—</span></button>
+          <button class="curr-opt" data-code="GBP" data-symbol="£"><span>£</span><span>GBP</span><span class="curr-rate loading">—</span></button>
+          <button class="curr-opt" data-code="JPY" data-symbol="¥"><span>¥</span><span>JPY</span><span class="curr-rate loading">—</span></button>
+          <button class="curr-opt" data-code="AUD" data-symbol="A$"><span>A$</span><span>AUD</span><span class="curr-rate loading">—</span></button>
+          <button class="curr-opt" data-code="CAD" data-symbol="C$"><span>C$</span><span>CAD</span><span class="curr-rate loading">—</span></button>
+        </div>
+      </div>
     </div>
-    <div class="user-chip" id="user-chip" style="flex-shrink:0;margin-top:8px;">
-      <div class="uc-av" id="uc-avatar">A</div>
-      <div class="uc-name" id="uc-name">Loading</div>
+    <div class="sb-profile">
+      <div class="sb-av" id="sb-avatar">A</div>
+      <div class="sb-info">
+        <div class="sb-name" id="sb-name">Ayush Bera</div>
+        <div class="sb-role">Clipper</div>
+      </div>
+      <button class="sb-signout" id="btn-signout" title="Sign out">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
-  </div>
+  </aside>
 
-  <!-- FILTER TABS -->
-  <div class="genre-bar" id="genre-bar">
-    <button class="genre-btn active" data-genre="All" onclick="filterCampaigns('All',this)">All</button>
-    <span class="camp-count" id="camp-count">Loading…</span>
-  </div>
+  <!-- MAIN -->
+  <main class="main" id="main">
 
-  <!-- CAMPAIGNS GRID -->
-  <div class="camp-grid" id="camp-grid">
-    <div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--tm);font-size:.88rem;">
-      <div class="spin" style="display:inline-block;margin-right:8px;"></div>Loading campaigns…
+    <!-- CAMPAIGNS -->
+    <section class="section active" id="section-campaigns">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Campaigns</h1>
+        </div>
+        <div class="user-chip">
+          <div class="uc-av" id="user-avatar">A</div>
+          <span id="user-name-camps">Ayush Bera</span>
+        </div>
+      </div>
+      <div class="filter-bar" id="genre-filters">
+        <button class="filter-btn active" data-genre="All">All</button>
+        <button class="filter-btn" data-genre="Music">Music</button>
+        <button class="filter-btn" data-genre="Gaming">Gaming</button>
+        <button class="filter-btn" data-genre="UGC">UGC</button>
+        <button class="filter-btn" data-genre="Sports">Sports</button>
+        <button class="filter-btn" data-genre="Clipping">Clipping</button>
+        <button class="filter-btn" data-genre="Edits">Edits</button>
+        <span class="camp-count" id="camp-count">8 campaigns</span>
+      </div>
+
+
+      <div class="camp-grid" id="camp-grid"></div>
+      <div class="hidden detail-wrap" id="camp-detail"></div>
+    </section>
+
+    <!-- STATS -->
+    <section class="section" id="section-stats">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Your Stats</h1>
+        </div>
+      </div>
+
+      <!-- 4 KPI stat cards -->
+      <div class="stats-row" style="margin-bottom:18px;">
+        <div class="stat-card">
+          <p class="stat-label">Total Views</p>
+          <h2 class="stat-value">2.4M</h2>
+          <span class="stat-delta">across all submissions</span>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Total Earned</p>
+          <h2 class="stat-value amber" id="stat-total-earned">$3,280</h2>
+          <span class="stat-delta">from approved clips</span>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Approval Rate</p>
+          <h2 class="stat-value green">83%</h2>
+          <span class="stat-delta">Approved submissions ratio</span>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Pending Review</p>
+          <h2 class="stat-value yellow">2</h2>
+          <span class="stat-delta">Waiting for verification</span>
+        </div>
+      </div>
+
+      <!-- Multi-metric Line Chart -->
+      <div class="card chart-card-main" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div style="display:flex;gap:6px;">
+            <button class="chart-metric-btn active" id="cmet-earnings" onclick="switchChartMetric('earnings')">Earnings</button>
+            <button class="chart-metric-btn" id="cmet-views" onclick="switchChartMetric('views')">Views</button>
+            <button class="chart-metric-btn" id="cmet-submissions" onclick="switchChartMetric('submissions')">Submissions</button>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <button class="chart-period-btn active" id="cper-7d" onclick="switchChartPeriod('7d')">7D</button>
+            <button class="chart-period-btn" id="cper-30d" onclick="switchChartPeriod('30d')">30D</button>
+            <button class="chart-period-btn" id="cper-90d" onclick="switchChartPeriod('90d')">90D</button>
+          </div>
+        </div>
+        <div style="position:relative;">
+          <canvas id="stats-line-chart" style="display:block;width:100%;"></canvas>
+          <div id="chart-tooltip" class="chart-tooltip"></div>
+        </div>
+        <div id="chart-x-labels" style="display:flex;justify-content:space-between;padding:8px 40px 0 48px;"></div>
+      </div>
+
+      <!-- Tabbed submissions -->
+      <div class="card" style="padding-bottom:28px;">
+        <div class="stats-tabs">
+          <button class="stats-tab-btn active" id="tab-my" onclick="switchStatsTab('my')">My Submissions</button>
+          <div class="stats-tab-divider"></div>
+          <button class="stats-tab-btn" id="tab-rejected" onclick="switchStatsTab('rejected')">Rejected Submissions</button>
+        </div>
+        <div class="stats-tab-panel active" id="panel-my">
+          <div class="sub-table-wrap"><div id="my-submissions-table"></div></div>
+        </div>
+        <div class="stats-tab-panel" id="panel-rejected">
+          <div class="sub-table-wrap"><div id="rejected-submissions-table"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rejection reason modal -->
+    <div class="reject-modal-overlay hidden" id="reject-modal">
+      <div class="reject-modal-box">
+        <button class="modal-close" onclick="closeRejectModal()">✕</button>
+        <p class="reject-label">Rejection Notice</p>
+        <div class="reject-camp-title" id="reject-modal-title"></div>
+        <div class="reject-reason-box" id="reject-modal-reason"></div>
+        <div class="appeal-section">
+          <div class="appeal-label">Send an appeal note to admin for re-review:</div>
+          <textarea class="appeal-textarea" id="appeal-textarea" placeholder="Explain why you believe this rejection should be reconsidered…"></textarea>
+          <div class="modal-nav" style="margin-top:12px;">
+            <button class="modal-btn-back" onclick="closeRejectModal()">Close</button>
+            <button class="modal-btn-next" onclick="sendAppeal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Send Appeal
+            </button>
+          </div>
+          <div class="appeal-sent-msg" id="appeal-sent-msg">✓ Appeal submitted — admin will review within 48 hrs.</div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- CAMPAIGN DETAIL (hidden by default) -->
-  <div id="camp-detail" class="hidden"></div>
+    <!-- PAYOUTS -->
+    <section class="section" id="section-payouts">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Payouts</h1>
+          <p style="color:var(--ts);font-size:.84rem;margin-top:4px;max-width:520px;">Track your earnings, pending payouts, and completed payments — all in one place.</p>
+        </div>
+      </div>
+
+      <!-- 3 KPI Cards -->
+      <div class="payout-grid" id="payout-cards">
+        <!-- Available Balance -->
+        <div class="payout-kpi kpi-highlight">
+          <div class="payout-kpi-icon amber-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+          <p class="payout-kpi-label">Available Balance</p>
+          <div class="balance-val amber" id="bal-available">$1,240</div>
+          <button class="btn-primary" id="btn-withdraw" onclick="openWithdrawModal()">Withdraw →</button>
+        </div>
+
+        <!-- Pending Payout -->
+        <div class="payout-kpi">
+          <div class="payout-kpi-icon yellow-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <p class="payout-kpi-label">Pending Payout</p>
+          <div class="balance-val yellow" id="bal-pending">$320</div>
+          <p class="payout-kpi-sub">Expected within 5–7 days</p>
+        </div>
+
+        <!-- Paid -->
+        <div class="payout-kpi">
+          <div class="payout-kpi-icon green-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <p class="payout-kpi-label">Paid</p>
+          <div class="balance-val green" id="bal-paid">$1,552</div>
+          <p class="payout-kpi-sub">Already paid by Clipency</p>
+        </div>
+      </div>
+
+      <!-- Payout History -->
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="font-family:'Instrument Serif',serif;font-size:1rem;color:var(--tp);margin-bottom:16px;font-weight:400;">Payout History</h3>
+        <div id="tx-list"></div>
+      </div>
+    </section>
+
+    <!-- WITHDRAW MODAL -->
+    <div class="withdraw-overlay hidden" id="withdraw-modal">
+      <div class="withdraw-box" id="withdraw-box">
+        <button class="wd-close" id="wd-close-btn" onclick="closeWithdrawModal()">✕</button>
+        <div id="wd-content">
+          <!-- Content injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET -->
+    <section class="section" id="section-wallet">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Payment Methods</h1>
+        </div>
+      </div>
+      <p style="color:var(--ts);font-size:.855rem;margin-bottom:18px;">Manage your payout methods. You can add one of each type.</p>
+      <div id="payment-list"></div>
+      <div class="wallet-actions">
+        <button class="wallet-action-btn" id="btn-add-payment">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Payment Method
+        </button>
+        <button class="wallet-action-btn wallet-action-edit" id="btn-change-payment">
+          <span style="font-size:1rem;">🔧</span>
+          Change Payment Info
+        </button>
+      </div>
+      <div class="pay-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>Your <strong>primary payment method</strong> will be used for all payout transfers. In the event of a failed transaction, payouts will automatically be routed to your secondary method on file.</span>
+      </div>
+    </section>
+
+    <div class="modal-overlay hidden" id="pay-modal">
+      <div class="modal-box" id="pay-modal-box"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <section class="section" id="section-profile">
+      <div class="pg-head">
+        <div>
+          <p class="pg-eyebrow">Clipency</p>
+          <h1 class="pg-title">Profile</h1>
+        </div>
+      </div>
+
+      <!-- ── Creator Hero ── -->
+      <div class="creator-hero-card">
+        <div class="creator-hero-inner">
+          <div class="creator-av-wrap">
+            <div class="creator-av" id="profile-avatar">A</div>
+            <div class="creator-av-edit" title="Change photo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </div>
+          </div>
+          <div class="creator-meta">
+            <p class="creator-eyebrow">Creator Profile</p>
+            <div class="creator-name" id="profile-display-name">Ayush Bera</div>
+            <div class="creator-email" id="profile-email">ayush@clipency.com</div>
+            <div class="creator-badges">
+              <span class="badge-pill green">✓ Account Verified</span>
+              <span class="badge-pill amber">Clipper</span>
+              <span class="badge-pill neutral">India</span>
+            </div>
+          </div>
+          <div class="creator-rank-box">
+            <p class="creator-rank-label">Clipency Rank</p>
+            <div class="creator-rank-dash"></div>
+            <p class="creator-rank-sub">By approved payouts across creators</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Two-column layout ── -->
+      <div class="profile-layout">
+
+        <!-- Performance Identity -->
+        <div class="perf-id-card">
+          <div class="card-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            Performance Identity
+          </div>
+          <div class="perf-row">
+            <span class="perf-row-label">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              Display Name
+            </span>
+            <span class="perf-row-val" id="pi-display-name">Ayush Bera</span>
+          </div>
+          <!-- Username row (editable) is below -->
+
+          <div class="perf-row">
+            <span class="perf-row-label">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              Total Views
+            </span>
+            <span class="perf-row-val">0</span>
+          </div>
+          <div class="perf-row">
+            <span class="perf-row-label">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/></svg>
+              Total Earned
+            </span>
+            <span class="perf-row-val amber">$0</span>
+          </div>
+          <!-- Username row (editable) -->
+          <div class="perf-row" id="pi-username-row">
+            <span class="perf-row-label">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Username
+            </span>
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span class="perf-row-val amber" id="pi-username">@beraayush79</span>
+              <button style="padding:3px 9px;border-radius:7px;border:1px solid var(--bsoft);background:transparent;color:var(--tm);font-size:.7rem;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;" id="pi-username-edit-btn" onclick="toggleUsernameEdit()" title="Edit username">Edit</button>
+            </div>
+          </div>
+          <div id="pi-username-edit-row" style="display:none;padding:10px 0;border-bottom:1px solid var(--bsoft);">
+            <label class="ep-label" style="margin-bottom:5px;display:block;">New Username</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="ep-input" id="pi-username-input" type="text" placeholder="@yourusername" style="flex:1;padding:8px 12px;font-size:.85rem;"/>
+              <button onclick="saveUsername()" style="padding:8px 14px;border-radius:8px;background:var(--amber);border:none;color:#0A0908;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.77rem;cursor:pointer;transition:all .2s;white-space:nowrap;">Save</button>
+              <button onclick="toggleUsernameEdit()" style="padding:8px 12px;border-radius:8px;background:transparent;border:1px solid var(--bsoft);color:var(--ts);font-family:'DM Sans',sans-serif;font-size:.77rem;cursor:pointer;">Cancel</button>
+            </div>
+            <p style="font-size:.71rem;color:var(--tm);margin-top:6px;">Usernames are unique and can be changed only once every 30 days. Use lowercase letters, numbers and underscores only.</p>
+          </div>
+        </div>
+
+        <!-- Connected Accounts -->
+        <div class="conn-new-card">
+          <div class="card-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Connected Accounts
+          </div>
+
+          <!-- TikTok -->
+          <div class="conn-platform-item" id="conn-tiktok-wrap">
+            <div class="conn-platform-icon cpi-tiktok">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.94a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/></svg>
+            </div>
+            <div class="conn-platform-info">
+              <div class="conn-platform-name">TikTok</div>
+              <div id="conn-tiktok-accounts" class="conn-accounts-list"></div>
+            </div>
+            <button class="conn-btn" onclick="openConnectModal('TikTok','tiktok')">+ Add</button>
+          </div>
+
+          <!-- Instagram -->
+          <div class="conn-platform-item" id="conn-instagram-wrap">
+            <div class="conn-platform-icon cpi-instagram">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </div>
+            <div class="conn-platform-info">
+              <div class="conn-platform-name">Instagram</div>
+              <div id="conn-instagram-accounts" class="conn-accounts-list"></div>
+            </div>
+            <button class="conn-btn" onclick="openConnectModal('Instagram','instagram')">+ Add</button>
+          </div>
+
+          <!-- YouTube -->
+          <div class="conn-platform-item" id="conn-youtube-wrap">
+            <div class="conn-platform-icon cpi-youtube">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+            </div>
+            <div class="conn-platform-info">
+              <div class="conn-platform-name">YouTube</div>
+              <div id="conn-youtube-accounts" class="conn-accounts-list"></div>
+            </div>
+            <button class="conn-btn" onclick="openConnectModal('YouTube','youtube')">+ Add</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── Edit Profile ── -->
+      <div class="edit-profile-card">
+        <div class="card-section-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          Edit Profile
+        </div>
+        <p style="font-size:.8rem;color:var(--tm);margin-bottom:20px;line-height:1.5;">Keep your creator identity polished. Your name and profile picture will be visible across your Clipency dashboard.</p>
+        <div class="ep-field-row">
+          <div class="ep-field">
+            <label class="ep-label">First Name</label>
+            <input class="ep-input" id="ep-first" type="text" placeholder="First name" value="Ayush"/>
+          </div>
+          <div class="ep-field">
+            <label class="ep-label">Last Name</label>
+            <input class="ep-input" id="ep-last" type="text" placeholder="Last name" value="Bera"/>
+          </div>
+        </div>
+        <div class="ep-field-row">
+          <div class="ep-field ep-input-full" style="grid-column:1/-1;">
+            <label class="ep-label">Display Name</label>
+            <input class="ep-input" id="ep-display" type="text" placeholder="Display name" value="Ayush Bera"/>
+          </div>
+        </div>
+        <button class="ep-save-btn" onclick="saveProfileEdit()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Profile
+        </button>
+      </div>
+    </section>
+
+    <!-- ── CONNECT ACCOUNT MODAL ── -->
+    <div class="connect-modal-overlay hidden" id="connect-modal">
+      <div class="connect-modal-box" id="connect-modal-box"></div>
+    </div>
+
+
+    <div class="modal-overlay hidden" id="submit-modal">
+      <div class="modal-box" id="submit-modal-box"></div>
+    </div>
+
+  </main>
 </div>
 
-</div><!-- #app -->
-
-<!-- SUBMIT MODAL -->
-<div class="modal-overlay hidden" id="submit-modal">
-  <div class="modal-box" id="submit-box">
-    <button class="modal-close" onclick="closeSubmitModal()">✕</button>
-    <div class="modal-eyebrow">Submit Clip</div>
-    <div class="modal-title" id="sm-camp-title">Campaign</div>
-    <p class="modal-subtitle" id="sm-camp-sub">Fill in your clip details below.</p>
-    <div id="sm-steps">
-      <div style="margin-bottom:14px;">
-        <label class="modal-label">Platform</label>
-        <div class="platform-grid" id="sm-platforms"></div>
-      </div>
-      <div style="margin-bottom:14px;">
-        <label class="modal-label">Your Handle</label>
-        <input class="modal-input" id="sm-handle" type="text" placeholder="@yourhandle"/>
-      </div>
-      <div style="margin-bottom:20px;">
-        <label class="modal-label">Clip URL</label>
-        <input class="modal-input" id="sm-url" type="url" placeholder="https://..."/>
-      </div>
-      <div id="sm-err" style="color:var(--red);font-size:.78rem;margin-bottom:10px;display:none;"></div>
-      <button class="submit-btn" id="sm-submit-btn" onclick="confirmSubmit()">Submit Clip →</button>
-    </div>
-    <div id="sm-success" class="hidden" style="text-align:center;padding:20px 0;">
-      <div style="font-size:2rem;margin-bottom:12px;">✅</div>
-      <div style="font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--tp);margin-bottom:8px;">Clip Submitted!</div>
-      <p style="font-size:.82rem;color:var(--tm);">Your clip is under review. You'll earn once approved.</p>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
-<script src="/supabaseClient.js"></script>
 <script>
-/* ══ AUTH GUARD ══ */
-(function(){
-  function reveal(){ document.getElementById('auth-hide')?.remove(); document.body.style.visibility=''; }
-  function bail()  { document.body.innerHTML=''; location.replace('/login'); }
-  async function check(){
-    let t=0;
-    while(!window.clipencySupabase&&!window.supabaseClient&&t++<30) await new Promise(r=>setTimeout(r,100));
+// ── DATA ──
+let CAMPAIGNS = [];
+
+const PERFORMERS = [
+  {name:"Alex Rivera", handle:"@alexriv",  views:"4.2M", earn:"$420", earnUsd:420},
+  {name:"Mia Chen",    handle:"@miachen",  views:"3.8M", earn:"$380", earnUsd:380},
+  {name:"Jake Storm",  handle:"@jakestorm",views:"2.9M", earn:"$290", earnUsd:290},
+  {name:"Priya Singh", handle:"@priyasg",  views:"2.4M", earn:"$240", earnUsd:240},
+  {name:"Leo Martinez",handle:"@leomart",  views:"1.9M", earn:"$190", earnUsd:190},
+];
+
+const TRANSACTIONS = [];
+
+const SUBMISSIONS = [];
+
+const PAYMENT_METHODS = [];
+
+// ── STATE ──
+let currentSection = 'campaigns';
+let currentCurrency = {code:'USD',symbol:'$',rate:1};
+const RATES = {USD:1,INR:83.2,EUR:0.92,GBP:0.79,JPY:149.5,AUD:1.53,CAD:1.37};
+let paymentMethods = [...PAYMENT_METHODS];
+let userName = 'Ayush Bera';
+
+// ── HELPERS ──
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';},2200);
+  setTimeout(()=>t.remove(),2700);
+}
+
+function detailSparkPath(data, id, color='#C4956A'){
+  const max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>{
+    const x=i*(500/(data.length-1));
+    const y=85-((v-min)/(max-min||1))*78-2;
+    return `${x},${y}`;
+  });
+  const line=`M ${pts.join(' L ')}`;
+  const area=`${line} L 500,90 L 0,90 Z`;
+  return `
+    <defs>
+      <linearGradient id="dsg${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#dsg${id})"/>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map((p,i)=>i===pts.length-1?`<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="${color}" opacity="0.9"/>`:'').join('')}
+  `;
+}
+
+function sparkPath(data,id,color='#C4956A'){
+  const max=Math.max(...data),min=Math.min(...data);
+  const pts=data.map((v,i)=>{
+    const x=i*(200/(data.length-1));
+    const y=60-((v-min)/(max-min||1))*54-3;
+    return `${x},${y}`;
+  });
+  const line=`M ${pts.join(' L ')}`;
+  const area=`${line} L 200,60 L 0,60 Z`;
+  return `
+    <defs>
+      <linearGradient id="sg${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#sg${id})"/>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  `;
+}
+
+// ── NAVIGATION ──
+function navigate(section){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('section-'+section).classList.add('active');
+  const navEl=document.getElementById('nav-'+section);
+  if(navEl) navEl.classList.add('active');
+  currentSection=section;
+  if(section==='campaigns'){renderCampaigns();hideCampDetail();}
+  if(section==='stats'){renderStats();setTimeout(loadStatsFromSupabase,300);}
+  if(section==='payouts'){renderPayouts();}
+  if(section==='wallet') renderWallet();
+}
+
+// ── CAMPAIGNS ──
+const SPARK_COLORS = {Music:'#C4956A',Gaming:'#6EE7B7',UGC:'#A78BFA',Sports:'#60A5FA',Clipping:'#F472B6',Edits:'#FBBF24'};
+
+async function loadCampaignsFromSupabase(){
+  try{
     const sb=window.clipencySupabase||window.supabaseClient;
-    if(!sb){bail();return;}
-    try{ const{data:{user}}=await sb.auth.getUser(); if(!user)bail(); else reveal(); }catch{bail();}
-  }
-  check();
-})();
-</script>
-<script>
-'use strict';
-const getSb=()=>window.clipencySupabase||window.supabaseClient||window.sbClient;
-
-/* ── CONSTANTS ── */
-const SPARK_COLORS={Music:'#a78bfa',Gaming:'#34d399',Sports:'#f97316',Dance:'#f472b6',UGC:'#60a5fa',General:'#C4956A'};
-let CAMPAIGNS=[], currentUser=null, _lastGenre='All', _submitCampId=null;
-
-/* ── FMT ── */
-function fmt(n){
-  const v=Number(n)||0;
-  if(v===0) return '$0';
-  if(v>=1000000) return '$'+(v/1000000).toFixed(1).replace(/\.0$/,'')+'M';
-  if(v>=1000) return '$'+Math.round(v/1000)+'K';
-  return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function fmtV(n){ const v=Number(n)||0; if(v>=1e6)return (v/1e6).toFixed(1)+'M'; if(v>=1e3)return Math.round(v/1e3)+'K'; return String(v); }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function parseReqs(raw){
-  if(!raw) return [];
-  try{ const p=JSON.parse(raw); if(Array.isArray(p)) return p.map(x=>String(x).replace(/^["\']+|["\']+$/g,'')); }catch{}
-  return raw.split(/\n|\|,/).map(x=>x.trim()).filter(x=>x.length>2);
-}
-function daysLeft(end){ if(!end) return null; const d=Math.ceil((new Date(end)-Date.now())/86400000); return d>0?d:0; }
-function iconFor(cat){ const c=(cat||'').toLowerCase(); return c.includes('music')?'🎵':c.includes('gaming')?'🎮':c.includes('sport')?'🏆':c.includes('dance')?'💃':c.includes('ugc')?'📱':'📎'; }
-
-/* ── INIT ── */
-(async()=>{
-  const sb=getSb(); if(!sb) return;
-  const{data:{user:u}}=await sb.auth.getUser(); if(!u) return;
-  currentUser=u;
-  const{data:p}=await sb.from('profiles').select('full_name,avatar_url').eq('id',u.id).single();
-  const name=p?.full_name||u.email?.split('@')[0]||'Clipper';
-  document.getElementById('sb-name').textContent=name;
-  document.getElementById('uc-name').textContent=name;
-  ['sb-avatar','uc-avatar'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    if(p?.avatar_url) el.innerHTML=`<img src="${p.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"/>`;
-    else el.textContent=name[0]?.toUpperCase()||'A';
-  });
-  document.getElementById('btn-signout').onclick=async()=>{ await sb.auth.signOut(); location.replace('/login'); };
-  await loadCampaigns();
-  // Realtime
-  sb.channel('camps-rt').on('postgres_changes',{event:'*',schema:'public',table:'campaigns'},loadCampaigns).subscribe();
-})();
-
-/* ── LOAD CAMPAIGNS ── */
-async function loadCampaigns(){
-  const sb=getSb(); if(!sb) return;
-  const{data:camps,error}=await sb.from('campaigns')
-    .select('*').eq('status','active').order('created_at',{ascending:false});
-  if(error||!camps) return;
-
-  CAMPAIGNS=camps.map(c=>{
-    const budgetUsd = Number(c.budget_usd||c.budget||0);
-    const spentUsd  = Number(c.spent_usd||c.budget_used||0);
-    const pct       = budgetUsd>0 ? Math.min(100,Math.round((spentUsd/budgetUsd)*100)) : 0;
-    const platforms = c.platform ? c.platform.split(',').map(x=>x.trim()).filter(Boolean) : ['Instagram','TikTok','YouTube'];
-    return {
-      id:         c.id,
-      title:      c.title||'Campaign',
-      brandName:  c.brand_name||'',
-      icon:       iconFor(c.category||c.genre),
-      genre:      c.genre||c.category||'General',
-      category:   c.category||c.genre||'General',
-      rpmUsd:     Number(c.rpm||c.rate_per_million_usd)||0,
-      budgetUsd,spentUsd,pct,
-      platforms,
-      reqs:       parseReqs(c.requirements),
+    if(!sb)return;
+    const{data:camps,error}=await sb.from('campaigns')
+      .select('*').eq('status','active').order('created_at',{ascending:false});
+    if(error||!camps)return;
+    CAMPAIGNS=camps.map(c=>({
+      id:c.id,
+      title:c.title||'Campaign',
+      icon:c.category==='music'?'🎵':c.category==='gaming'?'🎮':c.category==='sports'?'🏆':'📎',
+      genre:c.genre||c.category||'General',
+      rpmUsd:Number(c.rpm||c.rate_per_million_usd)||0,
+      budget:Number(c.budget)||0,
+      spent:Number(c.budget_used||c.spent_usd)||0,
+      platforms:(()=>{const p=c.platform||'All';return p==='All'?['YouTube','Instagram','TikTok']:p.split(',').map(x=>x.trim()).filter(Boolean);})(),
+      reqs:c.requirements?c.requirements.split('\n').filter(Boolean):[],
       description:c.description||'',
-      clippers:   Number(c.creators_count)||0,
-      banner:     c.asset_url||null,
-      isNew:      c.is_new===true,
-      startDate:  c.start_date,
-      endDate:    c.end_date,
-      sparkData:  [30,50,40,70,60,80,90],
-    };
-  });
-
-  // Build genre tabs from real data
-  const genres=['All',...new Set(CAMPAIGNS.map(c=>c.genre).filter(Boolean))];
-  const bar=document.getElementById('genre-bar');
-  bar.innerHTML=genres.map(g=>`<button class="genre-btn${g===_lastGenre?' active':''}" data-genre="${g}" onclick="filterCampaigns('${esc(g)}',this)">${esc(g)}</button>`).join('')
-    +`<span class="camp-count" id="camp-count"></span>`;
-
-  renderCampaigns(_lastGenre);
+      sparkData:[30,50,40,70,60,80,90],
+      views:'—',
+      creators:Number(c.creators_count)||0,
+      clippers:Number(c.creators_count)||0,
+      banner:c.asset_url||null,
+      tags:c.is_new?['New']:[],
+      start_date:c.start_date,
+      end_date:c.end_date,
+      brand_name:c.brand_name||''
+    }));
+    renderCampaigns(_lastGenre||'All');
+  }catch(e){console.warn('loadCampaignsFromSupabase:',e.message);}
 }
-
-/* ── RENDER GRID ── */
-function filterCampaigns(genre,btn){
-  _lastGenre=genre;
-  document.querySelectorAll('.genre-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderCampaigns(genre);
-}
-
+let _lastGenre='All';
 function renderCampaigns(genre='All'){
-  const filtered=genre==='All'?CAMPAIGNS:CAMPAIGNS.filter(c=>c.genre===genre||c.category===genre);
-  const el=document.getElementById('camp-count'); if(el) el.textContent=filtered.length+' campaigns';
-  const grid=document.getElementById('camp-grid');
-  if(!filtered.length){
-    grid.innerHTML='<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--tm);font-size:.88rem;">No campaigns in this category.</div>';
+  _lastGenre=genre;
+  if(!CAMPAIGNS.length){
+    const grid=document.getElementById('camp-grid');
+    if(grid)grid.innerHTML='<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--tm,rgba(255,255,255,.4));font-size:14px">Loading campaigns…</div>';
+    document.getElementById('camp-count').textContent='Loading…';
+    loadCampaignsFromSupabase();
     return;
   }
+  const filtered = genre==='All'?CAMPAIGNS:CAMPAIGNS.filter(c=>c.genre===genre);
+  document.getElementById('camp-count').textContent=filtered.length+' campaigns';
+  const grid=document.getElementById('camp-grid');
   grid.innerHTML=filtered.map(c=>{
-    const avColors=['#C4956A','#6EE7B7','#a78bfa','#f97316','#60a5fa','#f472b6'];
-    const initials=['Z','M','A','P','L','J','S','R'];
-    const avCount=Math.min(4,c.clippers);
-    const avHtml=initials.slice(0,avCount).map((l,i)=>`<div class="cc-creator-av" style="background:${avColors[i%avColors.length]}22;border-color:${avColors[i%avColors.length]}44;color:${avColors[i%avColors.length]}">${l}</div>`).join('');
-    const extraCount=c.clippers-avCount;
-    const days=daysLeft(c.endDate);
-    const daysHtml=days!==null?`<span class="tag" style="background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.18);color:#FACC15;">${days}d left</span>`:'';
-    const newHtml=c.isNew?`<span class="tag-new tag">New</span>`:'';
-    const bannerHtml=c.banner
-      ?`<img src="${c.banner}" alt="Campaign Banner" style="width:100%;height:100%;object-fit:cover;"/>`
-      :`<div class="cc-banner-placeholder"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="m3 15 4-4 4 4 4-6 4 6"/></svg><span>Campaign Banner</span></div>`;
+    const pct = Math.round((c.spent/c.budget)*100);
+    const clippers = c.clippers||c.creators;
+    const avLetters = ['Z','M','A','P','L','J'].slice(0,Math.min(4,clippers));
+    const avHtml = avLetters.map(l=>`<div class="cc-creator-av">${l}</div>`).join('');
+    const extraCount = clippers - avLetters.length;
+    // Banner: use c.banner (URL set by admin) or show placeholder
+    const bannerHtml = c.banner
+      ? `<img src="${c.banner}" alt="Campaign Banner"/>`
+      : `<div class="cc-banner-placeholder">
+           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="m3 15 4-4 4 4 4-6 4 6"/></svg>
+           <span>Campaign Banner</span>
+         </div>`;
     return `
-    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${c.pct}%">
+    <div class="camp-card" onclick="showCampDetail('${c.id}')" style="--prog-w:${pct}%">
       <div class="cc-header">
         <div class="cc-icon">${c.icon}</div>
         <div class="cc-title-wrap">
-          <div class="cc-title">${esc(c.title)}</div>
+          <div class="cc-title">${c.title}</div>
           <div class="cc-tags">
-            <span class="tag">${esc(c.genre)}</span>
-            ${newHtml}${daysHtml}
+            <span class="tag">${c.genre}</span>
+            ${(c.tags||[]).map(t=>`<span class="tag-new tag">${t}</span>`).join('')}
           </div>
         </div>
       </div>
@@ -1795,13 +2204,13 @@ function renderCampaigns(genre='All'){
         </div>
         <div class="cc-kpi-item">
           <div class="cc-kpi-label">Clippers</div>
-          <div class="cc-kpi-val">${c.clippers}</div>
+          <div class="cc-kpi-val">${clippers}</div>
         </div>
       </div>
       <div class="cc-progress">
         <div class="prog-label-row">
           <span class="prog-label">Budget Used</span>
-          <span class="prog-pct">${c.pct}%</span>
+          <span class="prog-pct">${pct}%</span>
         </div>
         <div class="prog-track"><div class="prog-fill"></div></div>
       </div>
@@ -1810,86 +2219,22 @@ function renderCampaigns(genre='All'){
           <div class="cc-creator-avatars">${avHtml}</div>
           ${extraCount>0?`<span class="cc-creators-label" style="margin-left:8px;">+${extraCount} clippers</span>`:''}
         </div>
-        <div class="cc-cta">View Campaign <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+        <div class="cc-cta">View Campaign <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  `}).join('');
 }
 
-/* ── CAMPAIGN DETAIL ── */
-async function showCampDetail(id){
+function showCampDetail(id){
   const c=CAMPAIGNS.find(x=>String(x.id)===String(id));
-  if(!c) return;
-  document.getElementById('camp-grid').classList.add('hidden');
+  const grid=document.getElementById('camp-grid');
   const detail=document.getElementById('camp-detail');
+  grid.classList.add('hidden');
   detail.classList.remove('hidden');
-
+  const pct=Math.round((c.spent/c.budget)*100);
   const color=SPARK_COLORS[c.genre]||'#C4956A';
-
-  // Show skeleton first
-  detail.innerHTML=`<div style="padding:40px;text-align:center;color:var(--tm);"><div class="spin" style="display:inline-block;"></div> Loading campaign…</div>`;
-
-  // Load live data: submissions + top clippers
-  const sb=getSb();
-  const campIdStr=String(c.id);
-
-  // Submissions for this campaign
-  const{data:subs}=await sb.from('clip_submissions')
-    .select('user_id,views_count,approved_amount,earning_amount,status,handle,created_at,likes,comments,engagement_rate')
-    .eq('campaign_id',campIdStr);
-
-  const approvedSubs=(subs||[]).filter(s=>s.status==='approved'||s.status==='paid');
-  const pendingSubs=(subs||[]).filter(s=>s.status==='pending');
-  const totalViewsReal=approvedSubs.reduce((a,s)=>a+Number(s.views_count||0),0);
-  const totalEarnReal=approvedSubs.reduce((a,s)=>a+Number(s.approved_amount||s.earning_amount||0),0);
-  const uniqueClippers=new Set(approvedSubs.map(s=>s.user_id)).size;
-
-  // User's own submission for this campaign
-  const mySubmission=(subs||[]).find(s=>s.user_id===currentUser?.id);
-
-  // Top 5 clippers: group by user_id
-  const clipperMap={};
-  approvedSubs.forEach(s=>{
-    if(!clipperMap[s.user_id]) clipperMap[s.user_id]={uid:s.user_id,views:0,earned:0,handle:s.handle||''};
-    clipperMap[s.user_id].views+=Number(s.views_count||0);
-    clipperMap[s.user_id].earned+=Number(s.approved_amount||s.earning_amount||0);
-  });
-  const topIds=Object.values(clipperMap).sort((a,b)=>b.earned-a.earned||b.views-a.views).slice(0,5);
-
-  // Fetch profiles for top clippers
-  let topClippers=[];
-  if(topIds.length){
-    const{data:profs}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',topIds.map(t=>t.uid));
-    topClippers=topIds.map(t=>{
-      const p=(profs||[]).find(x=>x.id===t.uid)||{};
-      return{...t, name:p.full_name||p.username||'Clipper', username:p.username||'', avatar:p.avatar_url||null};
-    });
-  }
-
-  // Spark data from approved submissions (7 days)
-  const now=Date.now();
-  const sparkData=Array.from({length:7},(_,i)=>{
-    const s=now-(6-i)*86400000, e=s+86400000;
-    return approvedSubs.filter(x=>{const t=new Date(x.created_at).getTime();return t>=s&&t<e;}).reduce((a,x)=>a+Number(x.views_count||0),0)/1000;
-  });
-  // fallback if all zeros
-  const finalSpark=sparkData.some(v=>v>0)?sparkData:[30,50,40,70,60,80,90];
-
-  const days=daysLeft(c.endDate);
-  const reqs=c.reqs.length?c.reqs:['Submit your clip URL and platform handle.'];
-
-  const submitBtnHtml=mySubmission
-    ?`<button class="submit-btn" style="opacity:.6;cursor:default;">
-        ${mySubmission.status==='approved'?'✓ Approved':mySubmission.status==='rejected'?'✗ Rejected':'⏳ Under Review'}
-      </button>`
-    :`<button class="submit-btn" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>`;
-
-  // Rank medal helper
-  const medal=i=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
-
-  // Avatar initials helper
-  const initials=name=>{ const p=name.trim().split(' '); return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():name.slice(0,2).toUpperCase(); };
-
+  const clippers=c.clippers||c.creators;
+  const videosApproved=Math.floor(clippers*1.4);
   detail.innerHTML=`
     <div class="detail-header">
       <button class="back-btn" onclick="hideCampDetail()">
@@ -1898,49 +2243,57 @@ async function showCampDetail(id){
       </button>
       <div class="detail-icon">${c.icon}</div>
       <div class="detail-title-wrap">
-        <div class="detail-title">${esc(c.title)}</div>
+        <div class="detail-title">${c.title}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
-          <span class="tag">${esc(c.genre)}</span>
-          ${c.platforms.map(p=>`<span class="tag">${esc(p)}</span>`).join('')}
-          ${c.isNew?'<span class="tag-new tag">New</span>':''}
-          ${days!==null?`<span class="tag" style="color:#FACC15;border-color:rgba(250,204,21,.2);">${days}d left</span>`:''}
+          <span class="tag">${c.genre}</span>
+          ${c.platforms.map(p=>`<span class="tag">${p}</span>`).join('')}
         </div>
-
+        <button class="submit-btn submit-btn-mobile" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
       </div>
-      ${mySubmission?'':`<button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>`}
+      <button class="submit-btn submit-btn-header" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
     </div>
 
+    <!-- ROW 1: Campaign info (left) + Views chart (right) -->
     <div class="camp-detail-top">
-      <!-- Campaign Info -->
       <div class="card" style="border-color:var(--border);">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          ${c.banner?`<img src="${c.banner}" style="width:48px;height:48px;border-radius:12px;object-fit:cover;border:1px solid var(--border);"/>`:`<div style="width:48px;height:48px;border-radius:12px;background:var(--adim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">${c.icon}</div>`}
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--adim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">${c.icon}</div>
           <div>
-            <div style="font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--tp);line-height:1.2;">${esc(c.title)}</div>
-            <div style="font-size:.74rem;color:var(--tm);margin-top:2px;">${c.brandName?esc(c.brandName)+' · ':''}${esc(c.genre)}</div>
+            <div style="font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--tp);line-height:1.2;">${c.title}</div>
+            <div style="font-size:.74rem;color:var(--tm);margin-top:2px;">Campaign · ${c.genre}</div>
           </div>
         </div>
         <div>
-          <div class="info-row"><span class="info-label">RPM Rate</span><span class="info-val amber">${fmt(c.rpmUsd)} / 1M views</span></div>
-          <div class="info-row"><span class="info-label">Total Budget</span><span class="info-val amber">${fmt(c.budgetUsd)}</span></div>
-          <div class="info-row"><span class="info-label">Active Clippers</span><span class="info-val">${uniqueClippers||c.clippers}</span></div>
-          <div class="info-row"><span class="info-label">Platforms</span><span class="info-val" style="color:var(--ts);font-size:.82rem;">${c.platforms.join(', ')}</span></div>
-          ${c.endDate?`<div class="info-row"><span class="info-label">Ends</span><span class="info-val" style="color:#FACC15;">${new Date(c.endDate).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</span></div>`:''}
+          <div class="info-row">
+            <span class="info-label">RPM Rate</span>
+            <span class="info-val amber">${fmt(c.rpmUsd)} / 1M views</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Budget</span>
+            <span class="info-val amber">${fmt(c.budget)}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Active Clippers</span>
+            <span class="info-val">${clippers}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Platforms</span>
+            <span class="info-val" style="color:var(--ts);font-weight:500;font-size:.82rem;">${c.platforms.join(', ')}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Views Chart -->
       <div class="detail-chart-card" style="display:flex;flex-direction:column;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <div>
             <div class="detail-chart-label">Total Views Generated</div>
-            <div class="detail-chart-val">${totalViewsReal?fmtV(totalViewsReal):'—'}</div>
-            <div class="detail-chart-delta">${approvedSubs.length} approved clips</div>
+            <div class="detail-chart-val">${c.views}</div>
+            <div class="detail-chart-delta">↑ 12.4% this week</div>
           </div>
           <div style="display:flex;gap:5px;flex-shrink:0;">
-            <button class="chart-period-btn active" id="dper-7d" onclick="switchDetailPeriod('7d')">7D</button>
-            <button class="chart-period-btn" id="dper-30d" onclick="switchDetailPeriod('30d')">30D</button>
-            <button class="chart-period-btn" id="dper-90d" onclick="switchDetailPeriod('90d')">90D</button>
+            <button class="chart-period-btn active" id="dper-7d"  onclick="switchDetailPeriod('7d')">7D</button>
+            <button class="chart-period-btn"        id="dper-30d" onclick="switchDetailPeriod('30d')">30D</button>
+            <button class="chart-period-btn"        id="dper-90d" onclick="switchDetailPeriod('90d')">90D</button>
           </div>
         </div>
         <div style="position:relative;flex:1;">
@@ -1948,86 +2301,77 @@ async function showCampDetail(id){
           <div id="detail-chart-tooltip" class="chart-tooltip"></div>
         </div>
         <div id="detail-x-labels" style="display:flex;justify-content:space-between;padding:6px 48px 0 56px;"></div>
-        <div style="margin-top:16px;text-align:right;">${submitBtnHtml}</div>
+        <div style="margin-top:16px;text-align:right;">
+          <button class="submit-btn" onclick="openSubmitModal('${c.id}')">Submit Your Clip →</button>
+        </div>
       </div>
     </div>
 
-    <!-- Budget Progress -->
+    <!-- ROW 2: Budget Progress (full width) -->
     <div class="budget-card">
       <div class="budget-card-head">
         <span class="budget-card-title">Budget Progress</span>
-        <span class="budget-card-meta">${fmt(c.spentUsd)} / ${fmt(c.budgetUsd)}</span>
+        <span class="budget-card-meta">${fmt(c.spent)} / ${fmt(c.budget)}</span>
       </div>
-      <div class="budget-track"><div class="budget-fill" style="width:${c.pct}%;"></div></div>
+      <div class="budget-track"><div class="budget-fill" style="width:${pct}%;"></div></div>
       <div class="budget-footnote">
-        <span class="budget-pct">${c.pct}% used</span>
+        <span class="budget-pct">${pct}% used</span>
         <span class="budget-rpm">RPM: ${fmt(c.rpmUsd)} / 1M</span>
       </div>
     </div>
 
-    <!-- KPI Row -->
+    <!-- ROW 3: 4 KPI boxes (full width) -->
     <div class="detail-kpi-row">
       <div class="d-kpi">
-        <span class="d-kpi-label">Views Generated</span>
-        <div class="d-kpi-val green">${totalViewsReal?fmtV(totalViewsReal):'—'}</div>
-        <div class="d-kpi-sub">${approvedSubs.length} approved clips</div>
+        <span class="d-kpi-label">Views This Month</span>
+        <div class="d-kpi-val green">1,860K</div>
+        <div class="d-kpi-sub green-txt">↑ 12.4% this week</div>
       </div>
       <div class="d-kpi">
         <span class="d-kpi-label">Est. Earnings</span>
-        <div class="d-kpi-val amber">${fmt(totalEarnReal)}</div>
+        <div class="d-kpi-val amber">${fmt(0)}</div>
         <div class="d-kpi-sub amber-txt">RPM: ${fmt(c.rpmUsd)} / 1M</div>
       </div>
       <div class="d-kpi">
-        <span class="d-kpi-label">Clips Approved</span>
-        <div class="d-kpi-val purple">${approvedSubs.length}</div>
-        <div class="d-kpi-sub">${pendingSubs.length} pending review</div>
+        <span class="d-kpi-label">Videos Approved</span>
+        <div class="d-kpi-val purple">${videosApproved}</div>
+        <div class="d-kpi-sub">approved clips</div>
       </div>
       <div class="d-kpi">
         <span class="d-kpi-label">Clippers Joined</span>
-        <div class="d-kpi-val">${uniqueClippers||c.clippers}</div>
-        <div class="d-kpi-sub">active creators</div>
+        <div class="d-kpi-val blue">${clippers}</div>
+        <div class="d-kpi-sub">active clippers</div>
       </div>
     </div>
 
-    <!-- Requirements -->
-    <div class="card" style="text-align:center;padding:28px 24px;">
-      <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Requirements</p>
-      <ul style="list-style:none;display:inline-flex;flex-direction:column;gap:10px;text-align:left;max-width:560px;width:100%;">
-        ${reqs.map(r=>`<li style="display:flex;align-items:flex-start;gap:10px;">
-          <div style="width:18px;height:18px;border-radius:50%;background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <span style="text-transform:uppercase;font-size:.78rem;letter-spacing:.04em;font-weight:600;">${esc(r)}</span>
-        </li>`).join('')}
+    <!-- ROW 4: Requirements (full width, centered) -->
+    <div class="card" style="margin-bottom:16px;text-align:center;">
+      <p style="font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--tp);margin-bottom:18px;font-weight:400;">Requirements</p>
+      <ul class="req-list" style="max-width:540px;margin:0 auto;">
+        ${c.reqs.map(r=>`<li class="req-item" style="justify-content:center;"><div class="req-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="text-transform:uppercase;font-size:.78rem;letter-spacing:.04em;font-weight:600;">${r}</span></li>`).join('')}
       </ul>
       <p style="font-size:.72rem;color:var(--tm);margin-top:14px;padding-top:12px;border-top:1px solid var(--bsoft);max-width:540px;margin-left:auto;margin-right:auto;">📋 For full Campaign RULES, check the brief</p>
     </div>
 
-    <!-- Top 5 Clippers -->
+    <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
-      ${topClippers.length ? topClippers.map((p,i)=>`
+      <div data-real-performers><div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">Loading…</div></div>
+      ${[].map((p,i)=>`
         <div class="perf-item">
-          <div class="perf-rank ${medal(i)}">#${i+1}</div>
-          <div class="perf-av">${initials(p.name)}</div>
-          <div style="flex:1">
-            <div class="perf-name">${esc(p.name)}</div>
-            <div class="perf-handle">@${esc(p.username||p.handle||'clipper')}</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="perf-views" style="font-size:.9rem;font-weight:700;">${fmtV(p.views)}</div>
-            <div class="perf-earn">${fmt(p.earned)}</div>
-          </div>
-        </div>`).join('')
-      : `<div style="text-align:center;padding:32px;color:var(--tm);font-size:.85rem;">No approved clippers yet — be the first! 🚀</div>`}
+          <div class="perf-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">#${i+1}</div>
+          <div class="perf-av">${p.name[0]+p.name.split(' ')[1][0]}</div>
+          <div style="flex:1"><div class="perf-name">${p.name}</div><div class="perf-handle">${p.handle}</div></div>
+          <div style="text-align:right;"><div class="perf-views" style="font-size:.9rem;font-weight:700;">${p.views}</div><div class="perf-earn">${fmt(p.earnUsd)}</div></div>
+        </div>
+      `).join('')}
     </div>
   `;
-
-  // Draw chart
+    setTimeout(()=>loadRealPerformers(id),50);
+// draw chart after DOM is updated
   setTimeout(()=>{
     _detailPeriod='7d';
-    _detailSparkData=finalSpark;
-    drawDetailChart(finalSpark, color);
+    drawDetailChart(c.sparkData, color);
     initDetailHover();
   }, 30);
 }
@@ -2037,32 +2381,43 @@ function hideCampDetail(){
   document.getElementById('camp-detail').classList.add('hidden');
 }
 
-/* ── CHART ── */
-let _detailPeriod='7d', _detailSparkData=null, _detailColor='#C4956A', _detailAnimRAF=null;
-const DETAIL_PERIOD_DATA={
-  '7d':{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']},
-  '30d':{labels:['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5']},
-  '90d':{labels:['Jan','Feb','Mar']},
+// ── CAMPAIGN DETAIL LINE CHART ──
+let _detailPeriod = '7d';
+let _detailSparkData = null;
+let _detailColor = '#C4956A';
+let _detailAnimRAF = null;
+
+const DETAIL_PERIOD_DATA = {
+  '7d': {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']},
+  '30d':{labels:['Apr 1','Apr 8','Apr 15','Apr 22','Apr 30']},
+  '90d':{labels:['Feb','Mar','Apr']},
 };
 
 function drawDetailChart(sparkData, color){
-  if(sparkData) _detailSparkData=sparkData;
-  if(color) _detailColor=color;
-  const canvas=document.getElementById('detail-line-chart'); if(!canvas) return;
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.parentElement.clientWidth||500, H=160;
+  if(sparkData) _detailSparkData = sparkData;
+  if(color) _detailColor = color;
+  const canvas = document.getElementById('detail-line-chart');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio||1;
+  const W   = canvas.parentElement.clientWidth||500;
+  const H   = 160;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   canvas.width=W*dpr; canvas.height=H*dpr;
-  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
-  const base=_detailSparkData||[40,55,35,70,60,85,90];
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  // generate period-aware data from sparkData (7pts base, slice/interpolate)
+  const base = _detailSparkData||[40,55,35,70,60,85,90];
   let vals;
-  if(_detailPeriod==='7d') vals=base;
-  else if(_detailPeriod==='30d') vals=[base[0],base[1]+base[2],base[3]+base[4],base[5],base[6]+base[5]];
-  else vals=[base[0]+base[1],base[2]+base[3]+base[4],base[5]+base[6]];
-  const labels=DETAIL_PERIOD_DATA[_detailPeriod].labels;
-  const n=vals.length, maxV=Math.max(...vals)*1.18||1;
-  const pad={l:48,r:18,t:18,b:28}, cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  if(_detailPeriod==='7d')   vals = base;
+  else if(_detailPeriod==='30d') vals = [base[0],base[1]+base[2],base[3]+base[4],base[5],base[6]+base[5]];
+  else vals = [base[0]+base[1], base[2]+base[3]+base[4], base[5]+base[6]];
+  const labels = DETAIL_PERIOD_DATA[_detailPeriod].labels;
+  const n=vals.length;
+  const maxV=Math.max(...vals)*1.18||1;
+  const pad={l:48,r:18,t:18,b:28};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
+  // grid
   for(let i=0;i<=3;i++){
     const y=pad.t+cH-(cH/3)*i;
     ctx.beginPath(); ctx.strokeStyle='rgba(242,237,232,0.05)'; ctx.lineWidth=1;
@@ -2070,99 +2425,1858 @@ function drawDetailChart(sparkData, color){
     ctx.fillStyle='rgba(106,97,88,0.85)'; ctx.font='9px DM Sans'; ctx.textAlign='right';
     ctx.fillText(Math.round((maxV/3)*i),pad.l-7,y+3);
   }
-  const pts=vals.map((v,i)=>({x:pad.l+(n===1?cW/2:(i/(n-1))*cW),y:pad.t+cH-(v/maxV)*cH}));
-  const g=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
-  g.addColorStop(0,_detailColor+'33'); g.addColorStop(1,_detailColor+'00');
-  ctx.beginPath(); ctx.moveTo(pts[0].x,pad.t+cH);
-  pts.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.lineTo(pts[pts.length-1].x,pad.t+cH);
-  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
-  ctx.beginPath(); pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-  ctx.strokeStyle=_detailColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
-  pts.forEach(p=>{
-    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
-    ctx.fillStyle=_detailColor; ctx.fill();
-    ctx.strokeStyle='#0A0908'; ctx.lineWidth=2; ctx.stroke();
-  });
-  // X labels
-  const xl=document.getElementById('detail-x-labels');
-  if(xl) xl.innerHTML=labels.map(l=>`<span style="font-size:9px;color:rgba(106,97,88,0.85);font-family:'DM Sans';">${l}</span>`).join('');
-  canvas._pts=pts; canvas._vals=vals; canvas._labels=labels;
+  // points
+  const pts=vals.map((v,i)=>({
+    x:pad.l+(n===1?cW/2:i*(cW/(n-1))),
+    y:pad.t+cH-(v/maxV)*cH,
+  }));
+  // animate
+  if(_detailAnimRAF) cancelAnimationFrame(_detailAnimRAF);
+  const dur=650, start=performance.now();
+  function step(now){
+    const prog=Math.min(1,(now-start)/dur);
+    const ease=1-Math.pow(1-prog,3);
+    ctx.clearRect(0,0,W,H);
+    // redraw grid
+    for(let i=0;i<=3;i++){
+      const y=pad.t+cH-(cH/3)*i;
+      ctx.beginPath(); ctx.strokeStyle='rgba(242,237,232,0.05)'; ctx.lineWidth=1;
+      ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+      ctx.fillStyle='rgba(106,97,88,0.85)'; ctx.font='9px DM Sans'; ctx.textAlign='right';
+      ctx.fillText(Math.round((maxV/3)*i),pad.l-7,y+3);
+    }
+    const visLen=Math.max(1,(n-1)*ease);
+    const visIdx=Math.floor(visLen);
+    const visFrac=visLen-visIdx;
+    const visPts=pts.slice(0,visIdx+1).map(p=>({...p}));
+    if(visIdx<n-1&&visFrac>0){
+      const a=pts[visIdx],b=pts[visIdx+1];
+      visPts[visPts.length-1]={x:a.x+(b.x-a.x)*visFrac,y:a.y+(b.y-a.y)*visFrac};
+    }
+    if(visPts.length<1){if(prog<1)_detailAnimRAF=requestAnimationFrame(step);return;}
+    function sCP(pts,i){const p=pts[i-1],c=pts[i],nx=pts[i+1]||c,k=0.2;return{cp1x:p.x+(c.x-p.x)*k+(c.x-p.x)*(1-k),cp1y:p.y+(c.y-p.y)*k,cp2x:c.x-(nx.x-p.x)*k,cp2y:c.y-(nx.y-p.y)*k};}
+    // area
+    function hr(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+    const [r,g,b]=hr(_detailColor);
+    const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+    grad.addColorStop(0,`rgba(${r},${g},${b},0.30)`);
+    grad.addColorStop(0.6,`rgba(${r},${g},${b},0.08)`);
+    grad.addColorStop(1,`rgba(${r},${g},${b},0)`);
+    ctx.beginPath(); ctx.moveTo(visPts[0].x,visPts[0].y);
+    for(let i=1;i<visPts.length;i++){const cp=sCP(visPts,i);ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,visPts[i].x,visPts[i].y);}
+    ctx.lineTo(visPts[visPts.length-1].x,pad.t+cH); ctx.lineTo(visPts[0].x,pad.t+cH);
+    ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    // line
+    ctx.beginPath(); ctx.moveTo(visPts[0].x,visPts[0].y);
+    for(let i=1;i<visPts.length;i++){const cp=sCP(visPts,i);ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,visPts[i].x,visPts[i].y);}
+    ctx.strokeStyle=_detailColor; ctx.lineWidth=2.2; ctx.stroke();
+    // dots (full pts only)
+    const fd=prog>=1?visPts:visPts.slice(0,-1);
+    fd.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fillStyle=_detailColor;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,1.4,0,Math.PI*2);ctx.fillStyle='#0A0908';ctx.fill();});
+    // x labels
+    const xl=document.getElementById('detail-x-labels');
+    if(xl&&prog===ease) xl.innerHTML=labels.map(l=>`<span style="font-family:'Space Mono',monospace;font-size:.5rem;color:var(--tm);">${l}</span>`).join('');
+    // store pts
+    canvas._pts=pts; canvas._vals=vals; canvas._labels=labels;
+    if(prog<1) _detailAnimRAF=requestAnimationFrame(step);
+  }
+  _detailAnimRAF=requestAnimationFrame(step);
 }
 
 function switchDetailPeriod(p){
   _detailPeriod=p;
-  document.querySelectorAll('.chart-period-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById('dper-'+p); if(btn) btn.classList.add('active');
+  ['7d','30d','90d'].forEach(x=>{
+    const btn=document.getElementById('dper-'+x);
+    if(btn) btn.classList.toggle('active',x===p);
+  });
   drawDetailChart();
 }
 
 function initDetailHover(){
-  const canvas=document.getElementById('detail-line-chart'); if(!canvas) return;
-  canvas.onmousemove=function(e){
-    const r=this.getBoundingClientRect(), mx=e.clientX-r.left;
-    const pts=this._pts||[], tip=document.getElementById('detail-chart-tooltip');
-    if(!tip) return;
-    let cl=null, md=40;
-    pts.forEach((p,i)=>{ const d=Math.abs(p.x-mx); if(d<md){md=d;cl={p,i};} });
-    if(cl){
-      const v=(this._vals||[])[cl.i], l=(this._labels||[])[cl.i];
-      tip.textContent=`${l}: ${v>=1?v.toFixed(1)+'K':'0'}`;
-      tip.style.display='block';
-      tip.style.left=Math.min(cl.p.x+10,this.clientWidth-120)+'px';
-      tip.style.top=(cl.p.y-36)+'px';
-    } else { tip.style.display='none'; }
-  };
-  canvas.onmouseleave=()=>{ const t=document.getElementById('detail-chart-tooltip'); if(t) t.style.display='none'; };
+  const canvas=document.getElementById('detail-line-chart');
+  const tip=document.getElementById('detail-chart-tooltip');
+  if(!canvas||!tip) return;
+  canvas.addEventListener('mousemove',e=>{
+    const pts=canvas._pts; if(!pts) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    let closest=null,minD=9999;
+    pts.forEach((p,i)=>{const d=Math.abs(p.x-mx);if(d<minD){minD=d;closest=i;}});
+    if(closest==null||minD>50){tip.style.opacity='0';return;}
+    const p=pts[closest];
+    tip.textContent=`${(canvas._labels||[])[closest]||''}: ${canvas._vals[closest]}`;
+    tip.style.opacity='1'; tip.style.left=p.x+'px'; tip.style.top=(p.y-10)+'px';
+  });
+  canvas.addEventListener('mouseleave',()=>tip.style.opacity='0');
 }
 
-/* ── SUBMIT MODAL ── */
-function openSubmitModal(campId){
-  _submitCampId=campId;
-  const c=CAMPAIGNS.find(x=>String(x.id)===String(campId)); if(!c) return;
-  document.getElementById('sm-camp-title').textContent=c.title;
-  document.getElementById('sm-camp-sub').textContent='Platform · '+c.platforms.join(' / ');
-  document.getElementById('sm-handle').value='';
-  document.getElementById('sm-url').value='';
-  document.getElementById('sm-err').style.display='none';
-  document.getElementById('sm-steps').classList.remove('hidden');
-  document.getElementById('sm-success').classList.add('hidden');
-  const pg=document.getElementById('sm-platforms');
-  pg.innerHTML=c.platforms.map((p,i)=>`<button class="plat-btn${i===0?' active':''}" data-plat="${esc(p)}" onclick="selectPlatform(this)">${esc(p)}</button>`).join('');
+
+// ── 3-STEP SUBMIT MODAL ──
+// Platform key map: campaign platform name -> connectedState key
+const PLATFORM_KEY_MAP = {
+  'TikTok':'tiktok','Instagram':'instagram',
+  'YouTube':'youtube','YouTube Shorts':'youtube'
+};
+const PLATFORM_ICONS = {
+  'TikTok':{
+    icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="color:#fff"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.94a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/></svg>',
+    bg:'rgba(255,255,255,.08)',border:'rgba(255,255,255,.15)',
+  },
+  'Instagram':{
+    icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    bg:'rgba(196,97,150,.1)',border:'rgba(196,97,150,.22)',
+  },
+  'YouTube':{
+    icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="#FF4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>',
+    bg:'rgba(255,0,0,.08)',border:'rgba(255,0,0,.18)',
+  },
+  'YouTube Shorts':{
+    icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="#FF4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>',
+    bg:'rgba(255,0,0,.08)',border:'rgba(255,0,0,.18)',
+  },
+};
+
+let _submitState = {step:1, campaignId:null, platform:null, account:null};
+
+function openSubmitModal(id){
+  _submitState = {step:1, campaignId:id, platform:null, account:null};
   document.getElementById('submit-modal').classList.remove('hidden');
-}
-function closeSubmitModal(){ document.getElementById('submit-modal').classList.add('hidden'); }
-document.getElementById('submit-modal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeSubmitModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSubmitModal(); });
-function selectPlatform(btn){ document.querySelectorAll('.plat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
-async function confirmSubmit(){
-  const platBtn=document.querySelector('.plat-btn.active');
-  const platform=platBtn?platBtn.dataset.plat:'Instagram';
-  const handle=document.getElementById('sm-handle').value.trim().replace(/^@/,'');
-  const url=document.getElementById('sm-url').value.trim();
-  const err=document.getElementById('sm-err');
-  err.style.display='none';
-  if(!handle){ err.textContent='Enter your handle.'; err.style.display='block'; return; }
-  if(!url||!url.startsWith('http')){ err.textContent='Enter a valid clip URL.'; err.style.display='block'; return; }
-  const btn=document.getElementById('sm-submit-btn'); btn.disabled=true; btn.textContent='Submitting…';
-  try{
-    const sb=getSb(); if(!sb) throw new Error('no supabase');
-    const c=CAMPAIGNS.find(x=>String(x.id)===String(_submitCampId));
-    const{error}=await sb.from('clip_submissions').insert([{
-      user_id:currentUser.id, campaign_id:_submitCampId,
-      campaign_title:c?.title||'', platform, handle, clip_url:url,
-      status:'pending', views:0, views_count:0, created_at:new Date().toISOString(),
-    }]);
-    if(error) throw error;
-    document.getElementById('sm-steps').classList.add('hidden');
-    document.getElementById('sm-success').classList.remove('hidden');
-    setTimeout(closeSubmitModal, 2500);
-  }catch(e){ err.textContent=e.message; err.style.display='block'; btn.disabled=false; btn.textContent='Submit Clip →'; }
+  renderModalStep();
 }
 
-/* ── SPIN ── */
-const styleEl=document.createElement('style');
-styleEl.textContent=`.spin{width:18px;height:18px;border:2px solid var(--s4);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}`;
-document.head.appendChild(styleEl);
+function closeSubmitModal(){
+  document.getElementById('submit-modal').classList.add('hidden');
+}
+
+function renderModalStep(){
+  const c = CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
+  const s = _submitState;
+  const steps = `
+    <div class="modal-steps">
+      <div class="modal-step-bar ${s.step>=1?'active':''}"></div>
+      <div class="modal-step-bar ${s.step>=2?'active':s.step>2?'done':''}"></div>
+      <div class="modal-step-bar ${s.step>=3?'active':''}"></div>
+    </div>`;
+
+  let content = '';
+
+  if(s.step===1){
+    // Parse platforms: support "All", "YouTube,Instagram", or array
+    const rawPlat = (Array.isArray(c.platforms)&&c.platforms.length) ? c.platforms.join(',') : (c.platform||'All');
+    const platforms = rawPlat==='All'||rawPlat===''
+      ? ['YouTube','Instagram','TikTok']
+      : rawPlat.split(',').map(p=>p.trim()).filter(Boolean);
+    content = `
+      ${steps}
+      <div class="modal-eyebrow">Step 1 of 3</div>
+      <div class="modal-title">Select Platform</div>
+      <div class="modal-subtitle">Where did you post your clip?</div>
+      <div class="platform-grid">
+        ${platforms.map(p=>{
+          const pi = PLATFORM_ICONS[p]||{icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>',bg:'var(--s3)',border:'var(--bsoft)'};
+          return `
+          <div class="platform-card ${s.platform===p?'selected':''}" onclick="_submitState.platform='${p}';renderModalStep();" style="position:relative;overflow:hidden;">
+            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:${pi.bg};border:1px solid ${pi.border};margin-bottom:4px;transition:transform .3s var(--ease-spring);">${pi.icon}</div>
+            <span class="p-name">${p}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="modal-nav">
+        <button class="modal-btn-next" ${!s.platform?'disabled':''} onclick="if(_submitState.platform){_submitState.step=2;renderModalStep();}">
+          Continue →
+        </button>
+      </div>`;
+  }
+
+  else if(s.step===2){
+    // Get accounts connected for this platform from connectedState
+    const pKey = PLATFORM_KEY_MAP[s.platform] || s.platform.toLowerCase();
+    // Use _verifiedAccounts loaded from Supabase, fallback to connectedState
+    const allVerified = window._verifiedAccountsList||[];
+    const platformAccs = allVerified.length
+      ? allVerified.filter(a=>a.platform?.toLowerCase()===pKey||a.platform?.toLowerCase()===s.platform?.toLowerCase()).map(a=>a.handle||a.username)
+      : (connectedState[pKey]||[]);
+    const noAccounts = platformAccs.length === 0;
+    content = `
+      ${steps}
+      <div class="modal-eyebrow">Step 2 of 3</div>
+      <div class="modal-title">Select Account</div>
+      <div class="modal-subtitle">Which ${s.platform} account did you post from?</div>
+      ${ noAccounts ? `
+        <div style="text-align:center;padding:22px 0;">
+          <div style="font-size:1.6rem;margin-bottom:10px;">🔗</div>
+          <div style="font-size:.9rem;font-weight:600;color:var(--tp);margin-bottom:6px;">No ${s.platform} accounts connected</div>
+          <p style="font-size:.78rem;color:var(--tm);line-height:1.5;margin-bottom:16px;">Connect a ${s.platform} account in your Profile to submit clips from it.</p>
+          <button class="modal-btn-next" style="width:100%;" onclick="closeSubmitModal();navigate('profile');">Go to Profile →</button>
+        </div>` : `
+        <div class="account-list">
+          ${platformAccs.map(handle=>{
+            const letter = handle.replace('@','')[0]?.toUpperCase()||'?';
+            return `
+            <div class="account-card ${s.account===handle?'selected':''}" onclick="_submitState.account='${handle}';renderModalStep();">
+              <div class="account-av">${letter}</div>
+              <div>
+                <div class="account-handle">${handle}</div>
+                <div class="account-sub">Connected · ${s.platform}</div>
+              </div>
+              <div class="account-sel-dot"></div>
+            </div>`;
+          }).join('')}
+        </div>`
+      }
+      <div class="modal-nav">
+        <button class="modal-btn-back" onclick="_submitState.step=1;renderModalStep();">← Back</button>
+        ${ !noAccounts ? `<button class="modal-btn-next" ${!s.account?'disabled':''} onclick="if(_submitState.account){_submitState.step=3;renderModalStep();}">
+          Continue →
+        </button>` : '' }
+      </div>`;
+  }
+
+  else if(s.step===3){
+    const placeholder = s.platform==='TikTok'?'https://tiktok.com/@user/video/...'
+      : s.platform==='Instagram'?'https://instagram.com/reel/...'
+      : 'https://youtube.com/shorts/...';
+    content = `
+      ${steps}
+      <div class="modal-eyebrow">Step 3 of 3</div>
+      <div class="modal-title">Paste Your Clip URL</div>
+      <div class="modal-subtitle" style="margin-bottom:16px;">Account: <strong style="color:var(--amber)">${s.account}</strong> · ${s.platform}</div>
+      <input class="modal-input" id="clip-url-input" type="url" placeholder="${placeholder}" style="margin-bottom:18px;"/>
+      <div class="modal-nav">
+        <button class="modal-btn-back" onclick="_submitState.step=2;renderModalStep();">← Back</button>
+        <button class="modal-btn-next" onclick="submitClip()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Submit Clip
+        </button>
+      </div>`;
+  }
+
+  document.getElementById('submit-modal-box').innerHTML = `
+    <button class="modal-close" onclick="closeSubmitModal()">✕</button>
+    ${content}
+  `;
+}
+
+async function submitClip(){
+  const url=document.getElementById('clip-url-input')?.value?.trim();
+  if(!url||!url.startsWith('http')){showToast('Please paste a valid clip URL');return;}
+  const btn=document.querySelector('.modal-btn-next:not([disabled])');
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)throw new Error('Not connected');
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('Not logged in');
+    // Find the connected account id for this platform+handle
+    const pKey=PLATFORM_KEY_MAP[_submitState.platform]||_submitState.platform.toLowerCase();
+    const{data:acct}=await sb.from('connected_accounts')
+      .select('id').eq('user_id',user.id)
+      .eq('platform',pKey).eq('handle',_submitState.account).eq('status','verified').maybeSingle();
+    if(!acct)throw new Error('Account not verified. Please verify your account first.');
+    const camp=CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
+    const{error}=await sb.from('clip_submissions').insert({
+      user_id:user.id,
+      connected_account_id:acct.id,
+      campaign_id:String(_submitState.campaignId),
+      campaign_title:camp?.title||'Campaign',
+      platform:_submitState.platform,
+      handle:_submitState.account,
+      clip_url:url,
+      views_count:0,
+      status:'pending',
+      earning_status:'pending',
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    });
+    if(error)throw error;
+    closeSubmitModal();
+    showToast('✓ Clip submitted! Our team will review within 24–48 hours.');
+  }catch(e){
+    showToast('Error: '+(e.message||'Could not submit'));
+    if(btn){btn.disabled=false;btn.textContent='Submit Clip';}
+  }
+}
+
+
+// ── STATS DATA ──
+let ALL_SUBMISSIONS = [];
+
+// ── CHART STATE ──
+let _chartMetric  = 'earnings';
+let _chartPeriod  = '7d';
+let _chartAnim    = 0; // 0→1 progress
+let _chartAnimRAF = null;
+let _openAppealIdx = null;
+
+let CHART_DATA = {
+  earnings:{
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0], prefix:'$'},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0],        prefix:'$'},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0],          prefix:'$'},
+  },
+  views:{
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0], prefix:'',suffix:'K'},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0],        prefix:'',suffix:'K'},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0],          prefix:'',suffix:'K'},
+  },
+  submissions:{
+    '7d':  {labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], values:[0,0,0,0,0,0,0]},
+    '30d': {labels:['Wk1','Wk2','Wk3','Wk4'],                  values:[0,0,0,0]},
+    '90d': {labels:['Mo1','Mo2','Mo3'],                          values:[0,0,0]},
+  },
+};
+
+const CHART_COLORS = {
+  earnings:'#C4956A',
+  views:'#6EE7B7',
+  submissions:'#A78BFA',
+};
+
+// ── DRAW LINE CHART ──
+function drawLineChart(progress=1){
+  const canvas = document.getElementById('stats-line-chart');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio||1;
+  const W   = canvas.parentElement.clientWidth||700;
+  const H   = 220;
+  canvas.style.width  = W+'px';
+  canvas.style.height = H+'px';
+  canvas.width  = W*dpr;
+  canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const d     = CHART_DATA[_chartMetric][_chartPeriod];
+  const color = CHART_COLORS[_chartMetric];
+  const vals  = d.values;
+  const n     = vals.length;
+  const maxV  = Math.max(...vals)*1.15||1;
+  const pad   = {l:52,r:24,t:24,b:36};
+  const cW    = W-pad.l-pad.r;
+  const cH    = H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+
+  // grid lines
+  const gridSteps=4;
+  const curSym = currentCurrency.symbol;
+  const curRate = currentCurrency.rate;
+  for(let i=0;i<=gridSteps;i++){
+    const y = pad.t + cH - (cH/gridSteps)*i;
+    ctx.beginPath();
+    ctx.strokeStyle='rgba(242,237,232,0.045)';
+    ctx.lineWidth=1;
+    ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    // y-axis label – use current currency for earnings
+    const raw=(maxV/gridSteps)*i;
+    let lbl;
+    if(d.suffix==='K'&&raw>=1000) lbl=(raw/1000).toFixed(1).replace(/\.0$/,'')+'M';
+    else if(d.prefix==='$'){
+      // earnings: convert USD → current currency
+      const converted = smartFloor(raw, curRate);
+      if(converted>=1000) lbl=curSym+(converted/1000).toFixed(1).replace(/\.0$/,'')+'K';
+      else lbl=curSym+Math.round(converted);
+    }
+    else if(raw>=1000) lbl=(raw/1000).toFixed(1)+'K';
+    else lbl=Math.round(raw)+(d.suffix||'');
+    ctx.fillStyle='rgba(106,97,88,0.9)';
+    ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText(lbl,pad.l-8,y+4);
+  }
+
+  // compute points
+  const pts = vals.map((v,i)=>({
+    x: pad.l + (n===1?cW/2:i*(cW/(n-1))),
+    y: pad.t + cH - (v/maxV)*cH,
+  }));
+
+  // clip to progress
+  const visLen = Math.max(1,(n-1)*progress);
+  const visIdx = Math.floor(visLen);
+  const visFrac= visLen - visIdx;
+
+  // build visible points array
+  const visPts = pts.slice(0, visIdx+1).map((p,i)=>({...p}));
+  if(visIdx < n-1 && visFrac>0){
+    const a=pts[visIdx], b=pts[visIdx+1];
+    visPts[visPts.length-1]={x:a.x+(b.x-a.x)*visFrac, y:a.y+(b.y-a.y)*visFrac};
+  }
+
+  if(visPts.length<1) return;
+
+  // area fill – proper gradient from color@0.28 → transparent
+  function hexToRgb(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`${r},${g},${b}`;}
+  const rgb=hexToRgb(color);
+  const grad = ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grad.addColorStop(0,`rgba(${rgb},0.32)`);
+  grad.addColorStop(0.6,`rgba(${rgb},0.10)`);
+  grad.addColorStop(1,`rgba(${rgb},0)`);
+  ctx.beginPath();
+  ctx.moveTo(visPts[0].x, visPts[0].y);
+  for(let i=1;i<visPts.length;i++){
+    const cp=smoothCP(visPts,i);
+    ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,visPts[i].x,visPts[i].y);
+  }
+  ctx.lineTo(visPts[visPts.length-1].x, pad.t+cH);
+  ctx.lineTo(visPts[0].x, pad.t+cH);
+  ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+
+  // line
+  ctx.beginPath();
+  ctx.moveTo(visPts[0].x,visPts[0].y);
+  for(let i=1;i<visPts.length;i++){
+    const cp=smoothCP(visPts,i);
+    ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,visPts[i].x,visPts[i].y);
+  }
+  ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+
+  // dots on full points only (not the in-progress interpolated last)
+  const fullDots = progress>=1 ? visPts : visPts.slice(0,-1);
+  fullDots.forEach((p,i)=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,4,0,Math.PI*2);
+    ctx.fillStyle=color;ctx.fill();
+    ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fillStyle='#0A0908';ctx.fill();
+  });
+
+  // x labels
+  const xlWrap=document.getElementById('chart-x-labels');
+  if(xlWrap){
+    xlWrap.innerHTML=d.labels.map(l=>`<span style="font-family:'Space Mono',monospace;font-size:.52rem;color:var(--tm);text-align:center;">${l}</span>`).join('');
+  }
+
+  // store pts for hover
+  canvas._chartPts  = pts;
+  canvas._chartData = d;
+  canvas._chartColor= color;
+  canvas._chartPad  = pad;
+  canvas._chartH    = H;
+  canvas._chartDpr  = dpr;
+}
+
+function smoothCP(pts,i){
+  const p=pts[i-1],c=pts[i],n=pts[i+1]||c;
+  const k=0.18;
+  return {
+    cp1x:p.x+(c.x-p.x)*k+(c.x-p.x)*(1-k),
+    cp1y:p.y+(c.y-p.y)*k,
+    cp2x:c.x-(n.x-p.x)*k,
+    cp2y:c.y-(n.y-p.y)*k,
+  };
+}
+
+function animateChart(){
+  if(_chartAnimRAF) cancelAnimationFrame(_chartAnimRAF);
+  _chartAnim=0;
+  const dur=700, start=performance.now();
+  function step(now){
+    _chartAnim=Math.min(1,(now-start)/dur);
+    const ease=1-Math.pow(1-_chartAnim,3);
+    drawLineChart(ease);
+    if(_chartAnim<1) _chartAnimRAF=requestAnimationFrame(step);
+  }
+  _chartAnimRAF=requestAnimationFrame(step);
+}
+
+function switchChartMetric(m){
+  _chartMetric=m;
+  ['earnings','views','submissions'].forEach(x=>
+    document.getElementById('cmet-'+x).classList.toggle('active',x===m));
+  animateChart();
+}
+
+function switchChartPeriod(p){
+  _chartPeriod=p;
+  ['7d','30d','90d'].forEach(x=>
+    document.getElementById('cper-'+x).classList.toggle('active',x===p));
+  animateChart();
+}
+
+// Hover tooltip
+function initChartHover(){
+  const canvas=document.getElementById('stats-line-chart');
+  const tip=document.getElementById('chart-tooltip');
+  if(!canvas||!tip) return;
+  canvas.addEventListener('mousemove',e=>{
+    const pts=canvas._chartPts;
+    if(!pts) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left);
+    let closest=null,minD=9999;
+    pts.forEach((p,i)=>{
+      const d=Math.abs(p.x-mx);
+      if(d<minD){minD=d;closest=i;}
+    });
+    if(closest==null||minD>50){tip.style.opacity='0';return;}
+    const p=pts[closest];
+    const d=canvas._chartData;
+    const v=d.values[closest];
+    let lbl;
+    if(d.prefix==='$'){
+      // earnings: convert via fmt()
+      lbl = fmt(v);
+    } else if(d.suffix==='K'&&v>=1000){
+      lbl=(v/1000).toFixed(1).replace(/\.0$/,'')+'M';
+    } else if(v>=1000&&_chartMetric!=='submissions'){
+      lbl=(v/1000).toFixed(1)+'K';
+    } else {
+      lbl=v+(d.suffix||'');
+    }
+    tip.textContent=`${d.labels[closest]}: ${lbl}`;
+    tip.style.opacity='1';
+    tip.style.left=p.x+'px';
+    tip.style.top=(p.y-10)+'px';
+  });
+  canvas.addEventListener('mouseleave',()=>tip.style.opacity='0');
+}
+
+// ── KPI SPARKLINES ──
+const KPI_SPARK_DATA = {
+  views:    {'7d':[12,28,22,45,60,38,72],'30d':[80,156,220,180,420],'90d':[520,810,1632]},
+  earnings: {'7d':[48,72,55,90,110,85,140],'30d':[120,280,450,320,680],'90d':[980,1340,2090]},
+  approval: {'7d':[75,80,78,82,85,80,83],'30d':[70,78,82,80,83],'90d':[72,80,83]},
+  submissions:{'7d':[1,0,1,2,1,0,2],'30d':[2,3,1,4,2],'90d':[4,7,8]},
+};
+let _kpiPeriod='7d';
+
+function drawKpiSpark(canvasId, data, color){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-40||200;
+  const H=52;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const n=data.length;
+  const maxV=Math.max(...data)||1;
+  const pad={l:2,r:2,t:4,b:2};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  const pts=data.map((v,i)=>({
+    x:pad.l+(n===1?cW/2:i*(cW/(n-1))),
+    y:pad.t+cH-(v/maxV)*cH
+  }));
+  // gradient fill
+  function hr(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+  const [r,g,b]=hr(color);
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grad.addColorStop(0,`rgba(${r},${g},${b},0.30)`);
+  grad.addColorStop(0.65,`rgba(${r},${g},${b},0.08)`);
+  grad.addColorStop(1,`rgba(${r},${g},${b},0)`);
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const prev=pts[i-1],cur=pts[i],nx=pts[i+1]||cur;
+    ctx.bezierCurveTo(prev.x+(cur.x-prev.x)*0.5,prev.y,cur.x-(nx.x-prev.x)*0.18,cur.y,cur.x,cur.y);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pad.t+cH);
+  ctx.lineTo(pts[0].x,pad.t+cH);
+  ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  // line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const prev=pts[i-1],cur=pts[i],nx=pts[i+1]||cur;
+    ctx.bezierCurveTo(prev.x+(cur.x-prev.x)*0.5,prev.y,cur.x-(nx.x-prev.x)*0.18,cur.y,cur.x,cur.y);
+  }
+  ctx.strokeStyle=color; ctx.lineWidth=1.8; ctx.stroke();
+  // dots
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,2.5,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x,p.y,1,0,Math.PI*2);
+    ctx.fillStyle='#0A0908'; ctx.fill();
+  });
+}
+
+function renderKpiSparks(){
+  drawKpiSpark('kpi-spark-views',    KPI_SPARK_DATA.views[_kpiPeriod],    '#C4956A');
+  drawKpiSpark('kpi-spark-earnings', KPI_SPARK_DATA.earnings[_kpiPeriod], '#C4956A');
+  drawKpiSpark('kpi-spark-approval', KPI_SPARK_DATA.approval[_kpiPeriod], '#C4956A');
+  drawKpiSpark('kpi-spark-submissions',KPI_SPARK_DATA.submissions[_kpiPeriod],'#C4956A');
+}
+
+function switchKpiPeriod(p){
+  _kpiPeriod=p;
+  ['7d','30d','90d'].forEach(x=>document.getElementById('kpi-per-'+x).classList.toggle('active',x===p));
+  renderKpiSparks();
+}
+
+// ── STATS RENDER ENTRY ──
+let TOTAL_EARNED_USD = 0; // sum of all approved earnings in USD
+
+function renderStats(){
+  const el=document.getElementById('stat-total-earned');
+  if(el)el.textContent=fmt(TOTAL_EARNED_USD);
+  animateChart();
+  setTimeout(initChartHover,100);
+  _myPage=0;_rejPage=0;
+  renderMySubmissions();
+  renderRejectedSubmissions();
+  // Load real data
+  loadStatsFromSupabase();
+}
+
+// ── PAGINATION HELPERS ──
+const PAGE_SIZE=5;
+let _myPage=0, _rejPage=0;
+
+function paginate(data, page){
+  const total=Math.ceil(data.length/PAGE_SIZE);
+  const start=page*PAGE_SIZE;
+  return {rows:data.slice(start,start+PAGE_SIZE), total, page};
+}
+
+function paginationBar(total, current, onClickFn){
+  if(total<=1) return '';
+  let btns='';
+  for(let i=0;i<total;i++){
+    btns+=`<button class="pg-btn${i===current?' active':''}" onclick="${onClickFn}(${i})">${i+1}</button>`;
+  }
+  return `<div class="pagination-bar">
+    <button class="pg-btn pg-nav" onclick="${onClickFn}(${Math.max(0,current-1)})" ${current===0?'disabled':''}>‹</button>
+    ${btns}
+    <button class="pg-btn pg-nav" onclick="${onClickFn}(${Math.min(total-1,current+1)})" ${current===total-1?'disabled':''}>›</button>
+  </div>`;
+}
+
+// ── MY SUBMISSIONS (all statuses, paginated) ──
+const statusStyle={
+  Approved:`color:var(--green);background:rgba(110,231,183,.1);border-color:rgba(110,231,183,.2);`,
+  Pending: `color:#FACC15;background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.2);`,
+  Rejected:`color:var(--red);background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);`,
+};
+
+function gotoMyPage(p){
+  _myPage=p;
+  renderMySubmissions();
+}
+
+function renderMySubmissions(){
+  const myTbl=document.getElementById('my-submissions-table');
+  if(!myTbl) return;
+  const {rows,total,page}=paginate(ALL_SUBMISSIONS,_myPage);
+  myTbl.innerHTML=`<table class="sub-table">
+    <thead><tr>
+      <th>Campaign</th><th>Platform</th>
+      <th style="text-align:right;">Views</th>
+      <th style="text-align:right;">Earned</th>
+      <th style="text-align:right;">Status</th>
+      <th style="text-align:right;">Link</th>
+    </tr></thead>
+    <tbody>${rows.map(s=>`
+      <tr>
+        <td class="camp-name">${s.camp}</td>
+        <td>${s.platform}</td>
+        <td style="text-align:right;">${s.views}</td>
+        <td style="text-align:right;color:${s.earnUsd!=null?'var(--green)':'var(--tm)'}">${s.earnUsd!=null ? fmt(s.earnUsd) : '—'}</td>
+        <td style="text-align:right;">
+          <span style="padding:3px 10px;border-radius:100px;font-size:.68rem;font-weight:600;border:1px solid;${statusStyle[s.status]||''}">${s.status}</span>
+        </td>
+        <td style="text-align:right;">${s.url
+          ?`<a class="open-link-btn" href="${s.url}" target="_blank" rel="noopener">↗ Open</a>`
+          :`<span style="color:var(--tm);font-size:.72rem;">—</span>`}
+        </td>
+      </tr>`).join('')}
+    </tbody></table>
+  ${paginationBar(total,page,'gotoMyPage')}`;
+}
+
+// ── REJECTED SUBMISSIONS (paginated) ──
+const ALL_REJECTED=()=>ALL_SUBMISSIONS.filter(s=>s.status==='Rejected');
+
+function gotoRejPage(p){
+  _rejPage=p;
+  renderRejectedSubmissions();
+}
+
+function renderRejectedSubmissions(){
+  const rejTbl=document.getElementById('rejected-submissions-table');
+  if(!rejTbl) return;
+  const rejected=ALL_REJECTED();
+  const {rows,total,page}=paginate(rejected,_rejPage);
+  rejTbl.innerHTML=`<table class="sub-table">
+    <thead><tr>
+      <th>Campaign</th><th>Platform</th>
+      <th style="text-align:right;">Views</th>
+      <th style="text-align:right;">Status</th>
+      <th style="text-align:right;">Link</th>
+      <th style="text-align:right;">Reason</th>
+    </tr></thead>
+    <tbody>${rows.map(s=>{
+      const globalIdx=ALL_SUBMISSIONS.indexOf(s);
+      return`<tr>
+        <td class="camp-name">${s.camp}</td>
+        <td>${s.platform}</td>
+        <td style="text-align:right;">${s.views}</td>
+        <td style="text-align:right;"><span style="padding:3px 10px;border-radius:100px;font-size:.68rem;font-weight:600;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);">Rejected</span></td>
+        <td style="text-align:right;">${s.url
+          ?`<a class="open-link-btn" href="${s.url}" target="_blank" rel="noopener">↗ Open</a>`
+          :`<span style="color:var(--tm);font-size:.72rem;">—</span>`}
+        </td>
+        <td style="text-align:right;"><button class="reason-btn" onclick="openRejectModal(${globalIdx})">${s.appealed?'✓ Appealed':'📋 Note'}</button></td>
+      </tr>`;}).join('')}
+    </tbody></table>
+  ${paginationBar(total,page,'gotoRejPage')}`;
+}
+
+function switchStatsTab(tab){
+  document.getElementById('tab-my').classList.toggle('active',tab==='my');
+  document.getElementById('tab-rejected').classList.toggle('active',tab==='rejected');
+  document.getElementById('panel-my').classList.toggle('active',tab==='my');
+  document.getElementById('panel-rejected').classList.toggle('active',tab==='rejected');
+}
+
+// ── REJECTION MODAL (per-submission appeal tracking) ──
+function openRejectModal(globalIdx){
+  _openAppealIdx=globalIdx;
+  const s=ALL_SUBMISSIONS[globalIdx];
+  document.getElementById('reject-modal-title').textContent=s.camp+' · '+s.platform;
+  document.getElementById('reject-modal-reason').textContent=s.reason||'No reason provided.';
+  // reset textarea & sent msg each time
+  const ta=document.getElementById('appeal-textarea');
+  const sentMsg=document.getElementById('appeal-sent-msg');
+  const sendBtn=document.querySelector('#reject-modal .modal-btn-next');
+  ta.value='';
+  ta.disabled=false;
+  sentMsg.classList.remove('show');
+  if(s.appealed){
+    ta.value='Appeal already submitted.';
+    ta.disabled=true;
+    sendBtn.disabled=true;
+    sentMsg.classList.add('show');
+  } else {
+    sendBtn.disabled=false;
+  }
+  document.getElementById('reject-modal').classList.remove('hidden');
+}
+
+function closeRejectModal(){
+  document.getElementById('reject-modal').classList.add('hidden');
+  _openAppealIdx=null;
+}
+
+function sendAppeal(){
+  if(_openAppealIdx===null) return;
+  const note=document.getElementById('appeal-textarea').value.trim();
+  if(!note){showToast('Please write an appeal note first');return;}
+  // mark this submission as appealed (permanent, per-submission)
+  ALL_SUBMISSIONS[_openAppealIdx].appealed=true;
+  document.getElementById('appeal-sent-msg').classList.add('show');
+  document.getElementById('appeal-textarea').disabled=true;
+  document.querySelector('#reject-modal .modal-btn-next').disabled=true;
+  // refresh rejected table so button shows "✓ Appealed"
+  renderRejectedSubmissions();
+  showToast('✓ Appeal sent to admin for review!');
+}
+
+// ── PAYOUTS ──
+let availableBalance = 0;
+const BASE_AVAILABLE = 0;
+const BASE_PENDING   = 0;
+const BASE_PAID      = 0;
+
+function renderPayouts(){
+  const balAvail=document.getElementById('bal-available');
+  const balPend=document.getElementById('bal-pending');
+  const balPaid=document.getElementById('bal-paid');
+  if(balAvail)balAvail.textContent=fmt(0);
+  if(balPend)balPend.textContent=fmt(0);
+  if(balPaid)balPaid.textContent=fmt(0);
+  const list=document.getElementById('tx-list');
+  if(list)list.innerHTML='<div style="padding:28px;text-align:center;color:var(--tm,rgba(255,255,255,.35))">Loading transactions…</div>';
+  loadPayoutsFromSupabase();
+}
+
+// ── WITHDRAW MODAL ──
+function openWithdrawModal(){
+  const modal = document.getElementById('withdraw-modal');
+  modal.classList.remove('hidden');
+  renderWithdrawStep1();
+}
+
+function closeWithdrawModal(){
+  const modal = document.getElementById('withdraw-modal');
+  modal.classList.add('hidden');
+}
+
+function renderWithdrawStep1(){
+  const content = document.getElementById('wd-content');
+  const sym = currentCurrency.symbol;
+  const rate = currentCurrency.rate;
+  // availableBalance is always stored in USD; convert for display
+  const dispBal = smartFloor(availableBalance, rate);
+  content.innerHTML = `
+    <p class="wd-eyebrow">Withdraw Funds</p>
+    <h2 class="wd-title">How much would you like to withdraw?</h2>
+    <p class="wd-subtitle">Enter amount in ${currentCurrency.code}. All transfers are processed in USD.</p>
+    
+    <div class="wd-amount-wrap">
+      <input type="text" class="wd-amount-input" id="wd-amount" value="${sym}${dispBal.toLocaleString()}" oninput="formatWdAmount(this)" />
+      <div class="wd-stepper">
+        <button class="wd-step-btn" onclick="adjustAmount(${Math.max(1,Math.round(10*rate))})" title="Increase">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button class="wd-step-btn" onclick="adjustAmount(-${Math.max(1,Math.round(10*rate))})" title="Decrease">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="wd-balance-hint">Available balance: <strong>${fmt(availableBalance)}</strong></div>
+    
+    <div class="wd-actions">
+      <button class="wd-btn-back" onclick="closeWithdrawModal()">Back</button>
+      <button class="wd-btn-confirm" id="wd-confirm-btn" onclick="confirmWithdraw()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+        Confirm Withdrawal
+      </button>
+    </div>
+  `;
+  validateWdAmount();
+}
+
+function formatWdAmount(input){
+  // Strip non-numeric, work in converted currency units
+  const rate = currentCurrency.rate;
+  const sym  = currentCurrency.symbol;
+  let raw = input.value.replace(/[^0-9]/g,'');
+  if(raw === '') raw = '0';
+  let num = parseInt(raw);
+  const maxConverted = smartFloor(availableBalance, rate);
+  if(num > maxConverted) num = maxConverted;
+  input.value = sym + num.toLocaleString();
+  validateWdAmount();
+}
+
+function getWdAmount(){
+  // Return value in USD (convert back from current currency)
+  const input = document.getElementById('wd-amount');
+  if(!input) return 0;
+  const rate = currentCurrency.rate;
+  const localAmt = parseInt(input.value.replace(/[^0-9]/g,'')) || 0;
+  return Math.round(localAmt / rate); // convert local → USD
+}
+
+function adjustAmount(delta){
+  const input = document.getElementById('wd-amount');
+  if(!input) return;
+  const rate = currentCurrency.rate;
+  const sym  = currentCurrency.symbol;
+  let current = parseInt(input.value.replace(/[^0-9]/g,'')) || 0;
+  const maxConverted = smartFloor(availableBalance, rate);
+  current = Math.max(0, Math.min(maxConverted, current + delta));
+  input.value = sym + current.toLocaleString();
+  // Add micro-animation to input
+  input.style.transform = delta > 0 ? 'scale(1.03)' : 'scale(0.97)';
+  setTimeout(() => input.style.transform = 'scale(1)', 150);
+  validateWdAmount();
+}
+
+function validateWdAmount(){
+  const btn = document.getElementById('wd-confirm-btn');
+  if(!btn) return;
+  const amt = getWdAmount();
+  btn.disabled = amt <= 0 || amt > availableBalance;
+}
+
+async function confirmWithdraw(){
+  const amt=getWdAmount();
+  if(amt<=0||amt>availableBalance)return;
+  const btn=document.getElementById('wd-confirm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Submitting\u2026';}
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)throw new Error('Not connected');
+    const{data,error}=await sb.rpc('clipper_request_payout',{p_amount:amt,p_note:null});
+    if(error)throw error;
+    const content=document.getElementById('wd-content');
+    content.innerHTML=`<div class="wd-success"><div class="wd-success-icon">\u2713</div><h2 class="wd-success-title">Withdrawal Request Submitted</h2><p class="wd-success-msg">Your request to withdraw <strong>${fmt(amt)}</strong> has been forwarded to the Clipency finance team.<br><br>Expected within 5\u20137 business days.</p><button class="wd-btn-close" onclick="closeWithdrawModal()">Close</button></div>`;
+    availableBalance-=amt;
+    if(document.getElementById('bal-available'))document.getElementById('bal-available').textContent=fmt(availableBalance);
+    setTimeout(()=>loadPayoutsFromSupabase(),800);
+    showToast('\u2713 Withdrawal request submitted!');
+  }catch(e){
+    showToast('Error: '+(e.message||'Could not submit'));
+    if(btn){btn.disabled=false;btn.textContent='Confirm Withdrawal';}
+  }
+}
+
+// Close withdraw modal on overlay click
+document.getElementById('withdraw-modal').addEventListener('click',function(e){
+  if(e.target === this) closeWithdrawModal();
+});
+
+// ── WALLET ──
+function renderWallet(){
+  const list=document.getElementById('payment-list');
+  if(!list) return;
+  if(paymentMethods.length===0){
+    list.innerHTML=`
+      <div class="wallet-empty-card">
+        <div class="wallet-empty-inner">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-bottom:8px;"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+          <div style="color:var(--ts);font-size:.88rem;font-weight:500;">No payment methods added yet.</div>
+          <div style="color:var(--tm);font-size:.76rem;margin-top:2px;">Add a method to start receiving payouts.</div>
+        </div>
+      </div>`;
+    return;
+  }
+  list.innerHTML=paymentMethods.map((m,i)=>`
+    <div class="pay-item ${m.primary?'primary-pay':''}" style="animation:kpiIn .35s var(--ease-out) ${i*.06}s both;">
+      <div class="pay-icon-new ${m.type==='upi'?'upi-icon':m.type==='paypal'?'paypal-icon':'crypto-icon'}">${m.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="pay-name">${m.name} ${m.primary?'<span class="tag" style="font-size:.6rem;margin-left:6px;">Primary</span>':''}</div>
+        <div class="pay-detail">${m.detail}</div>
+      </div>
+      <button class="pay-star ${m.primary?'is-primary':''}" onclick="setPrimary('${m.id}')" title="Set as primary">★</button>
+      <button class="pay-del" onclick="deletePay('${m.id}')" title="Remove method">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function setPrimary(id){
+  paymentMethods=paymentMethods.map(m=>({...m,primary:String(m.id)===String(id)}));
+  renderWallet();showToast('Primary method updated');
+}
+
+function deletePay(id){
+  paymentMethods=paymentMethods.filter(m=>String(m.id)!==String(id));
+  if(paymentMethods.length>0 && !paymentMethods.some(m=>m.primary)) paymentMethods[0].primary=true;
+  renderWallet();showToast('Payment method removed');
+}
+
+function hasType(type){ return paymentMethods.some(m=>m.type===type); }
+
+// ── ADD PAYMENT MODAL (3-step flow) ──
+let _addPayState = {};
+
+function openPayModal(){ document.getElementById('pay-modal').classList.remove('hidden'); }
+function closePayModal(){ document.getElementById('pay-modal').classList.add('hidden'); _addPayState={}; }
+
+document.getElementById('btn-add-payment').addEventListener('click',()=>{
+  _addPayState={step:1,type:null,cryptoToken:null,detail:''};
+  renderPayStep1();
+  openPayModal();
+});
+
+function renderPayStep1(){
+  const box=document.getElementById('pay-modal-box');
+  const availTypes=[];
+  if(!hasType('upi')) availTypes.push({key:'upi',icon:'<svg width="28" height="28" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#5F259F"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">UPI</text></svg>',label:'UPI',sub:'India Payments'});
+  if(!hasType('paypal')) availTypes.push({key:'paypal',icon:'<svg width="28" height="28" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#003087"/><text x="24" y="30" font-size="14" font-weight="bold" fill="#009CDE" text-anchor="middle" font-family="sans-serif">PP</text></svg>',label:'PayPal',sub:'Email-based'});
+  if(!hasType('crypto')) availTypes.push({key:'crypto',icon:'<svg width="28" height="28" viewBox="0 0 48 48"><rect width="48" height="48" rx="8" fill="#2775CA"/><text x="24" y="30" font-size="14" font-weight="bold" fill="white" text-anchor="middle" font-family="sans-serif">₿</text></svg>',label:'Crypto',sub:'USDC / SOL'});
+
+  if(availTypes.length===0){
+    box.innerHTML=`
+      <button class="modal-close" onclick="closePayModal()">✕</button>
+      <p class="modal-eyebrow">Wallet</p>
+      <div class="modal-title">All Methods Added</div>
+      <p class="modal-subtitle">You've already added one of each payment type (UPI, PayPal, Crypto). Use "Change Payment Info" to update details.</p>
+      <button class="wd-btn-close" onclick="closePayModal()">Close</button>`;
+    return;
+  }
+
+  const steps=`<div class="modal-steps"><div class="modal-step-bar active"></div><div class="modal-step-bar"></div><div class="modal-step-bar"></div></div>`;
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    ${steps}
+    <p class="modal-eyebrow">Step 1 of 3</p>
+    <div class="modal-title">Choose Payment Type</div>
+    <p class="modal-subtitle">Select the method you'd like to add for receiving payouts.</p>
+    <div class="pay-type-grid">
+      ${availTypes.map(t=>`
+        <div class="pay-type-card" id="ptc-${t.key}" onclick="selectPayType('${t.key}')">
+          <div class="pay-type-icon">${t.icon}</div>
+          <div class="pay-type-label">${t.label}</div>
+          <div class="pay-type-sub">${t.sub}</div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function selectPayType(type){
+  _addPayState.type=type;
+  document.querySelectorAll('.pay-type-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('ptc-'+type)?.classList.add('selected');
+  setTimeout(()=>{
+    if(type==='crypto') renderPayStep2Crypto();
+    else renderPayStep2Input();
+  },250);
+}
+
+function renderPayStep2Crypto(){
+  const box=document.getElementById('pay-modal-box');
+  const steps=`<div class="modal-steps"><div class="modal-step-bar done"></div><div class="modal-step-bar active"></div><div class="modal-step-bar"></div></div>`;
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    ${steps}
+    <p class="modal-eyebrow">Crypto</p>
+    <div class="modal-title">Select Token</div>
+    <p class="modal-subtitle">Choose your preferred cryptocurrency.</p>
+    <div class="crypto-token-grid">
+      <div class="crypto-token-card" id="ct-usdc" onclick="selectCryptoToken('usdc')">
+        <div class="crypto-token-icon"><img src="usdlogo.jpg" alt="USDC" style="width:32px;height:32px;object-fit:contain;border-radius:50%;"/></div>
+        <div class="crypto-token-name">USDC</div>
+        <div class="crypto-token-sub">USD Coin</div>
+      </div>
+      <div class="crypto-token-card" id="ct-sol" onclick="selectCryptoToken('sol')">
+        <div class="crypto-token-icon"><img src="sollogo.png" alt="SOL" style="width:32px;height:32px;object-fit:contain;"/></div>
+        <div class="crypto-token-name">SOL</div>
+        <div class="crypto-token-sub">Solana</div>
+      </div>
+    </div>
+    <div class="modal-nav" style="margin-top:16px;">
+      <button class="modal-btn-back" onclick="renderPayStep1()">← Back</button>
+    </div>`;
+}
+
+function selectCryptoToken(token){
+  _addPayState.cryptoToken=token;
+  document.querySelectorAll('.crypto-token-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('ct-'+token)?.classList.add('selected');
+  setTimeout(()=>renderPayStep2Input(),250);
+}
+
+function renderPayStep2Input(){
+  const box=document.getElementById('pay-modal-box');
+  const type=_addPayState.type;
+  const token=_addPayState.cryptoToken;
+  const labels={upi:{eyebrow:'ADD · UPI',title:'Enter UPI ID',placeholder:'yourname@upi',hint:'Enter your UPI address (e.g. name@paytm)'},paypal:{eyebrow:'ADD · PAYPAL',title:'Enter PayPal Email',placeholder:'you@example.com',hint:'Enter the email linked to your PayPal account'},crypto:{eyebrow:`ADD · ${(token||'').toUpperCase()}`,title:`Enter ${token==='usdc'?'USDC':'SOL'} Wallet Address`,placeholder:'Wallet address...',hint:`Paste your ${token==='usdc'?'USDC (SPL)':'Solana'} wallet address`}};
+  const l=labels[type];
+  const steps=`<div class="modal-steps"><div class="modal-step-bar done"></div><div class="modal-step-bar active"></div><div class="modal-step-bar"></div></div>`;
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    ${steps}
+    <p class="modal-eyebrow">${l.eyebrow}</p>
+    <div class="modal-title">${l.title}</div>
+    <p class="modal-subtitle">${l.hint}</p>
+    <label class="modal-label">${type==='upi'?'UPI ID':type==='paypal'?'PayPal Email':'Wallet Address'}</label>
+    <input class="modal-input" id="pay-detail-input" type="text" placeholder="${l.placeholder}" autofocus/>
+    <div class="modal-nav" style="margin-top:18px;">
+      <button class="modal-btn-back" onclick="${type==='crypto'?'renderPayStep2Crypto()':'renderPayStep1()'}">← Back</button>
+      <button class="modal-btn-next" id="pay-add-btn" onclick="finalizeAddPay()">Add Method</button>
+    </div>`;
+  document.getElementById('pay-detail-input').addEventListener('input',()=>{
+    document.getElementById('pay-add-btn').disabled=!document.getElementById('pay-detail-input').value.trim();
+  });
+  document.getElementById('pay-add-btn').disabled=true;
+}
+
+function finalizeAddPay(){
+  const detail=document.getElementById('pay-detail-input')?.value?.trim();
+  if(!detail) return;
+  const type=_addPayState.type;
+  const token=_addPayState.cryptoToken;
+  const icons={upi:'<img src="upilogo.png" alt="UPI" style="width:24px;height:24px;object-fit:contain;"/>',paypal:'<img src="paypallogo.jpg" alt="PayPal" style="width:24px;height:24px;object-fit:contain;border-radius:4px;"/>',crypto:token==='usdc'?'<img src="usdlogo.jpg" alt="USDC" style="width:24px;height:24px;object-fit:contain;border-radius:50%;"/>':'<img src="sollogo.png" alt="SOL" style="width:24px;height:24px;object-fit:contain;"/>'};
+  const names={upi:'UPI',paypal:'PayPal',crypto:token==='usdc'?'USDC Wallet':'SOL Wallet'};
+  const newMethod={id:Date.now(),type,cryptoToken:token||null,icon:icons[type],name:names[type],detail,primary:paymentMethods.length===0};
+  paymentMethods.push(newMethod);
+
+  // Show step 3 — success
+  const box=document.getElementById('pay-modal-box');
+  const steps=`<div class="modal-steps"><div class="modal-step-bar done"></div><div class="modal-step-bar done"></div><div class="modal-step-bar active"></div></div>`;
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    ${steps}
+    <div class="wd-success">
+      <div class="wd-success-icon" style="background:rgba(196,149,106,.1);border-color:rgba(196,149,106,.25);color:var(--amber);">✓</div>
+      <h2 class="wd-success-title">Method Added Successfully</h2>
+      <p class="wd-success-msg"><strong>${names[type]}</strong> has been added to your payment methods.${newMethod.primary?' It has been set as your <strong>primary</strong> method.':''}</p>
+      <button class="wd-btn-close" onclick="closePayModal()">Close</button>
+    </div>`;
+  renderWallet();
+  showToast('✓ Payment method added!');
+}
+
+// ── CHANGE PAYMENT INFO ──
+document.getElementById('btn-change-payment').addEventListener('click',()=>{
+  if(paymentMethods.length===0){showToast('No methods to edit — add one first.');return;}
+  const modal=document.getElementById('pay-modal');
+  const box=document.getElementById('pay-modal-box');
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    <p class="modal-eyebrow">Edit</p>
+    <div class="modal-title">Change Payment Info</div>
+    <p class="modal-subtitle">Select the method you'd like to update.</p>
+    <div class="change-pay-list">
+      ${paymentMethods.map(m=>`
+        <div class="change-pay-item" onclick="editPayMethod('${m.id}')">
+          <div class="pay-icon-new ${m.type==='upi'?'upi-icon':m.type==='paypal'?'paypal-icon':'crypto-icon'}">${m.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="pay-name">${m.name}</div>
+            <div class="pay-detail">${m.detail}</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </div>
+      `).join('')}
+    </div>`;
+  openPayModal();
+});
+
+function editPayMethod(id){
+  const m=paymentMethods.find(x=>String(x.id)===String(id));
+  if(!m) return;
+  const box=document.getElementById('pay-modal-box');
+  const labels={upi:'UPI ID',paypal:'PayPal Email',crypto:m.cryptoToken==='usdc'?'USDC Wallet Address':'SOL Wallet Address'};
+  box.innerHTML=`
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    <p class="modal-eyebrow">Edit · ${m.name}</p>
+    <div class="modal-title">Update Details</div>
+    <p class="modal-subtitle">Change the ${labels[m.type]?.toLowerCase()||'details'} for this method.</p>
+    <label class="modal-label">${labels[m.type]||'Details'}</label>
+    <input class="modal-input" id="edit-pay-input" type="text" value="${m.detail}" autofocus/>
+    <div class="modal-nav" style="margin-top:18px;">
+      <button class="modal-btn-back" onclick="document.getElementById('btn-change-payment').click()">← Back</button>
+      <button class="modal-btn-next" onclick="savePayEdit('${m.id}')">Save Changes</button>
+    </div>`;
+}
+
+function savePayEdit(id){
+  const val=document.getElementById('edit-pay-input')?.value?.trim();
+  if(!val){showToast('Please enter a value');return;}
+  const m=paymentMethods.find(x=>String(x.id)===String(id));
+  if(m) m.detail=val;
+  closePayModal();
+  renderWallet();
+  showToast('✓ Payment info updated!');
+}
+
+// ── CURRENCY ──
+// Smart floor: round down to nearest clean unit based on magnitude
+function smartFloor(usd, rate){
+  if(usd === null || usd === undefined || isNaN(usd)) return usd;
+  const val = usd * rate;
+  if(rate >= 50)       return Math.floor(val / 100) * 100;   // INR, JPY → nearest 100
+  else if(rate >= 5)   return Math.floor(val / 10) * 10;     // some currencies → nearest 10
+  else if(rate >= 1)   return Math.floor(val);                // AUD, CAD → nearest 1
+  else                 return Math.floor(val * 100) / 100;    // EUR, GBP → 2dp floor
+}
+
+// Format a USD dollar amount into current currency string
+function fmt(usd){
+  if(usd === null || usd === undefined) return '—';
+  const r = currentCurrency.rate;
+  const s = currentCurrency.symbol;
+  const val = smartFloor(usd, r);
+  return s + val.toLocaleString();
+}
+
+// Seed LIVE_RATES from static values immediately so fmt() works at startup
+const LIVE_RATES = {...RATES};
+const RATE_SYMBOLS = {USD:'$',INR:'₹',EUR:'€',GBP:'£',JPY:'¥',AUD:'A$',CAD:'C$'};
+
+// Populate dropdown with static rates right away (overwritten by live if fetch succeeds)
+function populateRateLabels(){
+  document.querySelectorAll('.curr-opt').forEach(btn => {
+    const code = btn.dataset.code;
+    const rateEl = btn.querySelector('.curr-rate');
+    if(rateEl && LIVE_RATES[code] !== undefined){
+      const r = LIVE_RATES[code];
+      rateEl.textContent = r >= 10 ? r.toFixed(0) : r.toFixed(2);
+      rateEl.classList.remove('loading');
+    }
+  });
+}
+
+// Fetch live rates from frankfurter.app
+function fetchLiveRates(){
+  const codes = ['INR','EUR','GBP','JPY','AUD','CAD'];
+  fetch(`https://api.frankfurter.app/latest?from=USD&to=${codes.join(',')}`)
+    .then(r => r.json())
+    .then(data => {
+      if(data && data.rates){
+        Object.assign(LIVE_RATES, data.rates);
+        // Update rate labels with live data
+        document.querySelectorAll('.curr-opt').forEach(btn => {
+          const code = btn.dataset.code;
+          const rateEl = btn.querySelector('.curr-rate');
+          if(rateEl && LIVE_RATES[code] !== undefined){
+            const r = LIVE_RATES[code];
+            rateEl.textContent = r >= 10 ? r.toFixed(0) : r.toFixed(2);
+            rateEl.classList.remove('loading');
+          }
+        });
+        // Refresh if user already switched to a non-USD currency
+        if(currentCurrency.code !== 'USD'){
+          currentCurrency.rate = LIVE_RATES[currentCurrency.code] || currentCurrency.rate;
+          refreshAllCurrencyDisplays();
+        }
+      }
+    })
+    .catch(() => { /* silently use static RATES already in LIVE_RATES */ });
+}
+
+// Re-render every section that shows money values
+function refreshAllCurrencyDisplays(){
+  renderCampaigns();
+  renderPayouts();
+  renderStats();
+  renderWallet();
+}
+
+document.getElementById('currency-toggle').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('currency-menu').classList.toggle('hidden');
+});
+
+document.querySelectorAll('.curr-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const code   = btn.dataset.code;
+    const symbol = btn.dataset.symbol || RATE_SYMBOLS[code] || code;
+    const rate   = LIVE_RATES[code] !== undefined ? LIVE_RATES[code] : (RATES[code] || 1);
+    currentCurrency = { code, symbol, rate };
+    document.getElementById('currency-flag').textContent = symbol;
+    document.getElementById('currency-code').textContent = code;
+    document.querySelectorAll('.curr-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('currency-menu').classList.add('hidden');
+    refreshAllCurrencyDisplays();
+    showToast('Currency switched to ' + code);
+  });
+});
+
+document.addEventListener('click', () => document.getElementById('currency-menu').classList.add('hidden'));
+
+// Init: seed dropdown labels from static rates immediately, then try live fetch
+populateRateLabels();
+fetchLiveRates();
+// Auto-refresh rates every 24 hours (86400000ms)
+setInterval(fetchLiveRates, 86400000);
+
+
+// ── SIDEBAR TOGGLE ──
+const sbToggle = document.getElementById('sb-toggle');
+const sbOverlay = document.getElementById('sb-overlay');
+const sidebar = document.getElementById('sidebar');
+
+function openSidebar(){
+  sidebar.classList.add('open');
+  sbToggle.classList.add('active');
+  sbOverlay.classList.add('visible');
+  document.body.style.overflow='hidden';
+}
+function closeSidebar(){
+  sidebar.classList.remove('open');
+  sbToggle.classList.remove('active');
+  sbOverlay.classList.remove('visible');
+  document.body.style.overflow='';
+}
+function toggleSidebar(){
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+}
+
+sbToggle.addEventListener('click', toggleSidebar);
+sbOverlay.addEventListener('click', closeSidebar);
+
+// Close sidebar on ESC
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && sidebar.classList.contains('open')) closeSidebar();
+});
+
+// Auto-close if resized back to desktop
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth > 900) closeSidebar();
+});
+
+// ── NAV CLICKS ──
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    navigate(btn.dataset.section);
+    if(window.innerWidth <= 900) closeSidebar();
+  });
+});
+
+// ── GENRE FILTERS ──
+document.getElementById('genre-filters').addEventListener('click',e=>{
+  const btn=e.target.closest('.filter-btn');
+  if(!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCampaigns(btn.dataset.genre);
+});
+
+// ── PROFILE EDIT ──
+function saveProfileEdit(){
+  const first = document.getElementById('ep-first')?.value.trim();
+  const last  = document.getElementById('ep-last')?.value.trim();
+  const disp  = document.getElementById('ep-display')?.value.trim();
+  if(!disp) return;
+  userName = disp;
+  const initials = (first?first[0]:'') + (last?last[0]:'');
+  const av = initials || disp[0];
+  document.getElementById('profile-display-name').textContent = disp;
+  document.getElementById('pi-display-name').textContent = disp;
+  document.getElementById('sb-name').textContent = disp;
+  document.getElementById('sb-avatar').textContent = av.toUpperCase();
+  document.getElementById('profile-avatar').textContent = av.toUpperCase();
+  document.getElementById('user-avatar').textContent = av.toUpperCase();
+  document.getElementById('user-name-camps').textContent = disp;
+  showToast('✓ Profile saved!');
+}
+
+// ── USERNAME EDIT ──
+function toggleUsernameEdit(){
+  const row = document.getElementById('pi-username-edit-row');
+  const inp = document.getElementById('pi-username-input');
+  const showing = row.style.display !== 'none';
+  row.style.display = showing ? 'none' : 'block';
+  if(!showing){ inp.value = document.getElementById('pi-username').textContent; inp.focus(); }
+}
+function saveUsername(){
+  const v = document.getElementById('pi-username-input').value.trim();
+  if(!v){ showToast('Username cannot be empty'); return; }
+  const clean = (v.startsWith('@') ? v : '@'+v).toLowerCase().replace(/[^@a-z0-9_]/g,'');
+  document.getElementById('pi-username').textContent = clean;
+  document.getElementById('pi-username-edit-row').style.display = 'none';
+  showToast('✓ Username updated!');
+}
+
+// ── CONNECT ACCOUNT MODAL ──
+const connectedState = { tiktok: [], instagram: [], youtube: [] };
+const pendingVerifications = { tiktok: [], instagram: [], youtube: [] };
+const FIXED_CODE = '150506';
+let _countdownTimer = null;
+
+function clearCountdown(){ if(_countdownTimer){ clearInterval(_countdownTimer); _countdownTimer=null; } }
+
+function openConnectModal(platformName, platformKey){
+  clearCountdown();
+  document.getElementById('connect-modal').classList.remove('hidden');
+  renderConnectStep1(platformName, platformKey);
+}
+function closeConnectModal(){
+  clearCountdown();
+  document.getElementById('connect-modal').classList.add('hidden');
+}
+
+// Render verified + pending chips for a platform
+function renderPlatformAccounts(platformKey){
+  const el = document.getElementById(`conn-${platformKey}-accounts`);
+  if(!el) return;
+  const verified = connectedState[platformKey];
+  const pending  = (pendingVerifications[platformKey]||[]).filter(p=>p.status==='pending');
+  if(!verified.length && !pending.length){
+    el.innerHTML = `<span style="font-size:.74rem;color:var(--tm);">No accounts connected</span>`;
+    return;
+  }
+  const vHtml = verified.map(u=>`
+    <span class="conn-chip" title="Verified">
+      <span style="font-size:.65rem;color:var(--green);">✓</span>
+      <span class="conn-chip-handle">${u.startsWith('@')?u:'@'+u}</span>
+      <button class="conn-chip-remove" onclick="removeAccount('${platformKey}','${u}')" title="Remove">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </span>`).join('');
+  const pHtml = pending.map(p=>`
+    <span class="conn-chip" style="background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.2);" title="Pending team review">
+      <span style="font-size:.65rem;color:#FACC15;">⏳</span>
+      <span class="conn-chip-handle" style="color:#FACC15;">${p.handle}</span>
+    </span>`).join('');
+  el.innerHTML = vHtml + pHtml;
+}
+
+function removeAccount(platformKey, username){
+  connectedState[platformKey] = connectedState[platformKey].filter(u=>u!==username);
+  pendingVerifications[platformKey] = (pendingVerifications[platformKey]||[]).filter(p=>p.handle!==username&&p.handle!==('@'+username));
+  renderPlatformAccounts(platformKey);
+  showToast(`Removed ${username.startsWith('@')?username:'@'+username}`);
+  // Delete from Supabase
+  (async()=>{
+    try{
+      const sb=window.clipencySupabase||window.supabaseClient;
+      if(!sb)return;
+      const{data:{user}}=await sb.auth.getUser();
+      if(!user)return;
+      const handle=username.startsWith('@')?username:'@'+username;
+      await sb.from('connected_accounts').delete().eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle);
+    }catch(e){console.warn('removeAccount supabase:',e.message);}
+  })();
+}
+
+function renderConnectStep1(platformName, platformKey){
+  const box = document.getElementById('connect-modal-box');
+  box.innerHTML = `
+    <button class="cm-close" onclick="closeConnectModal()">✕</button>
+    <p class="cm-eyebrow">Connect Account</p>
+    <div class="cm-title">Connect ${platformName}</div>
+    <p class="cm-subtitle">Enter your ${platformName} username to receive your verification code.</p>
+    <label style="font-family:'Space Mono',monospace;font-size:.54rem;text-transform:uppercase;letter-spacing:.12em;color:var(--tm);display:block;margin-bottom:5px;">${platformName} Username</label>
+    <input class="cm-input" id="cm-username-input" type="text" placeholder="@yourusername" autofocus/>
+    <div class="cm-actions">
+      <button class="cm-btn-cancel" onclick="closeConnectModal()">Close</button>
+      <button class="cm-btn-verify" id="cm-next-btn" onclick="renderConnectStep2('${platformName}','${platformKey}')" disabled>
+        Get Verification Code →
+      </button>
+    </div>`;
+  const inp = document.getElementById('cm-username-input');
+  inp.addEventListener('input', () => {
+    document.getElementById('cm-next-btn').disabled = !inp.value.trim();
+  });
+}
+
+function renderConnectStep2(platformName, platformKey){
+  const username = document.getElementById('cm-username-input')?.value.trim();
+  if(!username) return;
+  clearCountdown();
+  const code = FIXED_CODE;
+
+  const box = document.getElementById('connect-modal-box');
+  box.innerHTML = `
+    <button class="cm-close" onclick="closeConnectModal()">✕</button>
+    <p class="cm-eyebrow">Verify · ${platformName}</p>
+    <div class="cm-title">Add Code to Your Bio</div>
+    <p class="cm-subtitle">Copy this code and paste it <strong style="color:var(--amber)">anywhere in your ${platformName} bio</strong>, then click the button below.</p>
+    <div class="cm-code-box">
+      <p class="cm-code-label">Your Verification Code</p>
+      <div class="cm-code-val">${code}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;">
+        <button onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('\u2713 Code copied!'))" style="padding:5px 16px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--amber);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;">Copy Code</button>
+      </div>
+    </div>
+    <div class="cm-instruction">
+      1. Open <strong>${platformName}</strong> → your profile → Edit Bio.<br>
+      2. Paste <strong style="color:var(--amber);font-family:'Space Mono',monospace">${code}</strong> anywhere in your bio and save.<br>
+      3. Come back here and click <strong>I've Added the Code</strong>.
+    </div>
+    <div class="cm-actions">
+      <button class="cm-btn-cancel" onclick="renderConnectStep1('${platformName}','${platformKey}')">← Back</button>
+      <button class="cm-btn-verify" id="cm-verify-btn" onclick="submitForReview('${platformName}','${platformKey}','${username}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        I've Added the Code
+      </button>
+    </div>`;
+}
+
+async function submitForReview(platformName, platformKey, username){
+  clearCountdown();
+  const handle = username.startsWith('@') ? username : '@'+username;
+  const box = document.getElementById('connect-modal-box');
+  // Disable button immediately
+  const btn = document.getElementById('cm-verify-btn');
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+
+  try{
+    const sb = window.clipencySupabase||window.supabaseClient;
+    if(!sb) throw new Error('Not connected to database');
+    const{data:{user},error:authErr}=await sb.auth.getUser();
+    if(authErr||!user) throw new Error('Please sign in again');
+
+    // Check not already submitted
+    const{data:existing}=await sb.from('connected_accounts')
+      .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
+
+    if(existing && existing.status==='verified'){
+      showToast('✓ This account is already verified!');
+      closeConnectModal();
+      return;
+    }
+
+    // Check if already exists then insert or update
+    // Check if this exact handle is already verified on this platform
+    const{data:existingAcct}=await sb.from('connected_accounts')
+      .select('id,status').eq('user_id',user.id).eq('platform',platformKey).eq('handle',handle).maybeSingle();
+    let error;
+    if(existingAcct?.status==='verified'){
+      showToast('✓ @'+handle+' is already verified on '+platformName+'!');
+      closeConnectModal();
+      return;
+    }
+    if(existingAcct){
+      // Retry pending verification
+      ({error}=await sb.from('connected_accounts').update({
+        verification_code:FIXED_CODE,status:'pending',is_verified:false,
+        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
+        updated_at:new Date().toISOString()
+      }).eq('id',existingAcct.id));
+    }else{
+      // Add new account (multiple accounts per platform allowed)
+      ({error}=await sb.from('connected_accounts').insert({
+        user_id:user.id,platform:platformKey,handle:handle,username:handle,
+        verification_code:FIXED_CODE,status:'pending',is_verified:false,
+        expires_at:new Date(Date.now()+24*60*60*1000).toISOString(),
+        created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }));
+    }
+    if(error) throw error;
+
+    // Add to local pending state
+    if(!pendingVerifications[platformKey].find(p=>p.handle===handle)){
+      pendingVerifications[platformKey].push({id:Date.now(),handle,platformName,platformKey,code:FIXED_CODE,submittedAt:new Date().toISOString(),status:'pending'});
+    }
+    renderPlatformAccounts(platformKey);
+
+    // Show success UI
+    if(box) box.innerHTML = `
+      <div style="text-align:center;padding:8px 0;">
+        <div style="width:66px;height:66px;border-radius:50%;background:rgba(250,204,21,.1);border:2px solid rgba(250,204,21,.3);display:inline-flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:16px;animation:successPop2 .5s var(--ease-spring);">⏳</div>
+        <p class="cm-eyebrow" style="text-align:center;color:#FACC15;">Under Review</p>
+        <div class="cm-success-title">Submitted for Verification</div>
+        <p class="cm-success-msg">Your <strong>${platformName}</strong> account <strong>${handle}</strong> is now <strong style="color:#FACC15;">under review</strong> by the Clipency team.<br><br>Verification takes up to <strong>24 hours</strong>. Once approved, it moves to ✓ Connected.</p>
+        <div style="background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.2);border-radius:11px;padding:13px 16px;margin-bottom:20px;text-align:left;font-size:.79rem;color:var(--ts);line-height:1.6;">
+          ⚠ <strong style="color:#FACC15;">Keep the code ${FIXED_CODE} in your bio</strong> until verification is complete.
+        </div>
+        <button class="cm-btn-verify" style="width:100%;justify-content:center;" onclick="closeConnectModal()">Got it — Close</button>
+      </div>`;
+    showToast('⏳ Submitted — team reviewing within 24h');
+
+  }catch(e){
+    console.error('submitForReview error:',e);
+    if(box){
+      const errEl=document.createElement('div');
+      errEl.style.cssText='background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:.83rem;color:#F87171;';
+      errEl.textContent='Error: '+(e.message||'Could not submit. Try again.');
+      box.appendChild(errEl);
+    }
+    if(btn){btn.disabled=false;btn.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> I've Added the Code`;}
+  }
+}
+
+document.getElementById('connect-modal').addEventListener('click', function(e){
+  if(e.target === this){ clearCountdown(); closeConnectModal(); }
+});
+
+
+// Init platform account lists — load from Supabase
+async function loadAccountsFromSupabase(){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)return;
+    const{data:accounts}=await sb.from('connected_accounts').select('*').eq('user_id',user.id);
+    if(!accounts?.length)return;
+    accounts.forEach(a=>{
+      const pk=(a.platform||'').toLowerCase();
+      const handle=a.handle||a.username||'';
+      if(!handle)return;
+      if(a.status==='verified'||a.is_verified===true){
+        if(connectedState[pk]!==undefined&&!connectedState[pk].includes(handle))
+          connectedState[pk].push(handle);
+        if(pendingVerifications[pk])
+          pendingVerifications[pk]=pendingVerifications[pk].filter(p=>p.handle!==handle);
+      }else if(a.status==='pending'){
+        if(pendingVerifications[pk]!==undefined&&!pendingVerifications[pk].find(p=>p.handle===handle))
+          pendingVerifications[pk].push({handle,status:'pending',platformName:a.platform});
+      }
+    });
+    ['tiktok','instagram','youtube'].forEach(k=>renderPlatformAccounts(k));
+  }catch(e){console.warn('loadAccountsFromSupabase:',e.message);}
+}
+['tiktok','instagram','youtube'].forEach(k => renderPlatformAccounts(k));
+// Load real data from Supabase after page ready
+setTimeout(loadAccountsFromSupabase, 800);
+setTimeout(loadProfileFromSupabase, 400);
+
+async function loadProfileFromSupabase(){
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb)return;
+    const{data:{user},error:authErr}=await sb.auth.getUser();
+    if(authErr||!user)return;
+
+    // Load profile from DB
+    const{data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!p)return;
+
+    const fullName=([p.first_name,p.last_name].filter(Boolean).join(' ')||p.display_name||p.full_name||user.email?.split('@')[0]||'Clipper').trim();
+    const displayName=p.display_name||fullName;
+    const username=p.username||'';
+    const email=p.email||user.email||'';
+    const initials=(fullName.split(' ').map(w=>w[0]||'').join('').slice(0,2)||'C').toUpperCase();
+
+    // ── Hero section ──
+    const dn=document.getElementById('profile-display-name');
+    if(dn)dn.textContent=fullName;
+    const em=document.getElementById('profile-email');
+    if(em)em.textContent=email;
+
+    // ── Performance identity rows ──
+    const piDn=document.getElementById('pi-display-name');
+    if(piDn)piDn.textContent=displayName;
+    const piUn=document.getElementById('pi-username');
+    if(piUn)piUn.textContent=username?'@'+username:'—';
+
+    // ── Sidebar avatar + name ──
+    document.querySelectorAll('[data-user-name],[class*="user-name"]').forEach(el=>{if(el.textContent.length<60)el.textContent=fullName;});
+    document.querySelectorAll('[data-staff-name],[id*="staff-name"],[class*="sb-name"]').forEach(el=>el.textContent=fullName);
+    document.querySelectorAll('[data-staff-initials],[id*="staff-initials"]').forEach(el=>{if(el.textContent.length<=3)el.textContent=initials;});
+
+    // ── Edit profile form ──
+    const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+    const setValQ=(sel,v)=>{const el=document.querySelector(sel);if(el)el.value=v;};
+    // Edit profile form — exact IDs
+    setVal('ep-first', p.first_name||'');
+    setVal('ep-last',  p.last_name||'');
+    setVal('ep-display', displayName);
+    setVal('pi-username-input', username);
+
+    // Sidebar name elements
+    setVal('sb-name', fullName);
+    const sbName=document.getElementById('sb-name');
+    if(sbName)sbName.textContent=fullName;
+    const unCamps=document.getElementById('user-name-camps');
+    if(unCamps)unCamps.textContent=fullName;
+    const uAv=document.getElementById('user-avatar');
+    if(uAv)uAv.textContent=initials;
+
+    // ── Stats: views + earned ──
+    const[{data:subs},{data:payReqs}]=await Promise.all([
+      sb.from('clip_submissions').select('approved_amount,views_count,status').eq('user_id',user.id),
+      sb.from('payout_requests').select('amount,status').eq('user_id',user.id)
+    ]);
+    const totalViews=(subs||[]).reduce((a,s)=>a+(Number(s.views_count||s.views||0)),0);
+    const totalEarned=(subs||[]).filter(s=>s.status==='approved').reduce((a,s)=>a+(Number(s.approved_amount)||0),0);
+    const totalPaid=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
+
+    const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
+    const fmtM=n=>'₹'+Number(n).toLocaleString('en-IN');
+
+    // Update perf rows: views (2nd row), earned (3rd row)
+    const perfRows=document.querySelectorAll('.perf-row');
+    perfRows.forEach(row=>{
+      const lbl=(row.querySelector('.perf-row-label')||{}).textContent||'';
+      const val=row.querySelector('.perf-row-val');
+      if(!val)return;
+      if(lbl.toUpperCase().includes('VIEW'))val.textContent=fmtV(totalViews);
+      if(lbl.toUpperCase().includes('EARN'))val.textContent=fmtM(totalEarned);
+    });
+
+    // ── Clipency Rank ──
+    try{
+      // Get total earned per user to calculate rank
+      const{data:allEarnings}=await sb.from('clip_submissions')
+        .select('user_id,approved_amount')
+        .eq('status','approved');
+      // Sum per user
+      const earningMap={};
+      (allEarnings||[]).forEach(r=>{
+        earningMap[r.user_id]=(earningMap[r.user_id]||0)+(Number(r.approved_amount)||0);
+      });
+      const myEarned=earningMap[user.id]||0;
+      const sortedEarners=Object.values(earningMap).sort((a,b)=>b-a);
+      const rankPos=sortedEarners.findIndex(v=>v<=myEarned)+1||sortedEarners.length+1;
+      const totalClippers=Object.keys(earningMap).length||1;
+      const rankBox=document.querySelector('.creator-rank-sub');
+      const rankLabel=document.querySelector('.creator-rank-label');
+      if(rankLabel)rankLabel.textContent='Clipency Rank';
+      if(rankBox){
+        if(myEarned===0){
+          rankBox.innerHTML='<span style="font-size:.75rem;color:var(--ts)">Submit clips<br/>to earn your rank</span>';
+        }else{
+          rankBox.innerHTML=`<span style="font-size:1.5rem;font-weight:700;color:var(--amber);font-family:'DM Sans',sans-serif;letter-spacing:-.02em">#${rankPos}</span><br/><span style="font-size:.68rem;color:var(--ts)">of ${totalClippers} clippers</span>`;
+        }
+      }
+    }catch(rankErr){console.warn('rank:',rankErr.message);}
+
+    console.log('[Profile] Loaded:',fullName,'| Earned:',totalEarned,'| Rank:#'+rankPos);
+  }catch(e){console.warn('[Profile] loadProfileFromSupabase:',e.message);}
+}
+
+
+
+document.getElementById('btn-signout').addEventListener('click',()=>showToast('Signed out. See you soon!'));
+
+document.getElementById('submit-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+document.getElementById('pay-modal').addEventListener('click',function(e){if(e.target===this)closePayModal();});
+document.getElementById('reject-modal').addEventListener('click',function(e){if(e.target===this)closeRejectModal();});
+
+// ── INIT ──
+window.addEventListener('load',()=>{
+  // Load verified accounts for clip submission modal
+  (async()=>{
+    try{
+      const sb=window.clipencySupabase||window.supabaseClient;
+      if(!sb)return;
+      for(let i=0;i<30;i++){const c=window.clipencySupabase||window.supabaseClient;if(c?.auth){break;}await new Promise(r=>setTimeout(r,200));}
+      const sb2=window.clipencySupabase||window.supabaseClient;
+      if(!sb2)return;
+      const{data:{user}}=await sb2.auth.getUser();
+      if(!user)return;
+      const{data:accts}=await sb2.from('connected_accounts').select('*').eq('user_id',user.id).eq('status','verified');
+      window._verifiedAccountsList=accts||[];
+      // Also update connectedState for backward compat
+      (accts||[]).forEach(a=>{
+        const pk=(a.platform||'').toLowerCase();
+        if(connectedState[pk]!==undefined&&!connectedState[pk].includes(a.handle))
+          connectedState[pk].push(a.handle);
+      });
+    }catch(e){console.warn('loadVerifiedAccounts:',e.message);}
+  })();
+  const overlay=document.getElementById('loading-overlay');
+  overlay.classList.add('fade-out');
+  setTimeout(()=>overlay.remove(),500);
+  renderCampaigns();
+  renderPayouts();
+  renderWallet();
+});
+</script>
+<script>
+(function(){
+  var sectionMap={"/campaigns":"campaigns","/dashboard":"campaigns","/stats":"stats","/payouts":"payouts","/wallet":"wallet","/profile":"profile"};
+  var titleMap={"campaigns":"Clipency | Campaigns","stats":"Clipency | Stats","payouts":"Clipency | Payouts","wallet":"Clipency | Wallet","profile":"Clipency | Profile"};
+  var path=window.location.pathname.replace(/\/$/,"");
+  var section=sectionMap[path]||"campaigns";
+  window.addEventListener("load",function(){
+    setTimeout(function(){
+      if(typeof navigate==="function"){navigate(section);document.title=titleMap[section]||"Clipency";}
+    },120);
+  });
+  document.addEventListener("DOMContentLoaded",function(){
+    var urlMap={campaigns:"/campaigns",stats:"/stats",payouts:"/payouts",wallet:"/wallet",profile:"/profile"};
+    document.querySelectorAll(".nav-item[data-section]").forEach(function(btn){
+      var sec=btn.dataset.section;
+      if(!urlMap[sec])return;
+      btn.addEventListener("click",function(){
+        history.pushState({section:sec},"",urlMap[sec]);
+        document.title=titleMap[sec]||"Clipency";
+      },true);
+    });
+    window.addEventListener("popstate",function(e){
+      var sec=(e.state&&e.state.section)||sectionMap[location.pathname.replace(/\/$/,"")]||"campaigns";
+      if(typeof navigate==="function"){navigate(sec);document.title=titleMap[sec]||"Clipency";}
+    });
+  });
+})();
+</script>
+
+<script>
+// Payouts live data patch
+(async function patchPayouts(){
+  await new Promise(r=>setTimeout(r,1200));
+  const sb=window.clipencySupabase||window.supabaseClient;
+  if(!sb)return;
+  try{
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)return;
+    const{data:bal}=await sb.rpc('get_clipper_balance',{p_user_id:user.id});
+    if(!bal)return;
+    
+    const avail=Number(bal.available_balance)||0;
+    const pending=Number(bal.pending_withdrawal)||0;
+    const paid=Number(bal.total_withdrawn)||0;
+    const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
+    
+    // Update balance cards
+    ['bal-available','#bal-available'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(avail);
+    });
+    ['bal-pending','#bal-pending'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(pending);
+    });
+    ['bal-paid','#bal-paid'].forEach(id=>{
+      const el=document.getElementById(id.replace('#',''));
+      if(el)el.textContent=fmt(paid);
+    });
+    
+    // Load transactions
+    const[{data:subs},{data:reqs}]=await Promise.all([
+      sb.from('clip_submissions').select('campaign_title,platform,approved_amount,reviewed_at,created_at').eq('user_id',user.id).eq('status','approved').order('reviewed_at',{ascending:false}),
+      sb.from('payout_requests').select('*').eq('user_id',user.id).order('requested_at',{ascending:false})
+    ]);
+    
+    const txItems=[];
+    (subs||[]).forEach(s=>txItems.push({
+      icon:'📎',desc:(s.campaign_title||'Campaign')+' · '+(s.platform||''),
+      date:new Date(s.reviewed_at||s.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'}),
+      amount:Number(s.approved_amount)||0,neg:false,status:'Paid',
+      ts:new Date(s.reviewed_at||s.created_at).getTime()
+    }));
+    (reqs||[]).forEach(p=>txItems.push({
+      icon:'💸',desc:'Withdrawal request',
+      date:new Date(p.requested_at||p.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'}),
+      amount:Number(p.amount)||0,neg:true,
+      status:p.status==='paid'?'Sent':p.status==='pending'?'Processing':'Pending',
+      ts:new Date(p.requested_at||p.created_at).getTime()
+    }));
+    txItems.sort((a,b)=>b.ts-a.ts);
+    
+    const list=document.getElementById('tx-list');
+    if(list){
+      if(!txItems.length){
+        list.innerHTML='<div style="padding:28px;text-align:center;color:rgba(255,255,255,.35)">No transactions yet.</div>';
+      } else {
+        list.innerHTML=txItems.map(t=>`<div class="tx-item">
+          <div class="tx-icon">${t.icon}</div>
+          <div style="flex:1"><div class="tx-desc">${t.desc}</div><div class="tx-date">${t.date}</div></div>
+          <div><div class="tx-amount" style="${t.neg?'color:#F87171':''}">${t.neg?'-':''}${fmt(t.amount)}</div>
+          <div class="tx-status">${t.status}</div></div>
+        </div>`).join('');
+      }
+    }
+    
+    // Update availableBalance global for withdraw modal
+    if(typeof window.availableBalance!=='undefined')window.availableBalance=avail;
+    // Update withdraw modal balance display
+    document.querySelectorAll('[id*="wd-avail"],[id*="withdraw-balance"],[class*="wd-bal"]').forEach(el=>el.textContent=fmt(avail));
+    // Patch getWdAmount to use real balance
+    window.__realAvailableBalance=avail;
+    // Override openWithdrawModal to use real balance
+    const _origOpenWd = window.openWithdrawModal;
+    window.openWithdrawModal = function(){
+      if(_origOpenWd) _origOpenWd();
+      setTimeout(()=>{
+        const bal = window.__realAvailableBalance || 0;
+        // Fix balance hint
+        const hint = document.querySelector('.wd-balance-hint strong');
+        if(hint) hint.textContent = '₹'+Number(bal).toLocaleString('en-IN');
+        // Make input directly editable
+        const inp = document.querySelector('.wd-input, #wd-amount-display, [class*="wd-amount"]');
+        if(inp && inp.tagName!=='INPUT'){
+          // Replace display div with real input
+          const realInp = document.createElement('input');
+          realInp.type = 'number';
+          realInp.min = 1;
+          realInp.max = bal;
+          realInp.step = 1;
+          realInp.value = '';
+          realInp.placeholder = '0';
+          realInp.id = 'wd-real-input';
+          realInp.style.cssText = inp.style.cssText + ';width:100%;background:transparent;border:none;outline:none;color:inherit;font-size:inherit;font-family:inherit;text-align:center';
+          inp.parentNode.replaceChild(realInp, inp);
+          realInp.focus();
+        }
+        // Fix confirm button — use real balance
+        const confirmBtn = document.querySelector('[onclick*="confirmWithdraw"], #wd-confirm-btn, .wd-btn-confirm');
+        if(confirmBtn){
+          confirmBtn.disabled = false;
+          confirmBtn.onclick = async function(){
+            const realInput = document.getElementById('wd-real-input');
+            const amt = realInput ? Number(realInput.value) : 0;
+            if(!amt || amt <= 0){ alert('Enter a valid amount'); return; }
+            if(amt > bal){ alert('Amount exceeds available balance ₹'+bal); return; }
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Submitting…';
+            try{
+              const sb = window.clipencySupabase||window.supabaseClient;
+              const{data:{user}} = await sb.auth.getUser();
+              const{error} = await sb.rpc('clipper_request_payout',{p_amount:amt,p_note:null});
+              if(error) throw error;
+              window.__realAvailableBalance = Math.max(bal - amt, 0);
+              document.getElementById('bal-available').textContent = '₹'+window.__realAvailableBalance.toLocaleString('en-IN');
+              const wc = document.getElementById('wd-content');
+              if(wc) wc.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:2rem">✓</div><h2 style="margin:12px 0 8px;font-family:Instrument Serif,serif">Request Submitted</h2><p style="color:var(--tm,#6A6158);font-size:.85rem">₹'+amt.toLocaleString('en-IN')+' withdrawal requested. Expected in 5–7 days.</p><button onclick="closeWithdrawModal()" style="margin-top:18px;padding:10px 24px;background:#C4956A;color:#0A0908;border:none;border-radius:8px;cursor:pointer;font-weight:600">Close</button></div>';
+            }catch(e){
+              alert('Error: '+e.message);
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = 'Confirm Withdrawal';
+            }
+          };
+        }
+      }, 100);
+    };
+    const origGetWdAmount=window.getWdAmount;
+    window.availableBalance=avail;
+    console.log('[Payouts patch] Balance:',fmt(avail),'Pending:',fmt(pending),'Paid:',fmt(paid));
+  }catch(e){console.warn('[Payouts patch]',e.message);}
+})();
 </script>
 </body>
 </html>
