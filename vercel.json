@@ -16,7 +16,7 @@
     },
     {
       "source": "/campaigns",
-      "destination": "/auth/profile"
+      "destination": "/auth/campaigns"
     },
     {
       "source": "/profile",

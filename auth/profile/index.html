@@ -1575,7 +1575,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
     <div class="sb-nav">
       <p class="nav-label">Clipper</p>
       <nav>
-        <button class="nav-item active" data-section="campaigns" id="nav-campaigns">
+        <button class="nav-item active" data-section="campaigns" onclick="location.href='/campaigns'" id="nav-campaigns">
           <span class="nav-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></span>
           <span>Campaigns</span>
           <span class="nav-active-dot"></span>
@@ -1638,32 +1638,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   <main class="main" id="main">
 
     <!-- CAMPAIGNS -->
-    <section class="section active" id="section-campaigns">
-      <div class="pg-head">
-        <div>
-          <p class="pg-eyebrow">Clipency</p>
-          <h1 class="pg-title">Campaigns</h1>
-        </div>
-        <div class="user-chip">
-          <div class="uc-av" id="user-avatar">A</div>
-          <span id="user-name-camps">Ayush Bera</span>
-        </div>
-      </div>
-      <div class="filter-bar" id="genre-filters">
-        <button class="filter-btn active" data-genre="All">All</button>
-        <button class="filter-btn" data-genre="Music">Music</button>
-        <button class="filter-btn" data-genre="Gaming">Gaming</button>
-        <button class="filter-btn" data-genre="UGC">UGC</button>
-        <button class="filter-btn" data-genre="Sports">Sports</button>
-        <button class="filter-btn" data-genre="Clipping">Clipping</button>
-        <button class="filter-btn" data-genre="Edits">Edits</button>
-        <span class="camp-count" id="camp-count">8 campaigns</span>
-      </div>
-
-
-      <div class="camp-grid" id="camp-grid"></div>
-      <div class="hidden detail-wrap" id="camp-detail"></div>
-    </section>
+    <section class="section active" id="section-campaigns"><div style="display:none"></div></section>
 
     <!-- STATS -->
     <section class="section" id="section-stats"><div style="display:none"></div></section>
