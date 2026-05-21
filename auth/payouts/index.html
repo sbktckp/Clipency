@@ -8,7 +8,7 @@
 <link rel="prefetch" href="/campaigns"/>
 <link rel="prefetch" href="/wallet"/>
 <link rel="prefetch" href="/profile"/>
-<style id="auth-hide">body{visibility:hidden!important;}</style>
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Clipency | Payouts</title>
@@ -235,49 +235,29 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
 <script src="/supabaseClient.js"></script>
 <script>
-/* ══ INSTANT AUTH GUARD — checks localStorage first, no network delay ══ */
+/* AUTH GUARD */
 (function(){
-  const PROJECT = 'spwtkdgpgeutrhwcjrpy';
-  const KEY = 'sb-' + PROJECT + '-auth-token';
-  function reveal(){ 
-    var s=document.getElementById('auth-hide'); 
-    if(s) s.remove(); 
-    document.body.style.visibility=''; 
-  }
-  function bail(){ document.body.innerHTML=''; location.replace('/login'); }
-  
-  // Check localStorage synchronously — instant, no network call
-  try {
-    var stored = localStorage.getItem(KEY);
-    if(!stored) { bail(); return; }
-    var session = JSON.parse(stored);
-    var exp = session?.expires_at || session?.session?.expires_at || 0;
-    if(exp && Date.now()/1000 > exp) { bail(); return; }
-    // Session looks valid — reveal immediately
-    reveal();
-    // Still verify async in background (don't block page)
-    setTimeout(async function(){
-      try{
-        var sb=window.clipencySupabase||window.supabaseClient||window.sbClient;
-        var t=0; while(!sb&&t++<20){await new Promise(r=>setTimeout(r,100));sb=window.clipencySupabase||window.supabaseClient||window.sbClient;}
-        if(!sb) return;
-        var r=await sb.auth.getUser();
-        if(!r.data?.user) bail();
-      }catch(e){ /* keep session if offline */ }
-    }, 100);
-  } catch(e) { 
-    // localStorage parse error — do async check
+  // Show page immediately — don't block render
+  var s=document.getElementById('auth-hide');
+  if(s) s.remove();
+  document.body.style.visibility='';
+
+  // Verify session async — redirect to login only if truly unauthenticated
+  async function verify(){
     var t=0;
-    async function check(){
-      while(!(window.clipencySupabase||window.supabaseClient)&&t++<30) await new Promise(r=>setTimeout(r,100));
-      var sb=window.clipencySupabase||window.supabaseClient;
-      if(!sb){bail();return;}
-      try{var r=await sb.auth.getUser();if(!r.data?.user)bail();else reveal();}catch{bail();}
-    }
-    check();
+    var sb;
+    while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<25)
+      await new Promise(r=>setTimeout(r,80));
+    if(!sb){ location.replace('/login'); return; }
+    try{
+      var r=await sb.auth.getUser();
+      if(!r.data?.user) location.replace('/login');
+    }catch(e){}
   }
+  verify();
 })();
 </script>
+
 
 <script>
 'use strict';
