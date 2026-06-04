@@ -184,11 +184,13 @@ async function initAuth(){
   me=data.user;
   let role='clipper';
   try{
-    const{data:ac}=await sb.rpc('admin_access_check');
-    role=ac?.role||'clipper';
+    const{data:ac,error:acErr}=await sb.rpc('admin_access_check');
+    if(!acErr&&ac?.role){role=ac.role;}else{throw new Error('rpc_failed:'+JSON.stringify(acErr));}
   }catch{
-    const{data:rows}=await sb.from('admin_users').select('email').eq('email',me.email).limit(1);
-    role=rows?.length?'admin':'clipper';
+    try{
+      const{data:rows}=await sb.from('admin_users').select('email').eq('email',me.email).limit(1);
+      role=(rows||[]).length?'admin':'clipper';
+    }catch{}
   }
   if(role!=='admin'){
     document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif"><div style="text-align:center;max-width:440px;padding:32px"><div style="color:#6366f1;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Access Denied</div><h1 style="font-size:36px;font-weight:700;margin-bottom:10px">Admin only.</h1><p style="color:rgba(255,255,255,.5);margin-bottom:24px">You're signed in as <b>${esc(me.email)}</b> which is not an admin account.</p><a href="/login" style="background:#6366f1;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600">Sign in as admin</a></div></div>`;
