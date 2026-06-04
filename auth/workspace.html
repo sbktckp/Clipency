@@ -4,108 +4,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZEP54G261Y"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-ZEP54G261Y');
-</script>
-<script src="/clipency-auth-entry-guard.js"></script>
-<meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clipency | Workspace</title>
-  <link rel="stylesheet" href="/staff.css" />
-<link rel="stylesheet" href="/clipency-cursor.css" />
-  <link rel="stylesheet" href="/clipency-final-logout.css" />
-<script src="/clipency-unhang-guard.js"></script>
-  <link rel="stylesheet" href="/clipency-admin-os.css" />
-  <link rel="stylesheet" href="/clipency-admin-return.css" />
-  <link rel="stylesheet" href="/clipency-clipper-review-status.css" />
-
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="preconnect" href="https://api.frankfurter.app" crossorigin />
-
-  <link rel="stylesheet" href="/clipency-auth-ux-guard.css" />
-  <link rel="stylesheet" href="/clipency-safe-profile.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Clipency | Admin</title>
 </head>
-<body>
-  <script src="/clipency-final-logout.js"></script>
-<main class="workspace-shell">
-    <section class="workspace-inner">
-      <div class="workspace-header">
-        <div class="eyebrow">CLIPENCY WORKSPACE</div>
-        <h1 id="workspace-title">Choose where the work needs you.</h1>
-        <p>Move into the right operating layer. Admin for decisions, Review for verification, Finance for money, and Clipper View for the clipper experience.</p>
-      </div>
-
-      <div class="workspace-grid">
-        <a class="workspace-card" href="/admin">
-          <span>A</span>
-          <h2>Admin</h2>
-          <p>Manage campaigns, leads, access and the core operating flow of Clipency.</p>
-          <strong>Open Admin →</strong>
-        </a>
-
-        <a class="workspace-card" href="/review">
-          <span>R</span>
-          <h2>Review</h2>
-          <p>Clear the submission queue, verify proof, update metrics and leave useful review notes.</p>
-          <strong>Open Review →</strong>
-        </a>
-
-        <a class="workspace-card" href="/dashboard">
-          <span>C</span>
-          <h2>Clipper View</h2>
-          <p>Step into the creator-side dashboard and see exactly what clippers experience.</p>
-          <strong>Open Clipper View →</strong>
-        </a>
-
-        <a class="workspace-card" href="/admin/users">
-          <span>U</span>
-          <h2>Access</h2>
-          <p>Invite reviewers, add admins and keep platform access clean.</p>
-          <strong>Open Access →</strong>
-        </a>
-      
-        <a class="workspace-card finance-workspace-card" href="/admin/finance">
-          <span>F</span>
-          <h2>Finance OS</h2>
-          <p>Open the dedicated finance workspace for invoices, expenses, payouts, salaries, currency and accounting.</p>
-          <strong>Open finance →</strong>
-        </a>
-      </div>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js"></script>
-  <script src="/access-control.js"></script>
-  <script src="/staff-common.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const access = await window.ClipencyAccess.requireRole(["admin"]);
-      if (!access) return;
-
-      const name = access.profile?.full_name || access.user?.email?.split("@")[0] || "Admin";
-      document.getElementById("workspace-title").textContent = `Welcome back, ${name}.`;
-    });
-  </script>
-<script src="/clipency-cursor.js"></script>
-<script src="/clipency-premium-titles.js"></script>
-  <script src="/clipency-premium-url-cleaner.js"></script>
-<script src="/clipency-admin-return.js"></script>
-  <script src="/clipency-admin-os.js?v=20260604"></script>
-  <script src="/clipency-admin-review-actions.js"></script>
-  <script src="/clipency-clipper-review-status.js"></script>
-  <script src="/clipency-admin-campaigns.js"></script>
-  <script src="/clipency-performance-guard.js"></script>
-  <script src="/clipency-security-audit.js"></script>
-  <script src="/clipency-auth-ux-guard.js"></script>
-  <script src="/clipency-safe-profile.js"></script>
-<script defer src="/admin/admin-session-logger.js?v=logs-1"></script>
-<script defer src="/clipency-leads-direct-rest.js?v=direct-rest-leads-1"></script>
+<body style="margin:0;background:#0A0908">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin></script>
+<script src="/supabaseClient.js"></script>
+<script src="/clipency-admin-os.js?v=20260604"></script>
 </body>
 </html>
