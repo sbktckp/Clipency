@@ -3,6 +3,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/admin/:path+",
+      "destination": "/auth/admin"
+    },
+    {
       "source": "/login",
       "destination": "/auth/login"
     },
