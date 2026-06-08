@@ -245,7 +245,8 @@ body{animation:cx-fadein .18s ease-out;}
     while(!(sb=window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<30)
       await new Promise(function(r){setTimeout(r,100);});
     if(!sb){bail();return;}
-    try{var r=await sb.auth.getUser();if(r.data&&r.data.user)show();else bail();}
+    window._cxShow=show;
+    try{var r=await sb.auth.getUser();if(r.data&&r.data.user){/* wait for data */}else bail();}
     catch(e){bail();}
   }
   run();
@@ -284,6 +285,7 @@ const fm=v=>{const x=v*cur.rate;return cur.symbol+(x>=1000?x.toLocaleString('en-
   else av.textContent=name[0]?.toUpperCase()||'A';
   document.getElementById('btn-signout').onclick=async()=>{await sb.auth.signOut();location.replace('/login');};
   await load();
+  if(window._cxShow){window._cxShow();window._cxShow=null;}
   sb.channel('stats-'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'clip_submissions',filter:`user_id=eq.${u.id}`},()=>load()).subscribe();
   fetchRates();
 })();
