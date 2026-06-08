@@ -209,11 +209,9 @@ body{animation:cx-fadein .18s ease-out;}
   </div>
   <div class="hist-card">
     <div class="hist-head">
-      <div><div class="hist-title">Payout History</div><div class="hist-sub" id="hist-count">Loading transactions…</div></div>
+      <div><div class="hist-title">Payout History</div><div class="hist-sub" id="hist-count"></div></div>
     </div>
-    <div class="txn-list" id="txn-list">
-      <div class="empty-state"><span class="spin"></span></div>
-    </div>
+    <div class="txn-list" id="txn-list"></div>
   </div>
 </main>
 </div>
@@ -272,7 +270,12 @@ const fmtDate=d=>new Date(d).toLocaleDateString('en-US',{day:'numeric',month:'sh
 
 (async()=>{
   sb=window.clipencySupabase||window.supabaseClient||window.sbClient;
-  if(!sb)return;
+  if(!sb){
+    const l=document.getElementById('txn-list'),c=document.getElementById('hist-count');
+    if(l)l.innerHTML='<div class="empty-state"><span>💳</span><p>No transactions yet.</p></div>';
+    if(c)c.textContent='0 transactions';
+    return;
+  }
   const{data:{user:u}}=await sb.auth.getUser();
   if(!u){location.replace('/login');return;}
   user=u;
@@ -299,7 +302,13 @@ async function loadPayouts(){
     .eq('user_id',user.id)
     .order('created_at',{ascending:false});
 
-  if(error){console.warn('[payouts]',error.message);return;}
+  if(error){
+    console.warn('[payouts]',error.message);
+    const l=document.getElementById('txn-list'),c=document.getElementById('hist-count');
+    if(l)l.innerHTML='<div class="empty-state"><span>💳</span><p>No transactions yet.</p></div>';
+    if(c)c.textContent='0 transactions';
+    return;
+  }
 
   // Also load approved clip earnings to calculate available balance
   const{data:clips}=await sb.from('clip_submissions')
