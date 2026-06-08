@@ -180,7 +180,7 @@ body{animation:cx-fadein .18s ease-out;}
   </div>
   <div class="sb-profile">
     <div class="sb-av" id="sb-av">A</div>
-    <div class="sb-info"><div class="sb-name" id="sb-name">Loading…</div><div class="sb-role">Clipper</div></div>
+    <div class="sb-info"><div class="sb-name" id="sb-name"></div><div class="sb-role">Clipper</div></div>
     <button class="sb-signout" id="btn-signout" title="Sign out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
   </div>
 </aside>
@@ -215,11 +215,11 @@ body{animation:cx-fadein .18s ease-out;}
       <button class="sub-tab" data-tab="rej">Rejected Submissions</button>
     </div>
     <div class="sub-panel on" id="panel-my">
-      <div class="sub-table-wrap"><table class="st"><thead><tr><th>Campaign</th><th>Platform</th><th style="text-align:right">Views</th><th style="text-align:right">Earned</th><th>Status</th><th>Link</th></tr></thead><tbody id="my-body"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--tm)"><span class="spin"></span>Loading…</td></tr></tbody></table></div>
+      <div class="sub-table-wrap"><table class="st"><thead><tr><th>Campaign</th><th>Platform</th><th style="text-align:right">Views</th><th style="text-align:right">Earned</th><th>Status</th><th>Link</th></tr></thead><tbody id="my-body"></tbody></table></div>
       <div class="pag" id="my-pag"></div>
     </div>
     <div class="sub-panel" id="panel-rej">
-      <div class="sub-table-wrap"><table class="st"><thead><tr><th>Campaign</th><th>Platform</th><th style="text-align:right">Views</th><th>Status</th><th>Link</th><th>Reason</th></tr></thead><tbody id="rej-body"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--tm)"><span class="spin"></span>Loading…</td></tr></tbody></table></div>
+      <div class="sub-table-wrap"><table class="st"><thead><tr><th>Campaign</th><th>Platform</th><th style="text-align:right">Views</th><th>Status</th><th>Link</th><th>Reason</th></tr></thead><tbody id="rej-body"></tbody></table></div>
     </div>
   </div>
 </main>
@@ -267,7 +267,12 @@ const fm=v=>{const x=v*cur.rate;return cur.symbol+(x>=1000?x.toLocaleString('en-
   // Wait up to 3s for supabase client
   let t=0; while(!(window.clipencySupabase||window.supabaseClient||window.sbClient)&&t++<30) await new Promise(r=>setTimeout(r,100));
   sb=window.clipencySupabase||window.supabaseClient||window.sbClient;
-  if(!sb)return;
+  if(!sb){
+    const mb=document.getElementById('my-body'),rb=document.getElementById('rej-body');
+    const empty='<tr><td colspan="6"><div class="empty-row"><span>🎬</span>No submissions yet.</div></td></tr>';
+    if(mb)mb.innerHTML=empty;if(rb)rb.innerHTML=empty;
+    return;
+  }
   const{data:{user:u}}=await sb.auth.getUser();
   if(!u){location.replace('/login');return;}
   user=u;
@@ -287,7 +292,13 @@ async function load(){
   const{data,error}=await sb.from('clip_submissions')
     .select('id,clip_url,platform,handle,status,views,views_count,approved_amount,earning_amount,created_at,campaign_title,rejection_reason,appeal_note')
     .eq('user_id',user.id).order('created_at',{ascending:false});
-  if(error){console.warn('[stats]',error.message);return;}
+  if(error){
+    console.warn('[stats]',error.message);
+    const mb=document.getElementById('my-body'),rb=document.getElementById('rej-body');
+    const empty='<tr><td colspan="6"><div class="empty-row"><span>🎬</span>Could not load submissions.</div></td></tr>';
+    if(mb)mb.innerHTML=empty;if(rb)rb.innerHTML=empty;
+    return;
+  }
   subs=(data||[]).map(r=>({
     id:r.id,camp:r.campaign_title||'—',platform:r.platform||'—',
     rv:Number(r.views_count||r.views||0),re:Number(r.approved_amount||r.earning_amount||0),
