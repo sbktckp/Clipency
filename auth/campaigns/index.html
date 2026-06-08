@@ -4,10 +4,6 @@
 <link rel="dns-prefetch" href="https://spwtkdgpgeutrhwcjrpy.supabase.co"/>
 <link rel="preconnect" href="https://spwtkdgpgeutrhwcjrpy.supabase.co" crossorigin/>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>
-<link rel="prefetch" href="/stats"/>
-<link rel="prefetch" href="/payouts"/>
-<link rel="prefetch" href="/wallet"/>
-<link rel="prefetch" href="/profile"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
@@ -3722,8 +3718,13 @@ window.addEventListener('resize', ()=>{
 // ── NAV CLICKS ──
 document.querySelectorAll('.nav-item').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    navigate(btn.dataset.section);
-    if(window.innerWidth <= 900) closeSidebar();
+    const s=btn.dataset.section;
+    if(s==='campaigns'){
+      navigate('campaigns');
+      if(window.innerWidth<=900) closeSidebar();
+    } else {
+      window.location.href='/'+s;
+    }
   });
 });
 
