@@ -622,13 +622,16 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
       if(iconClear2&&iconClear2.dataset.cleared==='1') icon_url=null;
       const iconFile=panel.querySelector('#cp-icon-file')?.files[0];
       if(iconFile){
-        const ext2=iconFile.name.split('.').pop();
+        const ext2=(iconFile.name.split('.').pop()||'png').toLowerCase();
+        const mimeMap={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',svg:'image/svg+xml'};
+        const contentType=mimeMap[ext2]||iconFile.type||'image/png';
         const iconPath=`icons/${Date.now()}.${ext2}`;
-        const{error:ie}=await sb.storage.from('campaign-banners').upload(iconPath,iconFile,{upsert:true});
-        if(!ie){
-          const{data:{publicUrl:iPub}}=sb.storage.from('campaign-banners').getPublicUrl(iconPath);
-          icon_url=iPub;
-        }
+        console.log('[icon upload] path:',iconPath,'type:',contentType);
+        const{error:ie}=await sb.storage.from('campaign-banners').upload(iconPath,iconFile,{upsert:true,contentType});
+        if(ie){console.error('[icon upload] error:',ie);throw new Error('Icon upload failed: '+(ie.message||JSON.stringify(ie)));}
+        const{data:{publicUrl:iPub}}=sb.storage.from('campaign-banners').getPublicUrl(iconPath);
+        icon_url=iPub;
+        console.log('[icon upload] saved:',icon_url);
       }
       const selectedPlats=[...panel.querySelectorAll('.cp-plat[data-on="1"]')].map(b=>b.dataset.plat);
       const platform=selectedPlats.length===1?selectedPlats[0]:selectedPlats.length>1?selectedPlats.join(','):'All';
