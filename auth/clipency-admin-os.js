@@ -588,29 +588,6 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     };
   }
 
-  // Icon preview
-  const iconFi=panel.querySelector('#cp-icon-file');
-  if(iconFi){
-    iconFi.onchange=()=>{
-      const f=iconFi.files[0];if(!f)return;
-      const url=URL.createObjectURL(f);
-      let img=panel.querySelector('#cp-icon-preview');
-      if(!img){img=document.createElement('img');img.id='cp-icon-preview';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';panel.querySelector('#cp-icon-drop').appendChild(img);}
-      img.src=url;
-      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='none';
-    };
-  }
-  // Icon clear
-  const iconClearBtn=panel.querySelector('#cp-icon-clear');
-  if(iconClearBtn){
-    iconClearBtn.onclick=()=>{
-      const img=panel.querySelector('#cp-icon-preview');if(img)img.remove();
-      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='';
-      if(iconFi)iconFi.value='';
-      iconClearBtn.dataset.cleared='1';
-    };
-  }
-
   // Delete
   if(existing){
     panel.querySelector('#cp-delete').onclick=async()=>{
@@ -638,20 +615,6 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
         if(ue)throw ue;
         const{data:{publicUrl}}=sb.storage.from('campaign-banners').getPublicUrl(path);
         asset_url=publicUrl;
-      }
-      // Icon upload
-      let icon_url=c.icon_url||null;
-      const iconClear2=panel.querySelector('#cp-icon-clear');
-      if(iconClear2&&iconClear2.dataset.cleared==='1') icon_url=null;
-      const iconFile=panel.querySelector('#cp-icon-file')?.files[0];
-      if(iconFile){
-        const ext2=iconFile.name.split('.').pop();
-        const iconPath=`icons/${Date.now()}.${ext2}`;
-        const{error:ie}=await sb.storage.from('campaign-banners').upload(iconPath,iconFile,{upsert:true});
-        if(!ie){
-          const{data:{publicUrl:iPub}}=sb.storage.from('campaign-banners').getPublicUrl(iconPath);
-          icon_url=iPub;
-        }
       }
       // Icon upload
       let icon_url=c.icon_url||null;
