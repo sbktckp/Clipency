@@ -356,7 +356,10 @@ async function renderCampaigns(){
     ${rows.map(r=>{
       const plat=(r.platform||'All').toLowerCase();
       return`<div style="background:linear-gradient(135deg,rgba(24,20,16,.95),rgba(14,12,9,.8));border:1px solid rgba(196,149,106,.14);border-radius:16px;overflow:hidden;transition:all .2s;cursor:pointer" onmouseover="this.style.borderColor='rgba(196,149,106,.35)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(196,149,106,.14)';this.style.transform='none'">
-        ${r.asset_url?`<div style="width:100%;height:120px;overflow:hidden"><img src="${esc(r.asset_url)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/></div>`:`<div style="width:100%;height:6px;background:linear-gradient(90deg,#C4956A,rgba(196,149,106,.3))"></div>`}
+        <div style="position:relative;width:100%;height:120px;overflow:hidden;background:rgba(196,149,106,.04)">
+  ${r.asset_url?`<img src="${esc(r.asset_url)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.background='transparent'"/>`:`<div style="width:100%;height:6px;background:linear-gradient(90deg,#C4956A,rgba(196,149,106,.3))"></div>`}
+  ${r.icon_url?`<div style="position:absolute;bottom:8px;left:8px;width:38px;height:38px;border-radius:9px;overflow:hidden;border:2px solid rgba(0,0,0,.5);box-shadow:0 2px 10px rgba(0,0,0,.5)"><img src="${esc(r.icon_url)}" style="width:100%;height:100%;object-fit:cover"/></div>`:''}
+</div>
         <div style="padding:16px 18px 18px">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
             <div>
@@ -437,13 +440,24 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     </div>
     <div id="cp-err"></div>
 
-    <!-- Banner -->
-    <div style="margin-bottom:20px">
-      <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Campaign Banner</label>
-      <div id="cp-banner-drop" style="width:100%;aspect-ratio:16/5;border:2px dashed rgba(196,149,106,.2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:rgba(196,149,106,.03)">
-        ${c.asset_url?`<img src="${esc(c.asset_url)}" id="cp-banner-preview" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:''}
-        <input type="file" id="cp-banner-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
-        <div id="cp-banner-label" style="font-size:.8rem;color:#6A6158;text-align:center;pointer-events:none;z-index:1;line-height:1.8${c.asset_url?';display:none':''}">🖼<br/>Click to upload banner<br/><span style="font-size:.68rem">1280×400px recommended</span></div>
+    <!-- Banner + Icon -->
+    <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:20px;align-items:start">
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Campaign Banner</label>
+        <div id="cp-banner-drop" style="width:100%;aspect-ratio:16/5;border:2px dashed rgba(196,149,106,.2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:rgba(196,149,106,.03)">
+          ${c.asset_url?`<img src="${esc(c.asset_url)}" id="cp-banner-preview" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:''}
+          <input type="file" id="cp-banner-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+          <div id="cp-banner-label" style="font-size:.8rem;color:#6A6158;text-align:center;pointer-events:none;z-index:1;line-height:1.8${c.asset_url?';display:none':''}">🖼<br/>Click to upload<br/><span style="font-size:.68rem">1280×400px</span></div>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:#6A6158;margin-bottom:8px">Campaign Icon</label>
+        <div id="cp-icon-drop" style="width:100%;aspect-ratio:1/1;border:2px dashed rgba(196,149,106,.2);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:rgba(196,149,106,.03)">
+          ${c.icon_url?`<img src="${esc(c.icon_url)}" id="cp-icon-preview" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:''}
+          <input type="file" id="cp-icon-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+          <div id="cp-icon-label" style="font-size:.72rem;color:#6A6158;text-align:center;pointer-events:none;z-index:1;line-height:2${c.icon_url?';display:none':''}">🎨<br/><span style="font-size:.62rem">Icon<br/>200×200px</span></div>
+        </div>
+        ${c.icon_url?`<button type="button" id="cp-icon-clear" style="width:100%;margin-top:5px;padding:4px;border-radius:6px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.06);color:rgba(248,113,113,.7);font-size:.65rem;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Remove icon</button>`:''}
       </div>
     </div>
 
@@ -551,6 +565,52 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
     const bl=panel.querySelector('#cp-banner-label');if(bl)bl.style.display='none';
   };
 
+  // Icon preview
+  const iconFi=panel.querySelector('#cp-icon-file');
+  if(iconFi){
+    iconFi.onchange=()=>{
+      const f=iconFi.files[0];if(!f)return;
+      const url=URL.createObjectURL(f);
+      let img=panel.querySelector('#cp-icon-preview');
+      if(!img){img=document.createElement('img');img.id='cp-icon-preview';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';panel.querySelector('#cp-icon-drop').appendChild(img);}
+      img.src=url;
+      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='none';
+    };
+  }
+  // Icon clear
+  const iconClearBtn=panel.querySelector('#cp-icon-clear');
+  if(iconClearBtn){
+    iconClearBtn.onclick=()=>{
+      const img=panel.querySelector('#cp-icon-preview');if(img)img.remove();
+      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='';
+      if(iconFi)iconFi.value='';
+      iconClearBtn.dataset.cleared='1';
+    };
+  }
+
+  // Icon preview
+  const iconFi=panel.querySelector('#cp-icon-file');
+  if(iconFi){
+    iconFi.onchange=()=>{
+      const f=iconFi.files[0];if(!f)return;
+      const url=URL.createObjectURL(f);
+      let img=panel.querySelector('#cp-icon-preview');
+      if(!img){img=document.createElement('img');img.id='cp-icon-preview';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';panel.querySelector('#cp-icon-drop').appendChild(img);}
+      img.src=url;
+      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='none';
+    };
+  }
+  // Icon clear
+  const iconClearBtn=panel.querySelector('#cp-icon-clear');
+  if(iconClearBtn){
+    iconClearBtn.onclick=()=>{
+      const img=panel.querySelector('#cp-icon-preview');if(img)img.remove();
+      const lbl=panel.querySelector('#cp-icon-label');if(lbl)lbl.style.display='';
+      if(iconFi)iconFi.value='';
+      iconClearBtn.dataset.cleared='1';
+    };
+  }
+
   // Delete
   if(existing){
     panel.querySelector('#cp-delete').onclick=async()=>{
@@ -579,6 +639,34 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
         const{data:{publicUrl}}=sb.storage.from('campaign-banners').getPublicUrl(path);
         asset_url=publicUrl;
       }
+      // Icon upload
+      let icon_url=c.icon_url||null;
+      const iconClear2=panel.querySelector('#cp-icon-clear');
+      if(iconClear2&&iconClear2.dataset.cleared==='1') icon_url=null;
+      const iconFile=panel.querySelector('#cp-icon-file')?.files[0];
+      if(iconFile){
+        const ext2=iconFile.name.split('.').pop();
+        const iconPath=`icons/${Date.now()}.${ext2}`;
+        const{error:ie}=await sb.storage.from('campaign-banners').upload(iconPath,iconFile,{upsert:true});
+        if(!ie){
+          const{data:{publicUrl:iPub}}=sb.storage.from('campaign-banners').getPublicUrl(iconPath);
+          icon_url=iPub;
+        }
+      }
+      // Icon upload
+      let icon_url=c.icon_url||null;
+      const iconClear2=panel.querySelector('#cp-icon-clear');
+      if(iconClear2&&iconClear2.dataset.cleared==='1') icon_url=null;
+      const iconFile=panel.querySelector('#cp-icon-file')?.files[0];
+      if(iconFile){
+        const ext2=iconFile.name.split('.').pop();
+        const iconPath=`icons/${Date.now()}.${ext2}`;
+        const{error:ie}=await sb.storage.from('campaign-banners').upload(iconPath,iconFile,{upsert:true});
+        if(!ie){
+          const{data:{publicUrl:iPub}}=sb.storage.from('campaign-banners').getPublicUrl(iconPath);
+          icon_url=iPub;
+        }
+      }
       const selectedPlats=[...panel.querySelectorAll('.cp-plat[data-on="1"]')].map(b=>b.dataset.plat);
       const platform=selectedPlats.length===1?selectedPlats[0]:selectedPlats.length>1?selectedPlats.join(','):'All';
       const reqRaw=panel.querySelector('#cp-req').value;
@@ -594,7 +682,7 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
         end_date:panel.querySelector('#cp-end').value||null,
         requirements,
         description:panel.querySelector('#cp-desc').value.trim()||null,
-        asset_url,updated_at:new Date().toISOString()
+        asset_url,icon_url,updated_at:new Date().toISOString()
       };
       let err;
       if(existing){({error:err}=await sb.from('campaigns').update(payload).eq('id',existing.id));}
