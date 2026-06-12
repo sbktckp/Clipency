@@ -442,6 +442,7 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
   width:52px;height:52px;border-radius:14px;
   background:var(--adim);border:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  overflow:hidden;
 }
 .detail-title-wrap{flex:1;min-width:120px;}
 .detail-title{font-family:'Instrument Serif',serif;font-size:1.4rem;color:var(--tp);margin-bottom:4px;line-height:1.2;}
@@ -2374,7 +2375,7 @@ function showCampDetail(id){
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         Campaigns
       </button>
-      <div class="detail-icon">${c.icon}</div>
+      <div class="detail-icon">${c.icon_url?`<img src="${c.icon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.parentElement.textContent='📎'">`:c.icon}</div>
       <div class="detail-title-wrap">
         <div class="detail-title">${c.title}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
