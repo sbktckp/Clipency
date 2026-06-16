@@ -57,7 +57,7 @@
   async function fetchCampaigns() {
     const { data, error } = await supabaseClient
       .from("campaigns")
-      .select("id,title,category,campaign_type,status,rate_per_million_usd,budget_usd,spent_usd,creators_count,description,requirements,asset_url,created_at,updated_at")
+      .select("id,title,category,campaign_type,status,rate_per_million_usd,budget_usd,spent_usd,creators_count,description,requirements,asset_url,content_assets_url,guidelines_url,created_at,updated_at")
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
@@ -200,6 +200,16 @@
               </label>
 
               <label class="wide">
+                📂 Content Assets URL <small style="opacity:.55">(Google Drive)</small>
+                <input name="content_assets_url" placeholder="https://drive.google.com/..." />
+              </label>
+
+              <label class="wide">
+                📜 Campaign Guidelines URL <small style="opacity:.55">(Notion)</small>
+                <input name="guidelines_url" placeholder="https://notion.so/..." />
+              </label>
+
+              <label class="wide">
                 Description
                 <textarea name="description" placeholder="Explain the campaign in one clean paragraph."></textarea>
               </label>
@@ -300,6 +310,8 @@
     form.spent_usd.value = campaign?.spent_usd ?? "";
     form.creators_count.value = campaign?.creators_count ?? "";
     form.asset_url.value = campaign?.asset_url || "";
+    form.content_assets_url.value = campaign?.content_assets_url || "";
+    form.guidelines_url.value = campaign?.guidelines_url || "";
     form.description.value = campaign?.description || "";
     form.requirements.value = campaign?.requirements || "";
 
@@ -333,6 +345,8 @@
       spent_usd: Number(form.spent_usd.value || 0),
       creators_count: Number(form.creators_count.value || 0),
       asset_url: form.asset_url.value.trim() || null,
+      content_assets_url: form.content_assets_url.value.trim() || null,
+      guidelines_url: form.guidelines_url.value.trim() || null,
       description: form.description.value.trim() || null,
       requirements: form.requirements.value.trim() || null
     };
