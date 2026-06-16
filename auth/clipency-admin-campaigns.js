@@ -200,6 +200,16 @@
               </label>
 
               <label class="wide">
+                📂 Content Assets URL
+                <input name="content_assets_url" placeholder="https://drive.google.com/..." />
+              </label>
+
+              <label class="wide">
+                📜 Campaign Guidelines URL
+                <input name="guidelines_url" placeholder="https://notion.so/..." />
+              </label>
+
+              <label class="wide">
                 📂 Content Assets URL <small style="opacity:.55">(Google Drive)</small>
                 <input name="content_assets_url" placeholder="https://drive.google.com/..." />
               </label>
@@ -310,6 +320,8 @@
     form.spent_usd.value = campaign?.spent_usd ?? "";
     form.creators_count.value = campaign?.creators_count ?? "";
     form.asset_url.value = campaign?.asset_url || "";
+    form.content_assets_url.value = campaign?.content_assets_url || "";
+    form.guidelines_url.value = campaign?.guidelines_url || "";
     form.content_assets_url.value = campaign?.content_assets_url || "";
     form.guidelines_url.value = campaign?.guidelines_url || "";
     form.description.value = campaign?.description || "";
