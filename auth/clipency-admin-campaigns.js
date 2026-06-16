@@ -200,12 +200,12 @@
               </label>
 
               <label class="wide">
-                📂 Content Assets URL
+                📂 Content Assets URL (Google Drive)
                 <input name="content_assets_url" placeholder="https://drive.google.com/..." />
               </label>
 
               <label class="wide">
-                📜 Campaign Guidelines URL
+                📜 Campaign Guidelines URL (Notion)
                 <input name="guidelines_url" placeholder="https://notion.so/..." />
               </label>
 
