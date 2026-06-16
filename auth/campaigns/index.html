@@ -537,7 +537,6 @@ body{background:var(--bg);color:var(--tp);font-family:'DM Sans',sans-serif;font-
 .d-kpi-sub.green-txt{color:var(--green);}
 .d-kpi-sub.amber-txt{color:var(--amber);}
 .resource-box:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)!important;}
-.resource-box:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)!important;}
 @keyframes kpiIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .detail-kpi-row .d-kpi:nth-child(1){animation:kpiIn .35s var(--ease-out) .05s both;}
 .detail-kpi-row .d-kpi:nth-child(2){animation:kpiIn .35s var(--ease-out) .1s both;}
@@ -2522,36 +2521,7 @@ function showCampDetail(id){
       </a>`:``}
     </div>`:``}
 
-    <!-- ROW 4b: Resource Links -->
-    ${(c.contentAssetsUrl||c.guidelinesUrl)?`
-    <div style="display:grid;grid-template-columns:${c.contentAssetsUrl&&c.guidelinesUrl?'1fr 1fr':'1fr'};gap:14px;margin-bottom:16px;">
-      ${c.contentAssetsUrl?`
-      <a href="${c.contentAssetsUrl}" target="_blank" rel="noopener" style="text-decoration:none;">
-        <div class="resource-box" style="background:linear-gradient(135deg,rgba(253,186,116,.07),rgba(253,186,116,.02));border:1px solid rgba(253,186,116,.18);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .18s;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(253,186,116,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;">📂</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:.7rem;letter-spacing:.08em;font-weight:700;color:rgba(253,186,116,.6);text-transform:uppercase;margin-bottom:3px;">Content Assets</div>
-            <div style="font-size:.88rem;font-weight:600;color:var(--tp);">Access Creative Files</div>
-            <div style="font-size:.72rem;color:var(--tm);margin-top:2px;">Google Drive →</div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(253,186,116,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-        </div>
-      </a>`:``}
-      ${c.guidelinesUrl?`
-      <a href="${c.guidelinesUrl}" target="_blank" rel="noopener" style="text-decoration:none;">
-        <div class="resource-box" style="background:linear-gradient(135deg,rgba(167,139,250,.07),rgba(167,139,250,.02));border:1px solid rgba(167,139,250,.18);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .18s;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(167,139,250,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;">📜</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:.7rem;letter-spacing:.08em;font-weight:700;color:rgba(167,139,250,.6);text-transform:uppercase;margin-bottom:3px;">Campaign Guidelines</div>
-            <div style="font-size:.88rem;font-weight:600;color:var(--tp);">Read Full Brief</div>
-            <div style="font-size:.72rem;color:var(--tm);margin-top:2px;">Notion →</div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-        </div>
-      </a>`:``}
-    </div>`:``}
-
-    <!-- ROW 5: Top 5 Clippers (full width) -->
+        <!-- ROW 5: Top 5 Clippers (full width) -->
     <div class="card">
       <p style="font-size:.95rem;font-weight:600;color:var(--tp);margin-bottom:16px;">Top 5 Clippers</p>
       <div data-real-performers><div style="padding:16px;text-align:center;color:var(--tm);font-size:.82rem">Loading…</div></div>
