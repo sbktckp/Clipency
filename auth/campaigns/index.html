@@ -52,7 +52,7 @@ async function loadRealPerformers(campaignId){
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:.84rem;font-weight:700;color:var(--tp)">${fmtV(p.views)}</div>
-          <div style="font-size:.72rem;color:var(--green);font-weight:600">₹${p.earn.toLocaleString('en-IN')}</div>
+          <div style="font-size:.72rem;color:var(--green);font-weight:600">${fmt(p.earnUsd||p.earn||0)}</div>
         </div>
       </div>`).join('');
   }catch(e){console.warn('performers:',e.message);}
@@ -2310,7 +2310,7 @@ function renderCampaigns(genre='All'){
   document.getElementById('camp-count').textContent=filtered.length+' campaigns';
   const grid=document.getElementById('camp-grid');
   grid.innerHTML=filtered.map(c=>{
-    const pct = Math.round((c.spent/c.budget)*100);
+    const pct = c.budget>0?Math.round((c.spent/c.budget)*100):0;
     const clippers = c.clippers||c.creators;
     const avLetters = ['Z','M','A','P','L','J'].slice(0,Math.min(4,clippers));
     const avHtml = avLetters.map(l=>`<div class="cc-creator-av">${l}</div>`).join('');
@@ -2370,7 +2370,7 @@ function showCampDetail(id){
   const detail=document.getElementById('camp-detail');
   grid.classList.add('hidden');
   detail.classList.remove('hidden');
-  const pct=Math.round((c.spent/c.budget)*100);
+  const pct=c.budget>0?Math.round((c.spent/c.budget)*100):0;
   const color=SPARK_COLORS[c.genre]||'#C4956A';
   const clippers=c.clippers||c.creators;
   const videosApproved=c.approvedCount||Math.floor(clippers*1.4);
@@ -2555,7 +2555,7 @@ function showCampDetail(id){
       if($('kpi-total-views')) $('kpi-total-views').textContent=fmtV(kpis.totalViews);
       if($('kpi-views-sub')){$('kpi-views-sub').textContent=wgStr;$('kpi-views-sub').style.color=wgColor;}
       if($('kpi-weekly-delta')){$('kpi-weekly-delta').textContent=wgStr;$('kpi-weekly-delta').style.color=wgColor;}
-      if($('kpi-earnings')) $('kpi-earnings').textContent='₹'+kpis.myEarnings.toLocaleString('en-IN');
+      if($('kpi-earnings')) $('kpi-earnings').textContent=fmt(kpis.myEarnings);
       if($('kpi-approved')) $('kpi-approved').textContent=String(kpis.approvedCount);
 
       // Real chart data
@@ -4238,7 +4238,7 @@ async function loadProfileFromSupabase(){
     const totalPaid=(payReqs||[]).filter(p=>p.status==='paid').reduce((a,p)=>a+(Number(p.amount)||0),0);
 
     const fmtV=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n||0);
-    const fmtM=n=>'₹'+Number(n).toLocaleString('en-IN');
+    const fmtM=n=>fmt(Number(n));
 
     // Update perf rows: views (2nd row), earned (3rd row)
     const perfRows=document.querySelectorAll('.perf-row');
@@ -4363,20 +4363,20 @@ window.addEventListener('load',()=>{
     const avail=Number(bal.available_balance)||0;
     const pending=Number(bal.pending_withdrawal)||0;
     const paid=Number(bal.total_withdrawn)||0;
-    const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
+    const fmtLocal=n=>fmt(Number(n));
     
     // Update balance cards
     ['bal-available','#bal-available'].forEach(id=>{
       const el=document.getElementById(id.replace('#',''));
-      if(el)el.textContent=fmt(avail);
+      if(el)el.textContent=fmtLocal(avail);
     });
     ['bal-pending','#bal-pending'].forEach(id=>{
       const el=document.getElementById(id.replace('#',''));
-      if(el)el.textContent=fmt(pending);
+      if(el)el.textContent=fmtLocal(pending);
     });
     ['bal-paid','#bal-paid'].forEach(id=>{
       const el=document.getElementById(id.replace('#',''));
-      if(el)el.textContent=fmt(paid);
+      if(el)el.textContent=fmtLocal(paid);
     });
     
     // Load transactions
