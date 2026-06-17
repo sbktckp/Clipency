@@ -1148,3 +1148,13 @@ async function boot(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
 else boot();
 })();
+
+/* Review button delegated handler */
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.cx-review-btn');
+  if(!btn) return;
+  const d = btn.dataset;
+  openReviewModal(d.id, d.name, d.camp, d.platform, d.handle, d.clip,
+    Number(d.views||0), Number(d.amt||0), d.status,
+    Number(d.likes||0), Number(d.comments||0));
+});
