@@ -690,7 +690,7 @@ async function renderReviews(){
       <td style="font-size:13px;font-weight:700;color:${amt>0?'#6EE7B7':'rgba(255,255,255,.3)'}">${amt>0?'₹'+amt.toLocaleString('en-IN'):'—'}</td>
       <td><span class="cx-badge ${r.status}">${r.status||'—'}</span>${r.rejection_reason?`<div style="font-size:10px;color:#F87171;margin-top:2px">${esc(r.rejection_reason.slice(0,30))}…</div>`:''}</td>
       <td><div class="cx-btns" style="flex-direction:column;gap:5px">
-        <button class="cx-btn ok sm" style="width:100%;justify-content:center" onclick="openReviewModal('${esc(r.id)}','${esc(r.user_name||r.user_email||'')}','${esc(r.campaign_title||'')}','${esc(r.platform||'')}','${esc(r.handle||'')}','${esc(r.clip_url||'')}',${views},${amt},'${r.status}',${Number(r.likes||0)},${Number(r.comments||0)})">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
+        <button class="cx-btn ok sm cx-review-btn" style="width:100%;justify-content:center" data-id="${r.id}" data-name="${esc(r.user_name||r.user_email||'')}" data-camp="${esc(r.campaign_title||'')}" data-platform="${esc(r.platform||'')}" data-handle="${esc(r.handle||'')}" data-clip="${esc(r.clip_url||'')}" data-views="${views}" data-amt="${amt}" data-status="${r.status}" data-likes="${Number(r.likes||0)}" data-comments="${Number(r.comments||0)}">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
         ${r.status==='pending'?`<button class="cx-btn danger sm" style="width:100%;justify-content:center" onclick="quickReject('${esc(r.id)}')">✗ Reject</button>`:''}
       </div></td>
     </tr>`;}).join('')}</tbody>
