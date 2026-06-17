@@ -100,18 +100,21 @@ async function loadCampaignKPIs(campaignId, currentUserId){
   if(!sb)return{totalViews:0,myEarnings:0,approvedCount:0,weeklyGrowth:0};
   try{
     const[{data:allSubs},{data:mySubs}]=await Promise.all([
-      sb.from('clip_submissions').select('views_count,approved_amount,status,created_at').eq('campaign_id',String(campaignId)),
+      sb.from('clip_submissions').select('views_count,approved_amount,status,created_at,user_id').eq('campaign_id',String(campaignId)),
       sb.from('clip_submissions').select('approved_amount').eq('campaign_id',String(campaignId)).eq('user_id',currentUserId).eq('status','approved')
     ]);
     const approved=(allSubs||[]).filter(s=>s.status==='approved');
     const totalViews=approved.reduce((s,x)=>s+Number(x.views_count||0),0);
     const myEarnings=(mySubs||[]).reduce((s,x)=>s+Number(x.approved_amount||0),0);
     const approvedCount=approved.length;
+    const totalPaid=approved.reduce((s,x)=>s+Number(x.approved_amount||0),0);
+    const uniqueClippers=new Set(approved.map(x=>x.user_id).filter(Boolean)).size;
+    const avgEarnings=uniqueClippers>0?(totalPaid/uniqueClippers):0;
     const now=Date.now(),w7=7*86400000;
     const thisW=approved.filter(s=>(now-new Date(s.created_at).getTime())<w7).reduce((s,x)=>s+Number(x.views_count||0),0);
     const prevW=approved.filter(s=>{const a=now-new Date(s.created_at).getTime();return a>=w7&&a<2*w7;}).reduce((s,x)=>s+Number(x.views_count||0),0);
     const weeklyGrowth=prevW>0?((thisW-prevW)/prevW*100).toFixed(1):thisW>0?100:0;
-    return{totalViews,myEarnings,approvedCount,weeklyGrowth};
+    return{totalViews,myEarnings,avgEarnings,approvedCount,weeklyGrowth};
   }catch(e){return{totalViews:0,myEarnings:0,approvedCount:0,weeklyGrowth:0};}
 }
 </script>

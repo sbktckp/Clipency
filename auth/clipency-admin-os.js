@@ -158,7 +158,7 @@ const NAV=[
   ['Clipper View','/campaigns','ext',true],
 ];
 
-const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/'/g,'&#39;');
 const fmt=n=>n!=null?Number(n).toLocaleString('en-IN'):'—';
 const fmtDate=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
 const fmtMoney=n=>n!=null?'₹'+fmt(n):'—';
