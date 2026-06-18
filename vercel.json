@@ -109,6 +109,14 @@
     {
       "source": "/assets/:file*",
       "destination": "/auth/assets/:file*"
+    },
+    {
+      "source": "/:name.css",
+      "destination": "/auth/:name.css"
+    },
+    {
+      "source": "/:name.js",
+      "destination": "/auth/:name.js"
     }
   ],
   "headers": [
