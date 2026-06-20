@@ -3179,14 +3179,55 @@ function renderWallet(){
   `).join('');
 }
 
-function setPrimary(id){
+async function setPrimary(id){
+  const prevState=paymentMethods.map(m=>({...m}));
   paymentMethods=paymentMethods.map(m=>({...m,primary:String(m.id)===String(id)}));
+  renderWallet();
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient||window.supabase;
+    if(!sb)throw new Error('no supabase');
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('not authenticated');
+    const{error:unsetErr}=await sb.from('user_payment_methods').update({is_primary:false}).eq('user_id',user.id).eq('is_primary',true);
+    if(unsetErr)throw unsetErr;
+    const{error:setErr}=await sb.from('user_payment_methods').update({is_primary:true}).eq('id',id).eq('user_id',user.id);
+    if(setErr)throw setErr;
+    showToast('Primary method updated');
+  }catch(e){
+    console.error('[wallet] setPrimary persist failed:',e.message);
+    paymentMethods=prevState;
+    renderWallet();
+    showToast('Error: could not update primary method');
+  }
+  return;
   renderWallet();showToast('Primary method updated');
 }
 
-function deletePay(id){
+async function deletePay(id){
+  const prevState=paymentMethods.map(m=>({...m}));
+  const wasPrimary=paymentMethods.find(m=>String(m.id)===String(id))?.primary;
   paymentMethods=paymentMethods.filter(m=>String(m.id)!==String(id));
   if(paymentMethods.length>0 && !paymentMethods.some(m=>m.primary)) paymentMethods[0].primary=true;
+  renderWallet();
+  try{
+    const sb=window.clipencySupabase||window.supabaseClient||window.supabase;
+    if(!sb)throw new Error('no supabase');
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('not authenticated');
+    const{error:delErr}=await sb.from('user_payment_methods').delete().eq('id',id).eq('user_id',user.id);
+    if(delErr)throw delErr;
+    if(wasPrimary && paymentMethods.length>0){
+      const{error:setErr}=await sb.from('user_payment_methods').update({is_primary:true}).eq('id',paymentMethods[0].id).eq('user_id',user.id);
+      if(setErr)console.warn(setErr);
+    }
+    showToast('Payment method removed');
+  }catch(e){
+    console.error('[wallet] deletePay persist failed:',e.message);
+    paymentMethods=prevState;
+    renderWallet();
+    showToast('Error: could not remove method');
+  }
+  return;
   renderWallet();showToast('Payment method removed');
 }
 
@@ -4340,7 +4381,7 @@ window.addEventListener('load',()=>{
         icon:svg[m.method_type]||svg.upi,
         name:{upi:'UPI',paypal:'PayPal',crypto:'Crypto Wallet'}[m.method_type]||m.method_type,
         detail:m.upi_id||m.paypal_email||m.bank_account||'—',
-        primary:m.is_primary||i===0,
+        primary:!!m.is_primary,
         cryptoToken:m.extra_details||null,
       }));
 
