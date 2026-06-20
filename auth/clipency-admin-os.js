@@ -1242,9 +1242,14 @@ async function renderLogs(){
 /* ══ ANALYTICS ═══════════════════════════════════════════════════════ */
 async function renderAnalytics(){
   const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m':m>0?m+'m':'<1m';};
-  let k={},sessions=[];
+  let k={},sessions=[],campaigns=[],clippers=[],reviewers=[],payouts=[],daily=[];
   try{const{data,error}=await sb.from('v_admin_kpis').select('*').single();if(!error)k=data||{};}catch{}
   try{const r=await sb.from('user_session_logs').select('id,email,display_name,login_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(30);sessions=r.data||[];}catch{}
+  try{const r=await sb.from('v_campaign_performance').select('*').limit(50);campaigns=r.data||[];}catch{}
+  try{const r=await sb.from('v_top_clippers').select('*').limit(15);clippers=r.data||[];}catch{}
+  try{const r=await sb.from('v_reviewer_throughput').select('*').limit(15);reviewers=r.data||[];}catch{}
+  try{const r=await sb.from('v_payout_summary').select('*');payouts=r.data||[];}catch{}
+  try{const r=await sb.from('v_daily_activity').select('*').limit(30);daily=r.data||[];}catch{}
 
   const cards=[
     ['Active Campaigns',fmt(k.active_campaigns||0),'of '+fmt(k.total_campaigns||0)+' total','ok'],
@@ -1261,6 +1266,57 @@ async function renderAnalytics(){
     ['Total Brands',fmt(k.total_brands||0),'Registered',''],
   ].map(([l,v,s2,cls])=>`<div class="cx-stat ${cls}"><div class="cx-stat-l">${l}</div><div class="cx-stat-v">${v}</div><div class="cx-stat-s">${s2}</div></div>`).join('');
 
+  const campaignStatusColor={active:'#6EE7B7',paused:'#FACC15',completed:'rgba(255,255,255,.4)',draft:'rgba(255,255,255,.3)'};
+  const campaignRows=campaigns.map(c=>`<tr>
+    <td style="font-size:12px;font-weight:600">${esc(c.title||'Untitled')}</td>
+    <td><span style="font-size:.68rem;font-weight:600;color:${campaignStatusColor[c.status]||'rgba(255,255,255,.4)'}">${esc(c.status||'—')}</span></td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(c.total_submissions||0)}</td>
+    <td style="font-size:12px;color:#6EE7B7">${fmt(c.approved_submissions||0)}</td>
+    <td style="font-size:12px;color:#F87171">${fmt(c.rejected_submissions||0)}</td>
+    <td style="font-size:12px;color:#FACC15">${fmt(c.pending_submissions||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.85)">${fmt(c.total_views||0)}</td>
+    <td style="font-size:12px;font-weight:600;color:#C4956A">${fmtMoney(c.total_earnings||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${c.approval_rate_pct!=null?c.approval_rate_pct+'%':'—'}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(c.unique_clippers||0)}</td>
+  </tr>`).join('');
+
+  const clipperRows=clippers.map(c=>`<tr>
+    <td style="font-size:12px;font-weight:600">${esc(c.name||c.email||'—')}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(c.total_submissions||0)}</td>
+    <td style="font-size:12px;color:#6EE7B7">${fmt(c.approved_submissions||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.85)">${fmt(c.total_views||0)}</td>
+    <td style="font-size:12px;font-weight:600;color:#C4956A">${fmtMoney(c.total_earnings||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(c.campaigns_participated||0)}</td>
+  </tr>`).join('');
+
+  const reviewerRows=reviewers.map(r=>`<tr>
+    <td style="font-size:12px;font-weight:600">${esc(r.reviewer||'—')}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(r.total_reviewed||0)}</td>
+    <td style="font-size:12px;color:#6EE7B7">${fmt(r.approved||0)}</td>
+    <td style="font-size:12px;color:#F87171">${fmt(r.rejected||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${r.avg_review_time_hours!=null?r.avg_review_time_hours+'h':'—'}</td>
+  </tr>`).join('');
+
+  const payoutStatusColor={pending:'#FACC15',approved:'#60A5FA',paid:'#6EE7B7',rejected:'#F87171'};
+  const payoutRows=payouts.map(p=>`<tr>
+    <td><span style="font-size:.68rem;font-weight:600;color:${payoutStatusColor[p.status]||'rgba(255,255,255,.4)'}">${esc(p.status||'—')}</span></td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${fmt(p.count||0)}</td>
+    <td style="font-size:12px;font-weight:600;color:#C4956A">${fmtMoney(p.total_amount||0)}</td>
+    <td style="font-size:12px;color:rgba(255,255,255,.7)">${p.avg_turnaround_hours!=null?p.avg_turnaround_hours+'h':'—'}</td>
+  </tr>`).join('');
+
+  const dailyRows=daily.map(d=>`<tr>
+    <td style="font-size:11px;color:rgba(255,255,255,.6)">${d.day?new Date(d.day).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'—'}</td>
+    <td style="font-size:12px">${fmt(d.new_signups||0)}</td>
+    <td style="font-size:12px">${fmt(d.submissions||0)}</td>
+    <td style="font-size:12px;color:#6EE7B7">${fmt(d.approvals||0)}</td>
+    <td style="font-size:12px;color:#F87171">${fmt(d.rejections||0)}</td>
+    <td style="font-size:12px">${fmt(d.views_submitted||0)}</td>
+    <td style="font-size:12px">${fmt(d.payout_requests||0)}</td>
+    <td style="font-size:12px;color:#C4956A">${fmtMoney(d.amount_paid||0)}</td>
+    <td style="font-size:12px">${fmt(d.active_users||0)}</td>
+  </tr>`).join('');
+
   const sessionRows=sessions.map(r=>`<tr>
     <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:10.5px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
     <td><span class="cx-badge ${r.status==='active'?'approved':'draft'}">${esc(r.status||'offline')}</span></td>
@@ -1273,12 +1329,36 @@ async function renderAnalytics(){
   return page({kicker:'Platform Analytics',title:'Analytics.',sub:'Live KPIs across campaigns, clips, payouts and sessions.',
     body:`<div class="cx-stats">${cards}</div>
     <div class="cx-sec">
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">Campaign performance</div><div class="cx-sd">${campaigns.length} campaigns ranked by earnings</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th>Campaign</th><th>Status</th><th>Submissions</th><th>Approved</th><th>Rejected</th><th>Pending</th><th>Views</th><th>Earnings</th><th>Approval %</th><th>Clippers</th></tr></thead>
+      <tbody>${campaignRows||'<tr><td colspan="10"><div class="cx-empty">No campaign data yet.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">Top clippers</div><div class="cx-sd">${clippers.length} ranked by earnings</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th>Clipper</th><th>Submissions</th><th>Approved</th><th>Views</th><th>Earnings</th><th>Campaigns</th></tr></thead>
+      <tbody>${clipperRows||'<tr><td colspan="6"><div class="cx-empty">No data yet.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">Reviewer throughput</div><div class="cx-sd">${reviewers.length} reviewers</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th>Reviewer</th><th>Reviewed</th><th>Approved</th><th>Rejected</th><th>Avg time</th></tr></thead>
+      <tbody>${reviewerRows||'<tr><td colspan="5"><div class="cx-empty">No reviews yet.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">Payout summary</div><div class="cx-sd">By status</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th>Status</th><th>Count</th><th>Total</th><th>Avg turnaround</th></tr></thead>
+      <tbody>${payoutRows||'<tr><td colspan="4"><div class="cx-empty">No payouts yet.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">Daily activity</div><div class="cx-sd">Last 30 days</div></div></div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th>Day</th><th>Signups</th><th>Submissions</th><th>Approved</th><th>Rejected</th><th>Views</th><th>Payout Reqs</th><th>Paid</th><th>Active</th></tr></thead>
+      <tbody>${dailyRows||'<tr><td colspan="9"><div class="cx-empty">No data yet.</div></td></tr>'}</tbody>
+    </table></div>
     <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">User sessions</div><div class="cx-sd">${sessions.length} sessions tracked</div></div></div>
     <div class="cx-tw"><table class="cx-t">
       <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Last seen</th><th>Duration</th><th>Entry</th></tr></thead>
       <tbody>${sessionRows||'<tr><td colspan="6"><div class="cx-empty">No sessions.</div></td></tr>'}</tbody>
     </table></div>
-    <div class="cx-sh" style="margin:24px 0 12px"><div><div class="cx-st">More on the way</div><div class="cx-sd">Campaign performance, top clippers, reviewer throughput, payout breakdown and daily trends land here next, one section at a time.</div></div></div>
     </div>`});
 }
 
