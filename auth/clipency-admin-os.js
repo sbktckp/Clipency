@@ -666,7 +666,7 @@ async function renderReviews(){
   const tab=new URLSearchParams(location.search).get('tab')||'pending';
   let srData=[],profMap={};
   try{
-    const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,views,status,rejection_reason,approved_amount,earning_amount,created_at,reviewed_at').order('created_at',{ascending:false});
+    const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,views,status,rejection_reason,appeal_note,approved_amount,earning_amount,created_at,reviewed_at').order('created_at',{ascending:false});
     srData=srQ.data||[];
     const uids=[...new Set(srData.map(x=>x.user_id).filter(Boolean))];
     if(uids.length){const{data:profs}=await sb.from('profiles').select('id,email,full_name').in('id',uids);profMap=Object.fromEntries((profs||[]).map(p=>[p.id,p]));}
@@ -688,9 +688,9 @@ async function renderReviews(){
       <td>${r.clip_url?`<a href="${esc(r.clip_url)}" target="_blank" style="color:#C4956A;font-size:12px;text-decoration:none;white-space:nowrap">🔗 Open ↗</a>`:'—'}</td>
       <td style="font-size:13px;font-weight:600;color:${views>0?'#F5F0EB':'rgba(255,255,255,.3)'}">${fmtViews(views)}</td>
       <td style="font-size:13px;font-weight:700;color:${amt>0?'#6EE7B7':'rgba(255,255,255,.3)'}">${amt>0?'₹'+amt.toLocaleString('en-IN'):'—'}</td>
-      <td><span class="cx-badge ${r.status}">${r.status||'—'}</span>${r.rejection_reason?`<div style="font-size:10px;color:#F87171;margin-top:2px">${esc(r.rejection_reason.slice(0,30))}…</div>`:''}</td>
+      <td><span class="cx-badge ${r.status}">${r.status||'—'}</span>${r.rejection_reason?`<div style="font-size:10px;color:#F87171;margin-top:2px">${esc(r.rejection_reason.slice(0,30))}…</div>`:''}${r.appeal_note?`<div style="font-size:10px;color:#FACC15;margin-top:2px">↩ Appeal: ${esc(r.appeal_note.slice(0,40))}${r.appeal_note.length>40?'…':''}</div>`:''}</td>
       <td><div class="cx-btns" style="flex-direction:column;gap:5px">
-        <button class="cx-btn ok sm cx-review-btn" style="width:100%;justify-content:center" data-id="${r.id}" data-name="${esc(r.user_name||r.user_email||'')}" data-camp="${esc(r.campaign_title||'')}" data-platform="${esc(r.platform||'')}" data-handle="${esc(r.handle||'')}" data-clip="${esc(r.clip_url||'')}" data-views="${views}" data-amt="${amt}" data-status="${r.status}" data-likes="${Number(r.likes||0)}" data-comments="${Number(r.comments||0)}">${r.status==='approved'?'✏ Edit':'✓ Review'}</button>
+        <button class="cx-btn ok sm cx-review-btn" style="width:100%;justify-content:center" data-id="${r.id}" data-name="${esc(r.user_name||r.user_email||'')}" data-camp="${esc(r.campaign_title||'')}" data-platform="${esc(r.platform||'')}" data-handle="${esc(r.handle||'')}" data-clip="${esc(r.clip_url||'')}" data-views="${views}" data-amt="${amt}" data-status="${r.status}" data-likes="${Number(r.likes||0)}" data-comments="${Number(r.comments||0)}" data-appeal="${esc(r.appeal_note||'')}" data-rejreason="${esc(r.rejection_reason||'')}">${r.status==='approved'?'✏ Edit':r.status==='rejected'?'↺ Re-review':'✓ Review'}</button>
         ${r.status==='pending'?`<button class="cx-btn danger sm" style="width:100%;justify-content:center" onclick="quickReject('${esc(r.id)}')">✗ Reject</button>`:''}
       </div></td>
     </tr>`;}).join('')}</tbody>
@@ -704,7 +704,7 @@ async function renderReviews(){
     <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
 }
 
-window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status,likes,comments){
+window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status,likes,comments,appealNote,priorRejectReason){
   likes=likes||0; comments=comments||0;
   const engRate=views>0?((likes+comments)/views*100).toFixed(2):0;
   const panel=document.createElement('div');
@@ -720,6 +720,8 @@ window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,s
       <button onclick="this.closest('.cx-panel').remove()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#B8AFA8;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>
     </div>
     ${clipUrl?`<a href="${esc(clipUrl)}" target="_blank" style="display:flex;align-items:center;gap:8px;background:rgba(196,149,106,.07);border:1px solid rgba(196,149,106,.15);border-radius:9px;padding:10px 14px;text-decoration:none;color:#C4956A;font-size:.82rem;margin-bottom:18px;font-weight:600;">🔗 Open clip proof ↗</a>`:''}
+    ${priorRejectReason?`<div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.78rem;color:#F87171;"><b>Prior rejection reason:</b> ${esc(priorRejectReason)}</div>`:''}
+    ${appealNote?`<div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);border-radius:9px;padding:10px 14px;margin-bottom:18px;font-size:.78rem;color:#FACC15;"><b>↩ Clipper appeal:</b> ${esc(appealNote)}</div>`:''}
     <div id="rm-err" style="margin-bottom:8px;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
       <div>
@@ -748,7 +750,7 @@ window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,s
     </div>
     <div style="display:flex;gap:9px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);">
       <button id="rm-approve" class="cx-btn ok" style="flex:1;justify-content:center;">${status==='approved'?'✓ Save Changes':'✓ Approve & Save'}</button>
-      ${status==='pending'?`<button id="rm-reject" class="cx-btn danger" style="flex:1;justify-content:center;">✗ Reject</button>`:''}
+      ${status!=='rejected'?`<button id="rm-reject" class="cx-btn danger" style="flex:1;justify-content:center;">✗ Reject${status==='approved'?' (Unapprove)':''}</button>`:''}
       <button onclick="this.closest('.cx-panel').remove()" class="cx-btn ghost">Cancel</button>
     </div>
   </div>`;
@@ -1157,5 +1159,5 @@ document.addEventListener('click', function(e){
   const d = btn.dataset;
   openReviewModal(d.id, d.name, d.camp, d.platform, d.handle, d.clip,
     Number(d.views||0), Number(d.amt||0), d.status,
-    Number(d.likes||0), Number(d.comments||0));
+    Number(d.likes||0), Number(d.comments||0), d.appeal, d.rejreason);
 });
