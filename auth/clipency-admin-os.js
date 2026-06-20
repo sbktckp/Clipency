@@ -310,17 +310,71 @@ async function renderCommand(){
 }
 
 /* ══ ACCOUNTS ════════════════════════════════════════════════════════ */
+window.__acctFilter = function(){
+  const p=new URLSearchParams(location.search);
+  const q=(document.getElementById('cx-acct-search')?.value||'').trim();
+  const from=document.getElementById('cx-acct-from')?.value||'';
+  const to=document.getElementById('cx-acct-to')?.value||'';
+  if(q)p.set('q',q);else p.delete('q');
+  if(from)p.set('from',from);else p.delete('from');
+  if(to)p.set('to',to);else p.delete('to');
+  location.search='?'+p.toString();
+};
+window.__acctClear = function(){
+  const p=new URLSearchParams(location.search);
+  const tab=p.get('tab')||'pending';
+  location.search='?tab='+tab;
+};
 async function renderAccounts(){
-  const tab=new URLSearchParams(location.search).get('tab')||'pending';
+  const params=new URLSearchParams(location.search);
+  const tab=params.get('tab')||'pending';
+  const platform=params.get('platform')||'all';
+  const q=(params.get('q')||'').trim().toLowerCase();
+  const from=params.get('from')||'';
+  const to=params.get('to')||'';
   // Direct query — avoids ambiguous status column in RPC
   const caQuery = await sb
     .from('connected_accounts')
     .select('id,user_id,platform,username,handle,verification_code,status,rejection_reason,created_at,expires_at,verified_at,is_verified,profiles(email,full_name)')
     .order('created_at',{ascending:false});
-  const rows = caQuery.error ? [] : (tab==='all' ? caQuery.data : (caQuery.data||[]).filter(x=>x.status===tab))
+  const allRows = caQuery.error ? [] : (caQuery.data||[])
     .map(x=>({...x,acct_status:x.status,user_email:x.profiles?.email,user_name:x.profiles?.full_name}));
-  const tabs=['pending','verified','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+  let rows = tab==='all' ? allRows : allRows.filter(x=>x.status===tab);
+  if(platform!=='all') rows = rows.filter(x=>(x.platform||'').toLowerCase()===platform);
+  if(q) rows = rows.filter(x=>
+    (x.user_email||'').toLowerCase().includes(q) ||
+    (x.user_name||'').toLowerCase().includes(q) ||
+    (x.handle||x.username||'').toLowerCase().includes(q)
+  );
+  if(from){ const fromTs=new Date(from+'T00:00:00').getTime(); rows = rows.filter(x=>new Date(x.created_at).getTime()>=fromTs); }
+  if(to){ const toTs=new Date(to+'T23:59:59').getTime(); rows = rows.filter(x=>new Date(x.created_at).getTime()<=toTs); }
+
+  const qs=(overrides)=>{
+    const p=new URLSearchParams(location.search);
+    Object.entries(overrides).forEach(([k,v])=>{ if(v===''||v==null)p.delete(k);else p.set(k,v); });
+    return '?'+p.toString();
+  };
+
+  const tabs=['pending','verified','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='${qs({tab:t})}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+  const platformPills=['all','tiktok','instagram','youtube'].map(pl=>`<button class="cx-tab${platform===pl?' on':''}" onclick="location.search='${qs({platform:pl})}'">${pl==='all'?'All platforms':pl.charAt(0).toUpperCase()+pl.slice(1)}</button>`).join('');
   const platformIcon={youtube:'📹',instagram:'📸',tiktok:'🎵',yt:'📹',ig:'📸',tt:'🎵'};
+
+  const filterBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0">
+    <div class="cx-tabs" style="margin:0">${platformPills}</div>
+    <input type="text" id="cx-acct-search" placeholder="Search clipper email, name or handle…" value="${esc(q)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px;min-width:240px"
+      onkeydown="if(event.key==='Enter')window.__acctFilter()"/>
+    <input type="date" id="cx-acct-from" value="${esc(from)}" title="From date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__acctFilter()"/>
+    <span style="color:rgba(255,255,255,.3);font-size:12px">to</span>
+    <input type="date" id="cx-acct-to" value="${esc(to)}" title="To date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__acctFilter()"/>
+    <button class="cx-btn ghost sm" onclick="window.__acctFilter()">Apply</button>
+    <button class="cx-btn ghost sm" onclick="window.__acctClear()">Clear filters</button>
+  </div>`;
+
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Platform</th><th>Handle</th><th>Clipper</th><th>Code</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>${(rows||[]).map(r=>`<tr>
@@ -341,10 +395,17 @@ async function renderAccounts(){
         `:'<span style="font-size:11.5px;color:rgba(255,255,255,.3)">—</span>'}
       </div></td>
     </tr>`).join('')}</tbody>
-  </table></div>`:`<div class="cx-empty">No ${tab} accounts.</div>`;
+  </table></div>`:`<div class="cx-empty">No accounts match these filters.</div>`;
+
+  const subParts=[`${rows.length} account${rows.length!==1?'s':''}`];
+  if(tab!=='all')subParts.push(`in ${tab}`);
+  if(platform!=='all')subParts.push(`on ${platform}`);
+  if(q)subParts.push(`matching "${esc(q)}"`);
+  if(from||to)subParts.push(`between ${from||'…'} and ${to||'…'}`);
+
   return page({kicker:'Accounts',title:'Connected accounts.',sub:'Verify social media accounts connected by clippers. Check the verification code is in their bio.',
-    body:`<div class="cx-sec"><div class="cx-sh"><div><div class="cx-st">Account verification</div><div class="cx-sd">${(rows||[]).length} account${(rows||[]).length!==1?'s':''} in ${tab}</div></div></div>
-    <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
+    body:`<div class="cx-sec"><div class="cx-sh"><div><div class="cx-st">Account verification</div><div class="cx-sd">${subParts.join(' · ')}</div></div></div>
+    <div class="cx-tabs">${tabs}</div>${filterBar}${rowsHtml}</div>`});
 }
 
 /* ══ CAMPAIGNS ════════════════════════════════════════════════════════ */
