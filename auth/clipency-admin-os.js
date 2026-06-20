@@ -950,17 +950,84 @@ window.quickReject=async function(id){
 
 
 /* ══ PAYOUTS ════════════════════════════════════════════════════════ */
+window.__payFilter = function(){
+  const p=new URLSearchParams(location.search);
+  const q=(document.getElementById('cx-pay-search')?.value||'').trim();
+  const ref=(document.getElementById('cx-pay-ref')?.value||'').trim();
+  const minA=document.getElementById('cx-pay-min')?.value||'';
+  const maxA=document.getElementById('cx-pay-max')?.value||'';
+  const from=document.getElementById('cx-pay-from')?.value||'';
+  const to=document.getElementById('cx-pay-to')?.value||'';
+  if(q)p.set('q',q);else p.delete('q');
+  if(ref)p.set('ref',ref);else p.delete('ref');
+  if(minA)p.set('min',minA);else p.delete('min');
+  if(maxA)p.set('max',maxA);else p.delete('max');
+  if(from)p.set('from',from);else p.delete('from');
+  if(to)p.set('to',to);else p.delete('to');
+  location.search='?'+p.toString();
+};
+window.__payClear = function(){
+  const p=new URLSearchParams(location.search);
+  const tab=p.get('tab')||'pending';
+  location.search='?tab='+tab;
+};
 async function renderPayouts(){
-  const tab=new URLSearchParams(location.search).get('tab')||'pending';
+  const params=new URLSearchParams(location.search);
+  const tab=params.get('tab')||'pending';
+  const q=(params.get('q')||'').trim().toLowerCase();
+  const refFilter=(params.get('ref')||'').trim().toLowerCase();
+  const minA=params.get('min')||'';
+  const maxA=params.get('max')||'';
+  const from=params.get('from')||'';
+  const to=params.get('to')||'';
   const prQ=await sb.from('payout_requests').select('id,user_id,amount,status,note,requested_at,processed_at,transaction_reference').order('requested_at',{ascending:false});
   const prData=prQ.data||[];
   const puids=[...new Set(prData.map(x=>x.user_id).filter(Boolean))];
   const pprofQ=puids.length?await sb.from('profiles').select('id,email,full_name').in('id',puids):{data:[]};
   const pprofMap=Object.fromEntries((pprofQ.data||[]).map(p=>[p.id,p]));
   const allPR=prData.map(x=>({...x,user_email:pprofMap[x.user_id]?.email||'—',user_name:pprofMap[x.user_id]?.full_name||'',available_balance:0}));
-  const rows=tab==='all'?allPR:allPR.filter(x=>x.status===tab);
+  let rows=tab==='all'?allPR:allPR.filter(x=>x.status===tab);
+  if(q)rows=rows.filter(x=>
+    (x.user_email||'').toLowerCase().includes(q) ||
+    (x.user_name||'').toLowerCase().includes(q)
+  );
+  if(refFilter)rows=rows.filter(x=>(x.transaction_reference||'').toLowerCase().includes(refFilter));
+  if(minA)rows=rows.filter(x=>Number(x.amount||0)>=Number(minA));
+  if(maxA)rows=rows.filter(x=>Number(x.amount||0)<=Number(maxA));
+  if(from){const fromTs=new Date(from+'T00:00:00').getTime();rows=rows.filter(x=>new Date(x.requested_at).getTime()>=fromTs);}
+  if(to){const toTs=new Date(to+'T23:59:59').getTime();rows=rows.filter(x=>new Date(x.requested_at).getTime()<=toTs);}
   const totalPending=(rows||[]).filter(r=>r.status==='pending').reduce((a,r)=>a+(r.amount||0),0);
-  const tabs=['pending','paid','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+  const filteredSum=(rows||[]).reduce((a,r)=>a+(r.amount||0),0);
+  const qs=(overrides)=>{
+    const p=new URLSearchParams(location.search);
+    Object.entries(overrides).forEach(([k,v])=>{ if(v===''||v==null)p.delete(k);else p.set(k,v); });
+    return '?'+p.toString();
+  };
+  const tabs=['pending','paid','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='${qs({tab:t})}'">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+  const filterBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0">
+    <input type="text" id="cx-pay-search" placeholder="Search clipper email or name…" value="${esc(q)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px;min-width:210px"
+      onkeydown="if(event.key==='Enter')window.__payFilter()"/>
+    <input type="text" id="cx-pay-ref" placeholder="Search reference (UTR, UPI id)…" value="${esc(refFilter)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px;min-width:200px"
+      onkeydown="if(event.key==='Enter')window.__payFilter()"/>
+    <input type="number" id="cx-pay-min" placeholder="Min ₹" value="${esc(minA)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#f5f5f7;font-size:13px;width:90px"
+      onchange="window.__payFilter()"/>
+    <span style="color:rgba(255,255,255,.3);font-size:12px">to</span>
+    <input type="number" id="cx-pay-max" placeholder="Max ₹" value="${esc(maxA)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#f5f5f7;font-size:13px;width:90px"
+      onchange="window.__payFilter()"/>
+    <input type="date" id="cx-pay-from" value="${esc(from)}" title="From date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__payFilter()"/>
+    <span style="color:rgba(255,255,255,.3);font-size:12px">to</span>
+    <input type="date" id="cx-pay-to" value="${esc(to)}" title="To date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__payFilter()"/>
+    <button class="cx-btn ghost sm" onclick="window.__payFilter()">Apply</button>
+    <button class="cx-btn ghost sm" onclick="window.__payClear()">Clear filters</button>
+  </div>`;
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
     <thead><tr><th>Clipper</th><th>Requested</th><th>Available Balance</th><th>Status</th><th>Reference</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>${(rows||[]).map(r=>`<tr>
@@ -974,13 +1041,23 @@ async function renderPayouts(){
         ${r.status==='pending'?`<button class="cx-btn ok sm" data-pay="${esc(r.id)}">Mark Paid</button>`:'<span style="font-size:11px;color:rgba(255,255,255,.3)">Done</span>'}
       </div></td>
     </tr>`).join('')}</tbody>
-  </table></div>`:`<div class="cx-empty">No ${tab} payouts.</div>`;
+  </table></div>`:`<div class="cx-empty">No payouts match these filters.</div>`;
+  const subParts=[`${rows.length} payout${rows.length!==1?'s':''}`];
+  if(tab!=='all')subParts.push(`in ${tab}`);
+  if(q)subParts.push(`matching "${esc(q)}"`);
+  if(refFilter)subParts.push(`ref contains "${esc(refFilter)}"`);
+  if(minA||maxA)subParts.push(`₹${minA||'0'}–₹${maxA||'∞'}`);
+  if(from||to)subParts.push(`between ${from||'…'} and ${to||'…'}`);
   return page({kicker:'Payout Control',title:'Withdrawals.',sub:'Process clipper withdrawal requests. Mark as paid once transferred.',
     body:`<div class="cx-sec">
     ${tab==='pending'&&totalPending>0?`<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><span style="color:#fbbf24;font-weight:600">Total pending payout</span><span style="font-size:22px;font-weight:800;color:#f5f5f7">${fmtMoney(totalPending)}</span></div>`:''}
-    <div class="cx-sh"><div><div class="cx-st">Payout requests</div><div class="cx-sd">${(rows||[]).length} in ${tab}</div></div>
+    <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <span style="color:#a5b4fc;font-weight:600">Sum of filtered results (${rows.length})</span>
+      <span style="font-size:20px;font-weight:800;color:#f5f5f7">${fmtMoney(filteredSum)}</span>
+    </div>
+    <div class="cx-sh"><div><div class="cx-st">Payout requests</div><div class="cx-sd">${subParts.join(' · ')}</div></div>
     <a class="cx-btn ghost" href="https://finance.clipency.in" target="_blank" rel="noopener">Open Finance OS</a></div>
-    <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
+    <div class="cx-tabs">${tabs}</div>${filterBar}${rowsHtml}</div>`});
 }
 
 /* ══ USERS ═══════════════════════════════════════════════════════════ */
