@@ -168,7 +168,7 @@ const fmtDate=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'
 const fmtMoney=n=>n!=null?'₹'+fmt(n):'—';
 
 /* ══ STATE ══════════════════════════════════════════════════════════════ */
-let sb=null,me=null;
+let sb=null,me=null,myRole='clipper';
 
 async function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 async function getClient(){
@@ -196,7 +196,8 @@ async function initAuth(){
       role=(rows||[]).length?'admin':'clipper';
     }catch{}
   }
-  if(role!=='admin'){
+  myRole=role;
+  if(role!=='admin'&&role!=='reviewer'){
     document.body.className='';document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif"><div style="text-align:center;max-width:440px;padding:32px"><div style="color:#6366f1;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Access Denied</div><h1 style="font-size:36px;font-weight:700;margin-bottom:10px">Admin only.</h1><p style="color:rgba(255,255,255,.5);margin-bottom:24px">You're signed in as <b>${esc(me.email)}</b> which is not an admin account.</p><a href="/login" style="background:#6366f1;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600">Sign in as admin</a></div></div>`;
     return false;
   }
@@ -208,7 +209,9 @@ function shell(content){
   const email=me?.email||'';
   const name=me?.user_metadata?.full_name||email.split('@')[0]||'Admin';
   const init=name[0]?.toUpperCase()||'A';
-  const nav=NAV.map(([label,href,ic,ext])=>{
+  const REVIEWER_ALLOWED=['/admin/connected-accounts','/admin/accounts','/admin/reviews','/admin/review'];
+  const navItems=myRole==='reviewer'?NAV.filter(([,href])=>REVIEWER_ALLOWED.includes(href)):NAV;
+  const nav=navItems.map(([label,href,ic,ext])=>{
     const active=!ext&&(PATH===href||(href!=='/admin'&&PATH.startsWith(href)));
     return`<a href="${href}" class="${active?'active':''}" ${ext?'target="_blank" rel="noopener noreferrer"':''}>${svg(ic)}<span>${label}</span></a>`;
   }).join('');
@@ -1420,7 +1423,13 @@ function saveReqsFromEdit(text){
   return (text||'').split('\n').map(s=>s.trim()).filter(Boolean).join('\n');
 }
 
+function renderRestricted(){
+  return`<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif"><div style="text-align:center;max-width:440px;padding:32px"><div style="color:#6366f1;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Access Denied</div><h1 style="font-size:36px;font-weight:700;margin-bottom:10px">Reviewer access.</h1><p style="color:rgba(255,255,255,.5);margin-bottom:24px">Your reviewer account can only access Accounts and Reviews.</p><a href="/admin/reviews" style="background:#6366f1;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:10px">Go to Reviews</a><a href="/admin/connected-accounts" style="background:rgba(255,255,255,.08);color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600">Go to Accounts</a></div></div>`;
+}
+
 async function renderRoute(){
+  const REVIEWER_ALLOWED=['/admin/connected-accounts','/admin/accounts','/admin/reviews','/admin/review'];
+  if(myRole==='reviewer'&&!REVIEWER_ALLOWED.includes(PATH))return renderRestricted();
   if(PATH==='/admin'||PATH==='/workspace')return renderCommand();
   if(PATH==='/admin/connected-accounts'||PATH==='/admin/accounts')return renderAccounts();
   if(PATH==='/admin/campaigns')return renderCampaigns();
