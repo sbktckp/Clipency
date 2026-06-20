@@ -771,7 +771,8 @@ window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,s
     const c=Number(panel.querySelector('#rm-comments').value)||0;
     const eng=v>0?((l+c)/v*100):0;
     const errEl=panel.querySelector('#rm-err');
-    if(!a||a<=0){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px;">⚠ Enter earnings amount</div>`;return;}
+    if(v<500){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px;">⚠ Minimum 500 views required to approve</div>`;return;}
+    if(isNaN(a)||a<0){errEl.innerHTML=`<div style="color:#F87171;font-size:.8rem;margin-bottom:8px;">⚠ Enter a valid earnings amount</div>`;return;}
     const btn=panel.querySelector('#rm-approve');btn.disabled=true;btn.textContent='Saving…';
     try{
       const{error}=await sb.rpc('admin_approve_submission',{p_id:id,p_amount:a,p_views:v});
