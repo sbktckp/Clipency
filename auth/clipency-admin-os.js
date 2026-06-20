@@ -193,7 +193,7 @@ async function initAuth(){
     }catch{}
   }
   if(role!=='admin'){
-    document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif"><div style="text-align:center;max-width:440px;padding:32px"><div style="color:#6366f1;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Access Denied</div><h1 style="font-size:36px;font-weight:700;margin-bottom:10px">Admin only.</h1><p style="color:rgba(255,255,255,.5);margin-bottom:24px">You're signed in as <b>${esc(me.email)}</b> which is not an admin account.</p><a href="/login" style="background:#6366f1;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600">Sign in as admin</a></div></div>`;
+    document.body.className='';document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;background:#000;color:#f5f5f7;font-family:-apple-system,sans-serif"><div style="text-align:center;max-width:440px;padding:32px"><div style="color:#6366f1;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Access Denied</div><h1 style="font-size:36px;font-weight:700;margin-bottom:10px">Admin only.</h1><p style="color:rgba(255,255,255,.5);margin-bottom:24px">You're signed in as <b>${esc(me.email)}</b> which is not an admin account.</p><a href="/login" style="background:#6366f1;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600">Sign in as admin</a></div></div>`;
     return false;
   }
   return true;
