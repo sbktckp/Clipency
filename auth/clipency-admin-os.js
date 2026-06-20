@@ -985,7 +985,16 @@ async function renderPayouts(){
   const puids=[...new Set(prData.map(x=>x.user_id).filter(Boolean))];
   const pprofQ=puids.length?await sb.from('profiles').select('id,email,full_name').in('id',puids):{data:[]};
   const pprofMap=Object.fromEntries((pprofQ.data||[]).map(p=>[p.id,p]));
-  const allPR=prData.map(x=>({...x,user_email:pprofMap[x.user_id]?.email||'—',user_name:pprofMap[x.user_id]?.full_name||'',available_balance:0}));
+  const pmQ=puids.length?await sb.from('user_payment_methods').select('user_id,method_type,upi_id,paypal_email,bank_name,bank_account,ifsc,account_name,is_primary').in('user_id',puids).eq('is_primary',true):{data:[]};
+  const pmMap=Object.fromEntries((pmQ.data||[]).map(m=>[m.user_id,m]));
+  const fmtPayTarget=(m)=>{
+    if(!m)return'<span style="color:rgba(255,255,255,.3)">No method on file</span>';
+    if(m.method_type==='upi')return`<span style="color:#a5b4fc">UPI</span> ${esc(m.upi_id||'—')}`;
+    if(m.method_type==='paypal')return`<span style="color:#a5b4fc">PayPal</span> ${esc(m.paypal_email||'—')}`;
+    if(m.method_type==='bank')return`<span style="color:#a5b4fc">Bank</span> ${esc(m.bank_account||'—')} <span style="color:rgba(255,255,255,.35)">(${esc(m.ifsc||'—')})</span>`;
+    return`<span style="color:rgba(255,255,255,.3)">${esc(m.method_type||'—')}</span>`;
+  };
+  const allPR=prData.map(x=>({...x,user_email:pprofMap[x.user_id]?.email||'—',user_name:pprofMap[x.user_id]?.full_name||'',available_balance:0,pay_target:fmtPayTarget(pmMap[x.user_id])}));
   let rows=tab==='all'?allPR:allPR.filter(x=>x.status===tab);
   if(q)rows=rows.filter(x=>
     (x.user_email||'').toLowerCase().includes(q) ||
@@ -1029,9 +1038,10 @@ async function renderPayouts(){
     <button class="cx-btn ghost sm" onclick="window.__payClear()">Clear filters</button>
   </div>`;
   const rowsHtml=(rows||[]).length?`<div class="cx-tw"><table class="cx-t">
-    <thead><tr><th>Clipper</th><th>Requested</th><th>Available Balance</th><th>Status</th><th>Reference</th><th>Date</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Clipper</th><th>Pay To</th><th>Requested</th><th>Available Balance</th><th>Status</th><th>Reference</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>${(rows||[]).map(r=>`<tr>
       <td><div style="font-size:12.5px;font-weight:600">${esc(r.user_email||'—')}</div><div style="font-size:11px;color:rgba(255,255,255,.35)">${esc(r.user_name||'')}</div></td>
+      <td style="font-size:12px;white-space:nowrap">${r.pay_target}</td>
       <td style="font-size:15px;font-weight:700;color:#f5f5f7">${fmtMoney(r.amount)}</td>
       <td style="font-size:13px;color:#4ade80">${fmtMoney(r.available_balance)}</td>
       <td><span class="cx-badge ${r.status}">${esc(r.status||'—')}</span></td>

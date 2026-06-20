@@ -3276,9 +3276,34 @@ document.getElementById('withdraw-modal').addEventListener('click',function(e){
 });
 
 // ── WALLET ──
+let _paymentMethodsLoaded=false;
+async function loadPaymentMethodsFromSupabase(){
+  const sb=window.clipencySupabase||window.supabaseClient;
+  if(!sb)return;
+  try{
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)return;
+    const{data,error}=await sb.from('user_payment_methods').select('id,method_type,upi_id,paypal_email,bank_name,bank_account,ifsc,account_name,extra_details,is_primary,created_at').eq('user_id',user.id).order('created_at',{ascending:true});
+    if(error)throw error;
+    const icons={upi:'<img src="upilogo.png" alt="UPI" style="width:24px;height:24px;object-fit:contain;"/>',paypal:'<img src="paypallogo.jpg" alt="PayPal" style="width:24px;height:24px;object-fit:contain;border-radius:4px;"/>',crypto:'<img src="usdlogo.jpg" alt="Crypto" style="width:24px;height:24px;object-fit:contain;border-radius:50%;"/>'};
+    const names={upi:'UPI',paypal:'PayPal',bank:'Bank Account',crypto:'Crypto Wallet'};
+    paymentMethods=(data||[]).map(m=>({
+      id:m.id,
+      type:m.method_type,
+      icon:icons[m.method_type]||icons.upi,
+      name:names[m.method_type]||m.method_type,
+      detail:m.method_type==='upi'?(m.upi_id||''):m.method_type==='paypal'?(m.paypal_email||''):m.method_type==='bank'?(m.bank_account||''):(m.extra_details||''),
+      primary:!!m.is_primary,
+      _raw:m
+    }));
+    _paymentMethodsLoaded=true;
+    renderWallet();
+  }catch(e){console.warn('loadPaymentMethodsFromSupabase failed',e);}
+}
 function renderWallet(){
   const list=document.getElementById('payment-list');
   if(!list) return;
+  if(!_paymentMethodsLoaded){loadPaymentMethodsFromSupabase();}
   if(paymentMethods.length===0){
     list.innerHTML=`
       <div class="wallet-empty-card">
@@ -3305,15 +3330,50 @@ function renderWallet(){
   `).join('');
 }
 
-function setPrimary(id){
+async function setPrimary(id){
+  const prevState=paymentMethods.map(m=>({...m}));
   paymentMethods=paymentMethods.map(m=>({...m,primary:String(m.id)===String(id)}));
-  renderWallet();showToast('Primary method updated');
+  renderWallet();
+  const sb=window.clipencySupabase||window.supabaseClient;
+  if(!sb){showToast('Not connected');return;}
+  try{
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('Not signed in');
+    const{error:unsetErr}=await sb.from('user_payment_methods').update({is_primary:false}).eq('user_id',user.id).eq('is_primary',true);
+    if(unsetErr)throw unsetErr;
+    const{error:setErr}=await sb.from('user_payment_methods').update({is_primary:true}).eq('id',id).eq('user_id',user.id);
+    if(setErr)throw setErr;
+    showToast('Primary method updated');
+  }catch(e){
+    paymentMethods=prevState;
+    renderWallet();
+    showToast('Error: '+(e.message||'Could not update primary method'));
+  }
 }
 
-function deletePay(id){
+async function deletePay(id){
+  const prevState=paymentMethods.map(m=>({...m}));
+  const wasPrimary=paymentMethods.find(m=>String(m.id)===String(id))?.primary;
   paymentMethods=paymentMethods.filter(m=>String(m.id)!==String(id));
   if(paymentMethods.length>0 && !paymentMethods.some(m=>m.primary)) paymentMethods[0].primary=true;
-  renderWallet();showToast('Payment method removed');
+  renderWallet();
+  const sb=window.clipencySupabase||window.supabaseClient;
+  if(!sb){showToast('Not connected');return;}
+  try{
+    const{data:{user}}=await sb.auth.getUser();
+    if(!user)throw new Error('Not signed in');
+    const{error:delErr}=await sb.from('user_payment_methods').delete().eq('id',id).eq('user_id',user.id);
+    if(delErr)throw delErr;
+    if(wasPrimary && paymentMethods.length>0){
+      const{error:setErr}=await sb.from('user_payment_methods').update({is_primary:true}).eq('id',paymentMethods[0].id).eq('user_id',user.id);
+      if(setErr)console.warn(setErr);
+    }
+    showToast('Payment method removed');
+  }catch(e){
+    paymentMethods=prevState;
+    renderWallet();
+    showToast('Error: '+(e.message||'Could not remove method'));
+  }
 }
 
 function hasType(type){ return paymentMethods.some(m=>m.type===type); }
@@ -3440,8 +3500,30 @@ function finalizeAddPay(){
   const token=_addPayState.cryptoToken;
   const icons={upi:'<img src="upilogo.png" alt="UPI" style="width:24px;height:24px;object-fit:contain;"/>',paypal:'<img src="paypallogo.jpg" alt="PayPal" style="width:24px;height:24px;object-fit:contain;border-radius:4px;"/>',crypto:token==='usdc'?'<img src="usdlogo.jpg" alt="USDC" style="width:24px;height:24px;object-fit:contain;border-radius:50%;"/>':'<img src="sollogo.png" alt="SOL" style="width:24px;height:24px;object-fit:contain;"/>'};
   const names={upi:'UPI',paypal:'PayPal',crypto:token==='usdc'?'USDC Wallet':'SOL Wallet'};
-  const newMethod={id:Date.now(),type,cryptoToken:token||null,icon:icons[type],name:names[type],detail,primary:paymentMethods.length===0};
+  const isFirst=paymentMethods.length===0;
+  const tempId='temp-'+Date.now();
+  const newMethod={id:tempId,type,cryptoToken:token||null,icon:icons[type],name:names[type],detail,primary:isFirst};
   paymentMethods.push(newMethod);
+  (async()=>{
+    const sb=window.clipencySupabase||window.supabaseClient;
+    if(!sb){showToast('Not connected — method not saved');return;}
+    try{
+      const{data:{user}}=await sb.auth.getUser();
+      if(!user)throw new Error('Not signed in');
+      const insertRow={user_id:user.id,method_type:type,is_primary:isFirst};
+      if(type==='upi')insertRow.upi_id=detail;
+      else if(type==='paypal')insertRow.paypal_email=detail;
+      else insertRow.extra_details=detail;
+      const{data:inserted,error}=await sb.from('user_payment_methods').insert(insertRow).select('id').single();
+      if(error)throw error;
+      const idx=paymentMethods.findIndex(m=>m.id===tempId);
+      if(idx>-1)paymentMethods[idx].id=inserted.id;
+    }catch(e){
+      paymentMethods=paymentMethods.filter(m=>m.id!==tempId);
+      renderWallet();
+      showToast('Error: '+(e.message||'Could not save payment method'));
+    }
+  })();
 
   // Show step 3 — success
   const box=document.getElementById('pay-modal-box');
