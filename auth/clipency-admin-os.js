@@ -13,7 +13,7 @@ if(window.__clipencyAdminOSLoaded)return;
 window.__clipencyAdminOSLoaded=true;
 
 const PATH=window.location.pathname;
-const ADMIN_PATHS=['/admin','/admin/reviews','/admin/review','/admin/logs','/admin/campaigns','/admin/leads',
+const ADMIN_PATHS=['/admin','/admin/reviews','/admin/review','/admin/logs','/admin/analytics','/admin/campaigns','/admin/leads',
   '/admin/payouts','/admin/users','/admin/accounts','/admin/connected-accounts','/workspace'];
 if(!ADMIN_PATHS.includes(PATH))return;
 
@@ -143,7 +143,8 @@ const I={
   x:'<path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
   plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
   edit:'<path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 8.5-8.5z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  logs:'<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+  logs:'<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+  chart:'<path d="M4 19V9M10 19V5M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
 };
 const svg=n=>`<svg viewBox="0 0 24 24" fill="none">${I[n]||I.grid}</svg>`;
 
@@ -156,6 +157,7 @@ const NAV=[
   ['Payouts','/admin/payouts','wallet'],
   ['Users','/admin/users','users'],
   ['Logs','/admin/logs','logs'],
+  ['Analytics','/admin/analytics','chart'],
   ['Finance OS','https://finance.clipency.in','finance',true],
   ['Clipper View','/campaigns','ext',true],
 ];
@@ -1108,39 +1110,99 @@ async function renderUsers(){
 }
 
 /* ══ ROUTER ════════════════════════════════════════════════════════ */
-async function renderLogs(){
-  const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m':m>0?m+'m':'<1m';};
-  
-  // Fetch all data separately to avoid Promise.all issues
-  let sessions=[],audits=[];
-  try{const r=await sb.from('user_session_logs').select('id,email,display_name,login_at,logout_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(100);sessions=r.data||[];}catch{}
-  try{const r=await sb.from('audit_logs').select('id,actor_email,action,target_table,created_at').order('created_at',{ascending:false}).limit(100);audits=r.data||[];}catch{}
+function humanizeAudit(r){
+  const o=r.old_data||{},n=r.new_data||{},t=r.target_table||'';
+  const money=v=>'₹'+Number(v||0).toLocaleString('en-IN');
+  if(t==='clip_submissions'){
+    if(n.status==='approved')return{icon:'✅',text:`Approved clip — ${n.campaign_title||'Campaign'} (${money(n.earning_amount)})`,status:'approved'};
+    if(n.status==='rejected')return{icon:'❌',text:`Rejected clip — ${n.campaign_title||'Campaign'}${n.rejection_reason?' — '+n.rejection_reason:''}`,status:'rejected'};
+    if((r.action||'').startsWith('delete'))return{icon:'🗑️',text:`Deleted clip submission — ${o.campaign_title||'Campaign'}`,status:'done'};
+    return{icon:'📎',text:`Updated clip — ${n.campaign_title||o.campaign_title||'Campaign'} (${o.status||'?'} → ${n.status||'?'})`,status:n.status||'done'};
+  }
+  if(t==='payout_requests'){
+    if(n.status==='paid')return{icon:'💸',text:`Marked payout paid — ${money(n.amount)}`,status:'paid'};
+    if(n.status==='approved')return{icon:'✅',text:`Approved payout — ${money(n.amount)}`,status:'approved'};
+    if(n.status==='rejected')return{icon:'❌',text:`Rejected payout — ${money(n.amount)}${n.note?' — '+n.note:''}`,status:'rejected'};
+    return{icon:'💸',text:`Updated payout — ${money(n.amount||o.amount)} (${o.status||'?'} → ${n.status||'?'})`,status:n.status||'done'};
+  }
+  if(t==='connected_accounts'){
+    if(n.status==='verified')return{icon:'🔗',text:`Verified account — @${n.handle||n.username||'—'} (${n.platform||'—'})`,status:'verified'};
+    if(n.status==='rejected')return{icon:'🔗',text:`Rejected account — @${n.handle||n.username||'—'} (${n.platform||'—'})${n.rejection_reason?' — '+n.rejection_reason:''}`,status:'rejected'};
+    if((r.action||'').startsWith('delete'))return{icon:'🗑️',text:`Removed account — @${o.handle||o.username||'—'}`,status:'done'};
+    return{icon:'🔗',text:`Updated account — @${n.handle||o.handle||'—'} (${o.status||'?'} → ${n.status||'?'})`,status:n.status||'done'};
+  }
+  if(t==='campaigns'){
+    if((r.action||'').startsWith('insert'))return{icon:'🎬',text:`Created campaign — ${n.title||'Untitled'}`,status:'done'};
+    if((r.action||'').startsWith('delete'))return{icon:'🗑️',text:`Deleted campaign — ${o.title||'Untitled'}`,status:'done'};
+    return{icon:'🎬',text:`Updated campaign — ${n.title||o.title||'Untitled'}`,status:'done'};
+  }
+  if(t==='admin_users'){
+    if((r.action||'').startsWith('insert'))return{icon:'🛡️',text:`Granted admin access — ${n.email||'—'}`,status:'done'};
+    return{icon:'🛡️',text:`Revoked admin access — ${o.email||'—'}`,status:'done'};
+  }
+  if(t==='reviewer_users'){
+    if((r.action||'').startsWith('insert'))return{icon:'🛡️',text:`Granted reviewer access — ${n.email||'—'}`,status:'done'};
+    return{icon:'🛡️',text:`Revoked reviewer access — ${o.email||'—'}`,status:'done'};
+  }
+  if(t==='access_invites'){
+    if((r.action||'').startsWith('insert'))return{icon:'✉️',text:`Invited ${n.email||'—'} as ${n.role||'—'}`,status:n.status||'pending'};
+    return{icon:'✉️',text:`Invite ${n.email||o.email||'—'} — ${n.status||'updated'}`,status:n.status||'done'};
+  }
+  return{icon:'📋',text:(r.action||'')+(t?' on '+t:''),status:'done'};
+}
 
-  // Merge and build unified activity feed from real data
+window.__logsFilter=function(){
+  const p=new URLSearchParams(location.search);
+  const actor=(document.getElementById('cx-log-actor')?.value||'').trim();
+  const table=document.getElementById('cx-log-table')?.value||'';
+  const from=document.getElementById('cx-log-from')?.value||'';
+  const to=document.getElementById('cx-log-to')?.value||'';
+  if(actor)p.set('la',actor);else p.delete('la');
+  if(table)p.set('lt',table);else p.delete('lt');
+  if(from)p.set('lfrom',from);else p.delete('lfrom');
+  if(to)p.set('lto',to);else p.delete('lto');
+  location.search='?'+p.toString();
+};
+window.__logsClear=function(){location.search='';};
+
+async function renderLogs(){
+  const p=new URLSearchParams(location.search);
+  const fActor=p.get('la')||'',fTable=p.get('lt')||'',fFrom=p.get('lfrom')||'',fTo=p.get('lto')||'';
+
+  let auditQ=sb.from('v_audit_log_feed').select('*').limit(150);
+  if(fActor)auditQ=auditQ.ilike('actor_email','%'+fActor+'%');
+  if(fTable)auditQ=auditQ.eq('target_table',fTable);
+  if(fFrom)auditQ=auditQ.gte('created_at',fFrom);
+  if(fTo)auditQ=auditQ.lte('created_at',fTo+'T23:59:59');
+  let audits=[];
+  try{const r=await auditQ.order('created_at',{ascending:false});audits=r.data||[];}catch{}
+
   const allActivity=[];
-  
-  // Add submissions
   try{const{data:subs}=await sb.from('clip_submissions').select('id,user_id,campaign_title,platform,status,created_at,profiles(email,full_name)').order('created_at',{ascending:false}).limit(50);
     (subs||[]).forEach(s=>allActivity.push({ts:s.created_at,icon:'📎',user:s.profiles?.email||'—',action:'Clip submitted — '+( s.campaign_title||'Campaign'),status:s.status,cat:'Submission'}));
   }catch{}
-
-  // Add payout requests
   try{const{data:prs}=await sb.from('payout_requests').select('id,amount,status,requested_at,profiles(email)').order('requested_at',{ascending:false}).limit(30);
-    (prs||[]).forEach(p=>allActivity.push({ts:p.requested_at,icon:'💸',user:p.profiles?.email||'—',action:'Withdrawal request — ₹'+Number(p.amount).toLocaleString('en-IN'),status:p.status,cat:'Payout'}));
+    (prs||[]).forEach(p2=>allActivity.push({ts:p2.requested_at,icon:'💸',user:p2.profiles?.email||'—',action:'Withdrawal request — ₹'+Number(p2.amount).toLocaleString('en-IN'),status:p2.status,cat:'Payout'}));
   }catch{}
-
-  // Add account verifications
   try{const{data:accts}=await sb.from('connected_accounts').select('id,platform,handle,status,created_at,profiles(email)').order('created_at',{ascending:false}).limit(30);
     (accts||[]).forEach(a=>allActivity.push({ts:a.created_at,icon:'🔗',user:a.profiles?.email||'—',action:`Account connect — @${a.handle||'—'} (${a.platform||'—'})`,status:a.status,cat:'Account'}));
   }catch{}
-
-  // Add audit logs
-  (audits||[]).forEach(a=>allActivity.push({ts:a.created_at,icon:'📋',user:a.actor_email||'Admin',action:a.action+(a.target_table?' on '+a.target_table:''),status:'done',cat:'Audit'}));
-
   allActivity.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
 
   const statusColor={approved:'#6EE7B7',paid:'#6EE7B7',verified:'#6EE7B7',rejected:'#F87171',pending:'#FACC15',done:'rgba(255,255,255,.3)',draft:'rgba(255,255,255,.3)'};
-  
+
+  const auditRows=audits.map(r=>{
+    const h=humanizeAudit(r);
+    return`<tr>
+    <td style="font-size:14px">${h.icon}</td>
+    <td style="font-size:11.5px;color:rgba(255,255,255,.55)">${esc(r.actor_email||'—')}<br><span style="font-size:9.5px;color:rgba(255,255,255,.3);text-transform:uppercase">${esc(r.actor_role||'')}</span></td>
+    <td style="font-size:12px;color:#F5F0EB">${esc(h.text)}</td>
+    <td><span style="font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.45)">${esc(r.target_table||'—')}</span></td>
+    <td><span style="font-size:.68rem;font-weight:600;color:${statusColor[h.status]||'rgba(255,255,255,.3)'}">${esc(h.status||'—')}</span></td>
+    <td style="font-size:11px;color:rgba(255,255,255,.35)">${r.created_at?new Date(r.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</td>
+  </tr>`;
+  }).join('');
+
   const actRows=allActivity.slice(0,150).map(r=>`<tr>
     <td style="font-size:14px">${r.icon}</td>
     <td style="font-size:11.5px;color:rgba(255,255,255,.55)">${esc(r.user)}</td>
@@ -1150,7 +1212,56 @@ async function renderLogs(){
     <td style="font-size:11px;color:rgba(255,255,255,.35)">${r.ts?new Date(r.ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</td>
   </tr>`).join('');
 
-  const sessionRows=sessions.slice(0,20).map(r=>`<tr>
+  const tableOptions=['','clip_submissions','payout_requests','connected_accounts','campaigns','admin_users','reviewer_users','access_invites'];
+  const inputStyle='background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#F5F0EB;font-size:12px';
+
+  return page({kicker:'System Logs',title:'Activity & Logs.',sub:'Who did what — every admin and reviewer action, filterable.',
+    body:`<div class="cx-sec">
+    <div class="cx-sh" style="margin-bottom:14px"><div><div class="cx-st">Staff actions</div><div class="cx-sd">${audits.length} actions by admins & reviewers</div></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <input id="cx-log-actor" placeholder="Filter by actor email..." value="${esc(fActor)}" style="${inputStyle};min-width:200px">
+      <select id="cx-log-table" style="${inputStyle}">
+        ${tableOptions.map(t=>`<option value="${esc(t)}" ${t===fTable?'selected':''}>${t?esc(t):'All tables'}</option>`).join('')}
+      </select>
+      <input id="cx-log-from" type="date" value="${esc(fFrom)}" style="${inputStyle}">
+      <input id="cx-log-to" type="date" value="${esc(fTo)}" style="${inputStyle}">
+      <button class="cx-btn" onclick="window.__logsFilter()">Apply</button>
+      <button class="cx-btn ghost" onclick="window.__logsClear()">Clear</button>
+    </div>
+    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
+      <thead><tr><th></th><th>Actor</th><th>Action</th><th>Table</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody>${auditRows||'<tr><td colspan="6"><div class="cx-empty">No staff actions match these filters.</div></td></tr>'}</tbody>
+    </table></div>
+    <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">User activity</div><div class="cx-sd">${allActivity.length} submissions, payout requests & account connects</div></div></div>
+    <div class="cx-tw"><table class="cx-t">
+      <thead><tr><th></th><th>User</th><th>Action</th><th>Category</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody>${actRows||'<tr><td colspan="6"><div class="cx-empty">No activity yet.</div></td></tr>'}</tbody>
+    </table></div></div>`});
+}
+
+/* ══ ANALYTICS ═══════════════════════════════════════════════════════ */
+async function renderAnalytics(){
+  const fmtSec=s=>{if(!s)return'—';const m=Math.floor(s/60);const h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m':m>0?m+'m':'<1m';};
+  let k={},sessions=[];
+  try{const{data,error}=await sb.from('v_admin_kpis').select('*').single();if(!error)k=data||{};}catch{}
+  try{const r=await sb.from('user_session_logs').select('id,email,display_name,login_at,last_seen_at,status,entry_path,total_seconds').order('login_at',{ascending:false}).limit(30);sessions=r.data||[];}catch{}
+
+  const cards=[
+    ['Active Campaigns',fmt(k.active_campaigns||0),'of '+fmt(k.total_campaigns||0)+' total','ok'],
+    ['Pending Review',fmt(k.clips_pending_review||0),'Clips awaiting review','warn'],
+    ['Approved Views',fmt(k.total_approved_views||0),'Across approved clips','info'],
+    ['Earnings Accrued',fmtMoney(k.total_earnings_accrued||0),'Total clipper earnings',''],
+    ['Payouts Pending',fmt(k.payouts_pending||0),fmtMoney(k.payouts_pending_amount||0)+' requested','warn'],
+    ['Payouts Paid',fmtMoney(k.payouts_paid_amount||0),'Lifetime processed','ok'],
+    ['Accounts Pending',fmt(k.accounts_pending_verification||0),'Awaiting verification','warn'],
+    ['Active Sessions',fmt(k.sessions_active_now||0),'Right now','info'],
+    ['Logins (24h)',fmt(k.logins_last_24h||0),'Last 24 hours',''],
+    ['DAU (7d)',fmt(k.dau_7d||0),'Unique users, last 7 days','info'],
+    ['Total Clippers',fmt(k.total_clippers||0),'Registered','ok'],
+    ['Total Brands',fmt(k.total_brands||0),'Registered',''],
+  ].map(([l,v,s2,cls])=>`<div class="cx-stat ${cls}"><div class="cx-stat-l">${l}</div><div class="cx-stat-v">${v}</div><div class="cx-stat-s">${s2}</div></div>`).join('');
+
+  const sessionRows=sessions.map(r=>`<tr>
     <td><div style="font-size:12px;font-weight:600">${esc(r.display_name||r.email||'—')}</div><div style="font-size:10.5px;color:rgba(255,255,255,.35)">${esc(r.email||'')}</div></td>
     <td><span class="cx-badge ${r.status==='active'?'approved':'draft'}">${esc(r.status||'offline')}</span></td>
     <td style="font-size:11px;color:rgba(255,255,255,.45)">${r.login_at?new Date(r.login_at).toLocaleString('en-IN'):'—'}</td>
@@ -1159,18 +1270,16 @@ async function renderLogs(){
     <td style="font-size:10.5px;color:rgba(255,255,255,.3)">${esc(r.entry_path||'—')}</td>
   </tr>`).join('');
 
-  return page({kicker:'System Logs',title:'Activity & Logs.',sub:'Real-time platform activity — submissions, payouts, verifications, sessions.',
-    body:`<div class="cx-sec">
-    <div class="cx-sh" style="margin-bottom:20px"><div><div class="cx-st">Activity feed</div><div class="cx-sd">${allActivity.length} events logged</div></div></div>
-    <div class="cx-tw" style="margin-bottom:28px"><table class="cx-t">
-      <thead><tr><th></th><th>User</th><th>Action</th><th>Category</th><th>Status</th><th>Time</th></tr></thead>
-      <tbody>${actRows||'<tr><td colspan="6"><div class="cx-empty">No activity yet.</div></td></tr>'}</tbody>
-    </table></div>
+  return page({kicker:'Platform Analytics',title:'Analytics.',sub:'Live KPIs across campaigns, clips, payouts and sessions.',
+    body:`<div class="cx-stats">${cards}</div>
+    <div class="cx-sec">
     <div class="cx-sh" style="margin-bottom:12px"><div><div class="cx-st">User sessions</div><div class="cx-sd">${sessions.length} sessions tracked</div></div></div>
     <div class="cx-tw"><table class="cx-t">
       <thead><tr><th>User</th><th>Status</th><th>Login</th><th>Last seen</th><th>Duration</th><th>Entry</th></tr></thead>
       <tbody>${sessionRows||'<tr><td colspan="6"><div class="cx-empty">No sessions.</div></td></tr>'}</tbody>
-    </table></div></div>`});
+    </table></div>
+    <div class="cx-sh" style="margin:24px 0 12px"><div><div class="cx-st">More on the way</div><div class="cx-sd">Campaign performance, top clippers, reviewer throughput, payout breakdown and daily trends land here next, one section at a time.</div></div></div>
+    </div>`});
 }
 
 
@@ -1237,6 +1346,7 @@ async function renderRoute(){
   if(PATH==='/admin/campaigns')return renderCampaigns();
   if(PATH==='/admin/reviews'||PATH==='/admin/review')return renderReviews();
   if(PATH==='/admin/payouts')return renderPayouts();
+  if(PATH==='/admin/analytics')return renderAnalytics();
   if(PATH==='/admin/logs')return renderLogs();
   if(PATH==='/admin/leads')return renderLeads();
   if(PATH==='/admin/users')return renderUsers();
