@@ -334,6 +334,10 @@ async function renderAccounts(){
         ${r.status==='pending'?`
           <button class="cx-btn ok sm" data-approve-acct="${esc(r.id)}">Approve</button>
           <button class="cx-btn danger sm" data-reject-acct="${esc(r.id)}">Reject</button>
+        `:r.status==='verified'?`
+          <button class="cx-btn danger sm" data-reject-acct="${esc(r.id)}">Reject</button>
+        `:r.status==='rejected'?`
+          <button class="cx-btn ok sm" data-approve-acct="${esc(r.id)}">Approve</button>
         `:'<span style="font-size:11.5px;color:rgba(255,255,255,.3)">—</span>'}
       </div></td>
     </tr>`).join('')}</tbody>
