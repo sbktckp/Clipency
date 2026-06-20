@@ -727,8 +727,33 @@ window.showCampaignForm = async function showCampaignForm(existing=null){
   };
 }
 
+window.__subFilter = function(){
+  const p=new URLSearchParams(location.search);
+  const q=(document.getElementById('cx-sub-search')?.value||'').trim();
+  const camp=document.getElementById('cx-sub-camp')?.value||'';
+  const plat=document.getElementById('cx-sub-plat')?.value||'';
+  const from=document.getElementById('cx-sub-from')?.value||'';
+  const to=document.getElementById('cx-sub-to')?.value||'';
+  if(q)p.set('q',q);else p.delete('q');
+  if(camp)p.set('camp',camp);else p.delete('camp');
+  if(plat)p.set('plat',plat);else p.delete('plat');
+  if(from)p.set('from',from);else p.delete('from');
+  if(to)p.set('to',to);else p.delete('to');
+  location.search='?'+p.toString();
+};
+window.__subClear = function(){
+  const p=new URLSearchParams(location.search);
+  const tab=p.get('tab')||'pending';
+  location.search='?tab='+tab;
+};
 async function renderReviews(){
-  const tab=new URLSearchParams(location.search).get('tab')||'pending';
+  const params=new URLSearchParams(location.search);
+  const tab=params.get('tab')||'pending';
+  const q=(params.get('q')||'').trim().toLowerCase();
+  const campFilter=params.get('camp')||'';
+  const platFilter=params.get('plat')||'';
+  const from=params.get('from')||'';
+  const to=params.get('to')||'';
   let srData=[],profMap={};
   try{
     const srQ=await sb.from('clip_submissions').select('id,user_id,campaign_id,campaign_title,platform,handle,clip_url,views_count,views,status,rejection_reason,appeal_note,approved_amount,earning_amount,created_at,reviewed_at').order('created_at',{ascending:false});
@@ -737,10 +762,50 @@ async function renderReviews(){
     if(uids.length){const{data:profs}=await sb.from('profiles').select('id,email,full_name').in('id',uids);profMap=Object.fromEntries((profs||[]).map(p=>[p.id,p]));}
   }catch(e){console.warn(e);}
   const srAll=srData.map(x=>({...x,user_email:profMap[x.user_id]?.email||'—',user_name:profMap[x.user_id]?.full_name||''}));
-  const rows=tab==='all'?srAll:srAll.filter(x=>x.status===tab);
+  let rows=tab==='all'?srAll:srAll.filter(x=>x.status===tab);
+  if(campFilter)rows=rows.filter(x=>x.campaign_title===campFilter);
+  if(platFilter)rows=rows.filter(x=>(x.platform||'').toLowerCase()===platFilter.toLowerCase());
+  if(q)rows=rows.filter(x=>
+    (x.user_email||'').toLowerCase().includes(q) ||
+    (x.user_name||'').toLowerCase().includes(q) ||
+    (x.handle||'').toLowerCase().includes(q)
+  );
+  if(from){const fromTs=new Date(from+'T00:00:00').getTime();rows=rows.filter(x=>new Date(x.created_at).getTime()>=fromTs);}
+  if(to){const toTs=new Date(to+'T23:59:59').getTime();rows=rows.filter(x=>new Date(x.created_at).getTime()<=toTs);}
   const counts={pending:srAll.filter(x=>x.status==='pending').length,approved:srAll.filter(x=>x.status==='approved').length,rejected:srAll.filter(x=>x.status==='rejected').length,all:srAll.length};
-  const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='?tab=${t}'">${t[0].toUpperCase()+t.slice(1)} <span style="opacity:.5;font-size:.75em">${counts[t]||0}</span></button>`).join('');
+  const qs=(overrides)=>{
+    const p=new URLSearchParams(location.search);
+    Object.entries(overrides).forEach(([k,v])=>{ if(v===''||v==null)p.delete(k);else p.set(k,v); });
+    return '?'+p.toString();
+  };
+  const tabs=['pending','approved','rejected','all'].map(t=>`<button class="cx-tab${tab===t?' on':''}" onclick="location.search='${qs({tab:t})}'">${t[0].toUpperCase()+t.slice(1)} <span style="opacity:.5;font-size:.75em">${counts[t]||0}</span></button>`).join('');
   const fmtViews=n=>{n=Number(n||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(n||0);};
+  const campOptions=[...new Set(srAll.map(x=>x.campaign_title).filter(Boolean))].sort();
+  const platOptions=[...new Set(srAll.map(x=>x.platform).filter(Boolean))].sort();
+  const filterBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0">
+    <input type="text" id="cx-sub-search" placeholder="Search clipper email, name or handle…" value="${esc(q)}"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px;min-width:220px"
+      onkeydown="if(event.key==='Enter')window.__subFilter()"/>
+    <select id="cx-sub-camp" onchange="window.__subFilter()"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px">
+      <option value="">All campaigns</option>
+      ${campOptions.map(c=>`<option value="${esc(c)}" ${campFilter===c?'selected':''}>${esc(c)}</option>`).join('')}
+    </select>
+    <select id="cx-sub-plat" onchange="window.__subFilter()"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;color:#f5f5f7;font-size:13px">
+      <option value="">All platforms</option>
+      ${platOptions.map(pl=>`<option value="${esc(pl)}" ${platFilter.toLowerCase()===String(pl).toLowerCase()?'selected':''}>${esc(pl)}</option>`).join('')}
+    </select>
+    <input type="date" id="cx-sub-from" value="${esc(from)}" title="From date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__subFilter()"/>
+    <span style="color:rgba(255,255,255,.3);font-size:12px">to</span>
+    <input type="date" id="cx-sub-to" value="${esc(to)}" title="To date"
+      style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#f5f5f7;font-size:13px"
+      onchange="window.__subFilter()"/>
+    <button class="cx-btn ghost sm" onclick="window.__subFilter()">Apply</button>
+    <button class="cx-btn ghost sm" onclick="window.__subClear()">Clear filters</button>
+  </div>`;
   const rowsHtml=rows.length?`<div class="cx-tw"><table class="cx-t" style="table-layout:auto">
     <thead><tr><th>Clipper</th><th>Campaign</th><th>Platform</th><th>Clip</th><th>Views</th><th>Earnings</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>${rows.map(r=>{
@@ -759,14 +824,20 @@ async function renderReviews(){
         ${r.status==='pending'?`<button class="cx-btn danger sm" style="width:100%;justify-content:center" onclick="quickReject('${esc(r.id)}')">✗ Reject</button>`:''}
       </div></td>
     </tr>`;}).join('')}</tbody>
-  </table></div>`:`<div class="cx-empty">No ${tab} submissions.</div>`;
+  </table></div>`:`<div class="cx-empty">No submissions match these filters.</div>`;
+  const subParts=[`${rows.length} submission${rows.length!==1?'s':''}`];
+  if(tab!=='all')subParts.push(`in ${tab}`);
+  if(campFilter)subParts.push(`for "${esc(campFilter)}"`);
+  if(platFilter)subParts.push(`on ${esc(platFilter)}`);
+  if(q)subParts.push(`matching "${esc(q)}"`);
+  if(from||to)subParts.push(`between ${from||'…'} and ${to||'…'}`);
   return page({kicker:'Review Control',title:'Clip submissions.',sub:'Review submitted clips. Enter views and earnings to approve. Edit approved clips anytime.',
     body:`<div class="cx-sec">
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
       ${['pending','approved','rejected','all'].map(t=>`<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;text-align:center"><div style="font-family:'Space Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:6px">${t}</div><div style="font-size:1.6rem;font-weight:800;color:${t==='pending'?'#FACC15':t==='approved'?'#6EE7B7':t==='rejected'?'#F87171':'#F5F0EB'}">${counts[t]||0}</div></div>`).join('')}
     </div>
-    <div class="cx-sh"><div><div class="cx-st">Submissions</div><div class="cx-sd">${rows.length} in "${tab}"</div></div></div>
-    <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
+    <div class="cx-sh"><div><div class="cx-st">Submissions</div><div class="cx-sd">${subParts.join(' · ')}</div></div></div>
+    <div class="cx-tabs">${tabs}</div>${filterBar}${rowsHtml}</div>`});
 }
 
 window.openReviewModal=function(id,name,camp,platform,handle,clipUrl,views,amt,status,likes,comments,appealNote,priorRejectReason){
