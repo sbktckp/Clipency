@@ -154,7 +154,7 @@ const NAV=[
   ['Leads','/admin/leads','mail'],
   ['Payouts','/admin/payouts','wallet'],
   ['Users','/admin/users','users'],
-  ['Finance OS','https://v0-clipency-finance-dashboard.vercel.app/login','finance',true],
+  ['Finance OS','https://finance.clipency.in','finance',true],
   ['Clipper View','/campaigns','ext',true],
 ];
 
@@ -297,7 +297,7 @@ async function renderCommand(){
     ['/admin/campaigns','Campaigns','Manage active'],
     ['/admin/payouts','Payouts','Process withdrawals'],
     ['/admin/users','Users','Manage access'],
-    ['https://v0-clipency-finance-dashboard.vercel.app/login','Finance OS','External',true],
+    ['https://finance.clipency.in','Finance OS','External',true],
   ].map(([href,l,d,ext])=>`<a href="${href}" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;text-decoration:none;display:block;transition:all .15s" ${ext?'target="_blank" rel="noopener noreferrer"':''}
     onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='rgba(255,255,255,.04)'">
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:4px">${d}</div>
@@ -847,7 +847,7 @@ async function renderPayouts(){
     body:`<div class="cx-sec">
     ${tab==='pending'&&totalPending>0?`<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><span style="color:#fbbf24;font-weight:600">Total pending payout</span><span style="font-size:22px;font-weight:800;color:#f5f5f7">${fmtMoney(totalPending)}</span></div>`:''}
     <div class="cx-sh"><div><div class="cx-st">Payout requests</div><div class="cx-sd">${(rows||[]).length} in ${tab}</div></div>
-    <a class="cx-btn ghost" href="https://v0-clipency-finance-dashboard.vercel.app/login" target="_blank" rel="noopener">Open Finance OS</a></div>
+    <a class="cx-btn ghost" href="https://finance.clipency.in" target="_blank" rel="noopener">Open Finance OS</a></div>
     <div class="cx-tabs">${tabs}</div>${rowsHtml}</div>`});
 }
 
