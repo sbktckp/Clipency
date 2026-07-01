@@ -30,8 +30,8 @@ const STYLE=`
 .cxs-alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;line-height:1.5}
 .cxs-alert.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#F87171}
 .cxs-alert.ok{background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.2);color:#6EE7B7}
+.cxs-alert.warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#fbbf24}
 .cxs-no-accounts{background:rgba(196,149,106,.05);border:1px solid rgba(196,149,106,.12);border-radius:10px;padding:16px;font-size:13px;color:var(--ts,#B8AFA8);line-height:1.6;margin-bottom:12px}
-/* Submit button injected into campaign cards */
 .cxs-submit-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid rgba(196,149,106,.3);background:rgba(196,149,106,.1);color:#C4956A;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:10px}
 .cxs-submit-btn:hover{background:rgba(196,149,106,.2);border-color:rgba(196,149,106,.5)}
 `;
@@ -60,22 +60,18 @@ async function init(){
     const{data:{user}}=await _sb.auth.getUser();
     if(!user)return;
     _user=user;
-    // Load verified accounts
     const{data}=await _sb.from('connected_accounts').select('*').eq('user_id',user.id).eq('status','verified');
     _verifiedAccounts=data||[];
-    // Inject submit buttons into campaign cards
     injectSubmitButtons();
-    // Re-inject if DOM changes (SPA)
     const observer=new MutationObserver(()=>injectSubmitButtons());
     observer.observe(document.body,{childList:true,subtree:true});
   }catch(e){console.warn('cxs init:',e.message);}
 }
 
 function injectSubmitButtons(){
-  // Find campaign cards — look for common selectors
   const cards=document.querySelectorAll('[data-campaign-id],[data-id*="campaign"],[class*="campaign-card"],[class*="campaign-item"]');
   cards.forEach(card=>{
-    if(card.querySelector('.cxs-submit-btn'))return; // already injected
+    if(card.querySelector('.cxs-submit-btn'))return;
     const campaignId=card.dataset.campaignId||card.dataset.id||card.getAttribute('data-id');
     const campaignTitle=card.querySelector('[class*="title"],[class*="name"],h2,h3,h4')?.textContent?.trim()||'Campaign';
     if(!campaignId)return;
@@ -132,7 +128,7 @@ function showSubmitModal(campaignId,campaignTitle){
     const views=parseInt(overlay.querySelector('#'+mid+'_views').value)||0;
     const errEl=overlay.querySelector('#'+mid+'_err');
     if(!accountId){errEl.innerHTML='<div class="cxs-alert err">Please select an account.</div>';return;}
-    if(!clipUrl||!clipUrl.startsWith('http')){overlay.querySelector('#'+mid+'_url').focus();errEl.innerHTML='<div class="cxs-alert err">Please enter a valid clip URL.</div>';return;}
+    if(!clipUrl||!clipUrl.startsWith('http')){overlay.querySelector('#'+mid+'_url').focus();errEl.innerHTML='<div class="cxs-alert err">Please enter a valid clip URL starting with https://</div>';return;}
     const btn=overlay.querySelector('#'+mid+'_submit');
     btn.disabled=true;btn.textContent='Submitting…';
     try{
@@ -148,7 +144,16 @@ function showSubmitModal(campaignId,campaignTitle){
           <button class="cxs-btn ghost" style="margin-top:18px" onclick="this.closest('.cxs-overlay').remove()">Close</button>
         </div>`;
     }catch(e){
-      errEl.innerHTML=`<div class="cxs-alert err">${esc(e.message||'Submission failed')}</div>`;
+      const msg=e.message||'';
+      const isDuplicate=msg.includes('duplicate_clip_url');
+      if(isDuplicate){
+        errEl.innerHTML=`<div class="cxs-alert warn">
+          <strong>⚠ This clip is already in our system.</strong><br>
+          Each clip URL can only be submitted to Clipency once — by any clipper. Please submit a different clip.
+        </div>`;
+      }else{
+        errEl.innerHTML=`<div class="cxs-alert err">${esc(msg||'Submission failed — please try again.')}</div>`;
+      }
       btn.disabled=false;btn.textContent='Submit Clip';
     }
   };
