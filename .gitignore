@@ -8,29 +8,27 @@ Thumbs.db
 .idea/
 *.swp
 
-# Backup files — various naming patterns used historically
+# Temp / backup
 *.bak
 *.backup
 *.old
 *.tmp
 *.log
-*.backup-*
-*-backup-*.html
 *-backup-*/
 *-old-*/
 
-# One-off scripts (should never be committed)
-*.py
-*.sh
-
-# Scratch / staging
-incoming/
-
-# Build artifacts
+# Build
 node_modules/
 .cache/
 dist/
 build/
 
-# Vercel
-.vercel/output/
+# Backup file variants (suffix style, e.g. app.js.backup-some-fix)
+*.backup-*
+*-backup-*.html
+incoming/
+
+# Backup file variants (suffix style, e.g. app.js.backup-some-fix)
+*.backup-*
+*-backup-*.html
+incoming/
