@@ -1,7 +1,19 @@
+# Scripts and one-offs — never serve these
 *.py
 *.sh
 *.log
+
+# Dead files
 index.backup.html
 clipency_v2.html
-index.final.html
-theme-backup-20260501-092034
+
+# Backup sprawl
+*.backup-*
+*-backup-*.html
+
+# Scratch staging area
+incoming/
+
+# Docs (no need to serve)
+README.md
+CONTRIBUTING.md
