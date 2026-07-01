@@ -26,7 +26,7 @@ Clipency is a marketplace where brands launch pay-per-view campaigns and "clippe
 | Hosting | Vercel (main) · `clipency.in` |
 | Backend | Supabase (PostgreSQL + Auth + Edge Functions) |
 | Finance Dashboard | Next.js · `finance.clipency.in` |
-| Ops Bot | Marshie (Telegram bot via Supabase Edge Functions + pg_net) |
+| Ops Bot | COO (Telegram bot via Supabase Edge Functions + pg_net) |
 | Analytics | Custom Supabase views + admin panel |
 
 ---
