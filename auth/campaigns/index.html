@@ -2875,6 +2875,9 @@ async function submitClip(){
       .eq('platform',pKey).eq('handle',_submitState.account).eq('status','verified').maybeSingle();
     if(!acct)throw new Error('Account not verified. Please verify your account first.');
     const camp=CAMPAIGNS.find(x=>String(x.id)===String(_submitState.campaignId));
+    // Duplicate URL check
+    const{data:dupCheck}=await sb.from('clip_submissions').select('id').eq('clip_url',url).maybeSingle();
+    if(dupCheck){throw new Error('This clip URL has already been submitted to Clipency. Each clip can only be submitted once.');}
     const{error}=await sb.from('clip_submissions').insert({
       user_id:user.id,
       connected_account_id:acct.id,
@@ -2889,7 +2892,10 @@ async function submitClip(){
       created_at:new Date().toISOString(),
       updated_at:new Date().toISOString()
     });
-    if(error)throw error;
+    if(error){
+      if(error.code==='23505'||error.message?.includes('unique')){throw new Error('This clip URL has already been submitted to Clipency.');}
+      throw error;
+    }
     closeSubmitModal();
     showToast('✓ Clip submitted! Our team will review within 24–48 hours.');
   }catch(e){
