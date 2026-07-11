@@ -1,8 +1,18 @@
-# Clipency
+<p align="center">
+  <img src="Clipencylogo.png" width="180" alt="Clipency" />
+</p>
 
-> The Viral Creator Network — performance-based content distribution connecting brands with professional clippers.
+<h1 align="center">Clipency</h1>
+<p align="center"><b>The Viral Creator Network</b> — performance-based content distribution connecting brands with professional clippers.</p>
 
-**Live:** [clipency.in](https://www.clipency.in)
+<p align="center">
+  <img src="https://img.shields.io/badge/status-in%20production-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/frontend-HTML%20%2F%20CSS%20%2F%20Vanilla%20JS-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
+  <img src="https://img.shields.io/badge/backend-Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/hosting-Vercel-000000?style=flat-square&logo=vercel&logoColor=white" />
+</p>
+
+<p align="center"><b>Live:</b> <a href="https://www.clipency.in">clipency.in</a></p>
 
 ---
 
@@ -162,4 +172,4 @@ Vercel deploys on every push to `main`. Check [vercel.com](https://vercel.com) o
 
 ---
 
-© 2026 Clipency. Built for the Viral Economy.
+<p align="center">© 2026 Clipency. Built for the Viral Economy.</p>
