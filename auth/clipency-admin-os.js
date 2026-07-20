@@ -65,8 +65,10 @@ body.cxon>*:not(#cxos):not(.cx-loader):not(.cx-overlay):not(.cx-panel){display:n
 .cx-tab{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:6px 14px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;font-family:inherit}
 .cx-tab:hover{background:rgba(255,255,255,.1);color:#f5f5f7}
 .cx-tab.on{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.4);color:#a5b4fc}
-.cx-tw{border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
-table.cx-t{width:100%;border-collapse:collapse;font-size:13px}
+.cx-tw{border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.cx-t{width:100%;min-width:820px;border-collapse:collapse;font-size:13px}
+table.cx-t th:last-child,table.cx-t td:last-child{position:sticky;right:0;background:#0a0a0c;box-shadow:-10px 0 14px -8px rgba(0,0,0,.55)}
+table.cx-t thead th:last-child{background:#0d0d0f}
 table.cx-t th{background:rgba(255,255,255,.035);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06)}
 table.cx-t td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.75);vertical-align:middle}
 table.cx-t tr:last-child td{border-bottom:none}
